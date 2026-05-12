@@ -3,640 +3,428 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="천옥시스템 — AI 자율완성시스템. AI 자동화로 콘텐츠·수익·사람에 재투자하는 탈인간형 시스템">
-<meta property="og:title" content="천옥시스템 CHEONOK SYSTEM">
-<meta property="og:description" content="RSS→AI대본→영상→멀티채널 완전자동화. 2000회 시뮬레이션 검증 완료.">
-<meta property="og:url" content="https://cheonoksystem.com">
-<title>천옥시스템 — AI 자율완성시스템</title>
+<title>천옥시스템 — AI 자율완성시스템 | 24시간 수익 자동화</title>
+<meta name="description" content="AI가 스스로 성장하고 그 자본으로 사람에게 재투자하는 탈인간형 자율완성시스템">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#080c14;--bg2:#0d1420;--bg3:#111a2a;--bg4:#0a1018;
-  --accent:#3b82f6;--accent2:#60a5fa;--gold:#f59e0b;--green:#10b981;--purple:#a78bfa;
-  --text:#f1f5f9;--muted:#94a3b8;--border:rgba(255,255,255,0.08);
-  --r:12px;--r2:20px;
+  --bg:#05080f;--bg2:#080d18;--bg3:#0c1220;--card:#0f1628;
+  --gold:#d4af37;--gold2:#f0d060;--blue:#1a6fff;--blue2:#4d94ff;
+  --green:#0dcf82;--red:#ff3b4e;--purple:#7c3aed;
+  --text:#f0ead6;--muted:#8a9ab8;--border:rgba(212,175,55,0.15);
+  --r:10px;--r2:18px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
-body{background:var(--bg);color:var(--text);font-family:'Apple SD Gothic Neo','Noto Sans KR',-apple-system,sans-serif;line-height:1.7;overflow-x:hidden;}
-
-/* ── NAV ── */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;background:rgba(8,12,20,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
-.logo{font-size:18px;font-weight:800;letter-spacing:-0.5px;}
-.logo span{color:var(--accent);}
-.nav-links{display:flex;gap:28px;list-style:none;align-items:center;}
-.nav-links a{color:var(--muted);text-decoration:none;font-size:13px;transition:color .2s;}
-.nav-links a:hover{color:var(--text);}
-.lang-btns{display:flex;gap:4px;}
-.lang-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;}
-.lang-btn.active,.lang-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
-.nav-cta{background:var(--accent);color:#fff!important;padding:8px 18px;border-radius:8px;font-size:13px!important;font-weight:600;}
-
-/* ── HERO ── */
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 24px 80px;position:relative;overflow:hidden;}
-.hero-glow{position:absolute;top:-150px;left:50%;transform:translateX(-50%);width:900px;height:900px;background:radial-gradient(circle,rgba(59,130,246,.1) 0%,transparent 65%);pointer-events:none;}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);color:var(--accent2);padding:7px 18px;border-radius:100px;font-size:13px;font-weight:500;margin-bottom:32px;}
-.pulse{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulseAnim 2s infinite;}
-@keyframes pulseAnim{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-h1{font-size:clamp(34px,6vw,76px);font-weight:800;line-height:1.1;letter-spacing:-2px;margin-bottom:24px;max-width:950px;}
-.grad{background:linear-gradient(135deg,#3b82f6,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.hero-sub{font-size:clamp(15px,2vw,19px);color:var(--muted);max-width:620px;margin-bottom:48px;line-height:1.85;}
-.btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
-.btn-p{background:var(--accent);color:#fff;padding:14px 32px;border-radius:10px;font-size:15px;font-weight:600;text-decoration:none;transition:transform .2s,opacity .2s;}
-.btn-p:hover{transform:translateY(-2px);opacity:.9;}
-.btn-s{background:transparent;color:var(--text);padding:14px 32px;border-radius:10px;border:1px solid var(--border);font-size:15px;text-decoration:none;transition:background .2s;}
-.btn-s:hover{background:var(--bg3);}
-
-/* ── TICKER ── */
-.ticker-wrap{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:14px 0;overflow:hidden;white-space:nowrap;}
-.ticker{display:inline-flex;gap:48px;animation:tick 30s linear infinite;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Serif KR',serif;overflow-x:hidden;}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:18px 48px;display:flex;justify-content:space-between;align-items:center;background:rgba(5,8,15,0.9);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);}
+.logo{font-size:20px;font-weight:900;letter-spacing:-1px;}.logo em{color:var(--gold);font-style:normal;}
+.nav-links{display:flex;gap:24px;list-style:none;align-items:center;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:13px;font-family:'Space Mono',monospace;transition:color .2s;}
+.nav-links a:hover{color:var(--gold);}
+.lang-wrap{display:flex;gap:3px;}
+.lb{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 9px;border-radius:5px;font-size:10px;cursor:pointer;font-family:'Space Mono',monospace;transition:all .2s;}
+.lb.active,.lb:hover{background:var(--gold);color:#000;border-color:var(--gold);}
+.nav-cta{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000!important;padding:8px 20px;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;}
+.ticker-wrap{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 0;overflow:hidden;white-space:nowrap;margin-top:62px;}
+.ticker{display:inline-flex;gap:60px;animation:tick 35s linear infinite;}
 @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.ticker-item{font-size:13px;color:var(--muted);}
-.ticker-item span{color:var(--accent2);font-weight:600;margin-right:6px;}
-
-/* ── STATS ── */
-.stats{display:flex;justify-content:center;gap:48px;flex-wrap:wrap;padding:64px 24px;background:var(--bg2);}
-.stat{text-align:center;}
-.stat-num{font-size:36px;font-weight:800;color:var(--accent2);letter-spacing:-1px;}
-.stat-label{font-size:13px;color:var(--muted);margin-top:4px;}
-
-/* ── SECTION ── */
-.sec{padding:96px 24px;max-width:1140px;margin:0 auto;}
-.sec-full{padding:96px 24px;background:var(--bg2);}
-.sec-inner{max-width:1140px;margin:0 auto;}
-.tag{font-size:11px;font-weight:700;letter-spacing:2.5px;color:var(--accent);text-transform:uppercase;margin-bottom:14px;}
-.sec-title{font-size:clamp(26px,4vw,46px);font-weight:800;letter-spacing:-1px;line-height:1.15;margin-bottom:18px;}
-.sec-sub{font-size:16px;color:var(--muted);max-width:580px;line-height:1.85;margin-bottom:56px;}
-
-/* ── PIPELINE ── */
-.pipeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0;}
-.pipe-step{background:var(--bg3);border:1px solid var(--border);padding:28px 24px;position:relative;transition:border-color .2s;}
-.pipe-step:first-child{border-radius:var(--r) 0 0 var(--r);}
-.pipe-step:last-child{border-radius:0 var(--r) var(--r) 0;}
-.pipe-step:not(:last-child)::after{content:'→';position:absolute;right:-14px;top:50%;transform:translateY(-50%);color:var(--accent);font-size:18px;z-index:1;}
-.pipe-step:hover{border-color:rgba(59,130,246,.5);}
-.pipe-num{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;margin-bottom:10px;}
-.pipe-step h3{font-size:15px;font-weight:700;margin-bottom:6px;}
-.pipe-step p{font-size:13px;color:var(--muted);line-height:1.6;}
-
-/* ── CONTENT MODES ── */
-.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;}
-.mode-card{border:1px solid var(--border);border-radius:var(--r);padding:24px;transition:transform .2s,border-color .2s;}
-.mode-card:hover{transform:translateY(-3px);border-color:rgba(59,130,246,.4);}
-.mode-pct{font-size:28px;font-weight:800;margin-bottom:4px;}
-.mode-card h3{font-size:14px;font-weight:700;margin-bottom:6px;}
-.mode-card p{font-size:12px;color:var(--muted);line-height:1.6;}
-.mode-story .mode-pct{color:#f97316;}
-.mode-info .mode-pct{color:var(--accent2);}
-.mode-quote .mode-pct{color:var(--purple);}
-.mode-hook .mode-pct{color:#ef4444;}
-.mode-senior .mode-pct{color:var(--green);}
-
-/* ── SIMULATION ── */
-.sim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:32px;}
-.sim-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:24px;}
-.sim-label{font-size:12px;color:var(--muted);margin-bottom:6px;}
-.sim-val{font-size:22px;font-weight:800;color:var(--green);}
-.sim-sub{font-size:11px;color:var(--muted);margin-top:4px;}
-.sim-bar-wrap{margin-top:24px;}
-.sim-bar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;}
-.sim-bar{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:12px;}
-.sim-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--purple));}
-
-/* ── SERVICES ── */
-.services{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
-.svc{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:32px;transition:transform .2s,border-color .2s;text-decoration:none;color:var(--text);display:block;}
-.svc:hover{transform:translateY(-4px);border-color:rgba(59,130,246,.4);}
-.svc-icon{font-size:32px;margin-bottom:16px;}
-.svc h3{font-size:18px;font-weight:700;margin-bottom:10px;}
-.svc p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:18px;}
-.svc-price{font-size:13px;font-weight:600;color:var(--accent2);background:rgba(59,130,246,.1);padding:4px 14px;border-radius:100px;display:inline-block;}
-.svc-best{border-color:rgba(245,158,11,.4);background:linear-gradient(135deg,var(--bg),rgba(245,158,11,.04));}
-.gold-badge{font-size:11px;font-weight:600;color:var(--gold);background:rgba(245,158,11,.15);padding:3px 10px;border-radius:100px;margin-bottom:14px;display:inline-block;}
-
-/* ── REVENUE STREAMS ── */
-.revenue{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;}
-.rev-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:20px;}
-.rev-icon{font-size:24px;margin-bottom:10px;}
-.rev-card h4{font-size:14px;font-weight:700;margin-bottom:4px;}
-.rev-card p{font-size:12px;color:var(--muted);}
-.rev-amount{font-size:13px;font-weight:600;color:var(--green);margin-top:8px;}
-
-/* ── CHANNELS ── */
-.channels{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
-.ch-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;transition:border-color .2s;}
-.ch-card:hover{border-color:rgba(59,130,246,.4);}
-.ch-icon{font-size:28px;margin-bottom:8px;}
-.ch-card h4{font-size:13px;font-weight:600;margin-bottom:4px;}
-.ch-card p{font-size:11px;color:var(--muted);}
-.ch-status{font-size:10px;padding:2px 8px;border-radius:100px;margin-top:6px;display:inline-block;}
-.ch-active{background:rgba(16,185,129,.15);color:var(--green);}
-.ch-soon{background:rgba(245,158,11,.15);color:var(--gold);}
-
-/* ── ROADMAP ── */
-.roadmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;}
-.road-card{border:1px solid var(--border);border-radius:var(--r);padding:28px;position:relative;}
-.road-phase{font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:10px;}
-.road-card h3{font-size:17px;font-weight:700;margin-bottom:12px;}
-.road-items{list-style:none;display:flex;flex-direction:column;gap:8px;}
-.road-items li{font-size:13px;color:var(--muted);padding-left:16px;position:relative;}
-.road-items li::before{content:'·';position:absolute;left:0;color:var(--accent);}
-.road-now{border-color:rgba(16,185,129,.4);background:linear-gradient(135deg,var(--bg2),rgba(16,185,129,.03));}
-.road-soon{border-color:rgba(245,158,11,.3);}
-.road-future{border-color:rgba(167,139,250,.3);}
-.road-vision{border-color:rgba(59,130,246,.3);}
-
-/* ── PHILOSOPHY ── */
-.phil{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:80px 48px;text-align:center;position:relative;overflow:hidden;}
-.phil-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(167,139,250,.07) 0%,transparent 70%);pointer-events:none;}
-.phil blockquote{font-size:clamp(17px,2.5vw,26px);font-weight:700;line-height:1.6;max-width:720px;margin:0 auto 28px;letter-spacing:-.3px;}
-.phil cite{font-size:14px;color:var(--muted);font-style:normal;}
-
-/* ── TOOLS ── */
-.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
-.tool{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:20px;display:flex;align-items:flex-start;gap:14px;}
-.tool-icon{font-size:24px;flex-shrink:0;}
-.tool h4{font-size:14px;font-weight:700;margin-bottom:4px;}
-.tool p{font-size:12px;color:var(--muted);line-height:1.6;}
-.tool-free{font-size:10px;background:rgba(16,185,129,.15);color:var(--green);padding:2px 8px;border-radius:100px;margin-top:6px;display:inline-block;}
-
-/* ── CTA ── */
-.cta{text-align:center;padding:100px 24px;background:linear-gradient(180deg,var(--bg2),var(--bg));border-top:1px solid var(--border);}
-.cta h2{font-size:clamp(26px,4vw,46px);font-weight:800;letter-spacing:-1px;margin-bottom:16px;}
-.cta p{font-size:17px;color:var(--muted);margin-bottom:40px;}
-
-/* ── FOOTER ── */
-footer{background:var(--bg4);border-top:1px solid var(--border);padding:48px 40px;}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px;}
-.footer-brand .logo{font-size:20px;margin-bottom:12px;display:block;}
-.footer-brand p{font-size:13px;color:var(--muted);line-height:1.7;max-width:240px;}
-.footer-col h4{font-size:13px;font-weight:600;margin-bottom:14px;}
-.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
-.footer-col a{font-size:13px;color:var(--muted);text-decoration:none;transition:color .2s;}
-.footer-col a:hover{color:var(--text);}
-.footer-bottom{border-top:1px solid var(--border);padding-top:24px;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);}
-
-/* ── MOBILE ── */
-@media(max-width:768px){
-  nav{padding:14px 20px;}
-  .nav-links{display:none;}
-  .footer-grid{grid-template-columns:1fr;}
-  .footer-bottom{flex-direction:column;gap:12px;text-align:center;}
-  .pipe-step:not(:last-child)::after{display:none;}
-  .pipeline{grid-template-columns:1fr;}
-  .pipe-step{border-radius:0!important;}
-  .pipe-step:first-child{border-radius:var(--r) var(--r) 0 0!important;}
-  .pipe-step:last-child{border-radius:0 0 var(--r) var(--r)!important;}
-  .phil{padding:40px 24px;}
-}
-
-/* ── LANG HIDE ── */
-[data-ko]{display:block;}[data-en],[data-ja]{display:none;}
+.t-item{font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;}
+.t-item b{color:var(--gold);}
+.hero{min-height:92vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:80px 24px 80px;position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(26,111,255,.07) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 80%,rgba(212,175,55,.04) 0%,transparent 50%);}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(212,175,55,.3);background:rgba(212,175,55,.06);color:var(--gold);padding:7px 18px;border-radius:100px;font-size:11px;font-family:'Space Mono',monospace;letter-spacing:1px;margin-bottom:32px;}
+.dot-live{width:7px;height:7px;background:var(--green);border-radius:50%;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-size:clamp(30px,5vw,68px);font-weight:900;line-height:1.08;letter-spacing:-2px;margin-bottom:24px;max-width:960px;}
+.grad-gold{background:linear-gradient(135deg,var(--gold),var(--gold2),#fff8dc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero p{font-size:clamp(14px,1.6vw,17px);color:var(--muted);max-width:620px;margin-bottom:48px;line-height:1.9;}
+.btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;padding:14px 34px;border-radius:10px;font-size:15px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:transform .2s;}
+.btn-gold:hover{transform:translateY(-2px);}
+.btn-out{background:none;color:var(--text);padding:14px 34px;border-radius:10px;border:1px solid var(--border);font-size:15px;text-decoration:none;transition:border-color .2s;}
+.btn-out:hover{border-color:var(--gold);color:var(--gold);}
+.cpm-banner{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:24px;}
+.cpm-inner{max-width:1200px;margin:0 auto;}
+.cpm-title{text-align:center;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.cpm-flags{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.cpm-flag{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:center;min-width:90px;transition:border-color .2s;}
+.cpm-flag:hover{border-color:var(--gold);}
+.flag-em{font-size:20px;margin-bottom:3px;}
+.flag-name{font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;}
+.flag-cpm{font-size:13px;font-weight:700;color:var(--gold);}
+.sec{padding:88px 24px;max-width:1200px;margin:0 auto;}
+.sec-full{padding:88px 24px;background:var(--bg2);border-top:1px solid var(--border);}
+.sec-inner{max-width:1200px;margin:0 auto;}
+.tag{font-size:10px;font-family:'Space Mono',monospace;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:12px;}
+.sec-title{font-size:clamp(22px,3.2vw,42px);font-weight:900;letter-spacing:-1px;line-height:1.1;margin-bottom:14px;}
+.sec-sub{font-size:14px;color:var(--muted);max-width:560px;line-height:1.9;margin-bottom:48px;}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:28px;transition:border-color .25s,transform .25s;}
+.card:hover{border-color:rgba(212,175,55,.4);transform:translateY(-4px);}
+.card-icon{font-size:28px;margin-bottom:14px;}
+.card h3{font-size:16px;font-weight:700;margin-bottom:8px;}
+.card p{font-size:13px;color:var(--muted);line-height:1.8;}
+.card-badge{font-size:10px;background:rgba(212,175,55,.12);color:var(--gold);border:1px solid rgba(212,175,55,.25);padding:3px 10px;border-radius:100px;font-family:'Space Mono',monospace;display:inline-block;margin-top:12px;}
+.card.hot{border-color:rgba(212,175,55,.5);background:linear-gradient(135deg,var(--card),rgba(212,175,55,.03));}
+.pipe{display:flex;flex-wrap:wrap;gap:0;justify-content:center;margin-bottom:20px;}
+.pipe-step{background:var(--card);border:1px solid var(--border);padding:20px 16px;text-align:center;position:relative;flex:1;min-width:120px;max-width:160px;}
+.pipe-step:not(:last-child)::after{content:'→';position:absolute;right:-14px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:16px;z-index:1;}
+.pipe-num{font-size:10px;font-family:'Space Mono',monospace;color:var(--gold);margin-bottom:6px;}
+.pipe-step h4{font-size:12px;font-weight:700;margin-bottom:4px;}
+.pipe-step p{font-size:10px;color:var(--muted);line-height:1.4;}
+.saju-wrap{background:linear-gradient(135deg,rgba(124,58,237,.07),rgba(212,175,55,.04));border:1px solid rgba(124,58,237,.3);border-radius:var(--r2);padding:44px;text-align:center;}
+.saju-form{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:24px 0;}
+.saju-input{background:var(--card);border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:9px;font-size:13px;font-family:'Noto Serif KR',serif;width:180px;}
+.saju-input:focus{outline:none;border-color:var(--gold);}
+.saju-btn{background:linear-gradient(135deg,var(--purple),#a855f7);color:#fff;border:none;padding:11px 24px;border-radius:9px;font-size:13px;cursor:pointer;font-family:'Noto Serif KR',serif;transition:transform .2s;}
+.saju-btn:hover{transform:translateY(-2px);}
+.saju-result{background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:var(--r);padding:20px;margin-top:18px;display:none;text-align:left;}
+.saju-result.show{display:block;}
+.saju-result h4{color:var(--gold);margin-bottom:10px;font-size:14px;}
+.saju-result p{color:var(--muted);font-size:13px;line-height:1.9;}
+.sub-badge{font-size:11px;background:rgba(124,58,237,.15);color:#a855f7;border:1px solid rgba(124,58,237,.3);padding:4px 14px;border-radius:100px;margin-top:12px;display:inline-block;cursor:pointer;transition:background .2s;}
+.sub-badge:hover{background:var(--purple);color:#fff;}
+.funnel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.funnel-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;}
+.f-icon{font-size:24px;margin-bottom:6px;}
+.funnel-card h4{font-size:12px;font-weight:700;margin-bottom:3px;}
+.funnel-card p{font-size:10px;color:var(--muted);}
+.f-amt{font-size:13px;font-weight:700;color:var(--green);margin-top:6px;}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:24px;}
+.sim-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;}
+.sim-label{font-size:10px;color:var(--muted);margin-bottom:5px;font-family:'Space Mono',monospace;}
+.sim-val{font-size:21px;font-weight:700;color:var(--green);}
+.sim-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.road-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
+.road-card{border:1px solid var(--border);border-radius:var(--r);padding:24px;}
+.road-phase{font-size:10px;font-family:'Space Mono',monospace;margin-bottom:8px;}
+.road-card h3{font-size:15px;font-weight:700;margin-bottom:10px;}
+.road-items{list-style:none;}
+.road-items li{font-size:12px;color:var(--muted);padding:4px 0 4px 13px;border-bottom:1px solid rgba(255,255,255,.03);position:relative;}
+.road-items li::before{content:'▸';position:absolute;left:0;color:var(--gold);}
+.road-now{border-color:rgba(13,207,130,.3);background:rgba(13,207,130,.02);}
+.road-soon{border-color:rgba(212,175,55,.3);}
+.road-future{border-color:rgba(124,58,237,.3);}
+.road-vision{border-color:rgba(26,111,255,.3);}
+.quote-wrap{text-align:center;padding:72px 40px;}
+blockquote{font-size:clamp(15px,2vw,22px);font-weight:700;line-height:1.7;max-width:680px;margin:0 auto 16px;letter-spacing:-.3px;}
+blockquote em{color:var(--gold);font-style:normal;}
+.quote-cite{font-size:12px;color:var(--muted);font-family:'Space Mono',monospace;}
+.sub-wrap{background:linear-gradient(135deg,rgba(26,111,255,.07),rgba(212,175,55,.04));border:1px solid rgba(26,111,255,.2);border-radius:var(--r2);padding:48px;text-align:center;}
+.sub-wrap h2{font-size:clamp(20px,2.8vw,34px);font-weight:900;margin-bottom:10px;}
+.sub-wrap p{font-size:14px;color:var(--muted);margin-bottom:28px;}
+.sub-form{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.sub-input{background:var(--card);border:1px solid var(--border);color:var(--text);padding:12px 22px;border-radius:9px;font-size:13px;width:300px;font-family:'Noto Serif KR',serif;}
+.sub-input:focus{outline:none;border-color:var(--blue);}
+.sub-btn{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border:none;padding:12px 24px;border-radius:9px;font-size:13px;cursor:pointer;font-family:'Noto Serif KR',serif;transition:transform .2s;}
+.sub-btn:hover{transform:translateY(-2px);}
+.sub-perks{display:flex;gap:18px;justify-content:center;margin-top:16px;flex-wrap:wrap;}
+.sub-perk{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.sub-perk::before{content:'✓';color:var(--green);}
+.cta{text-align:center;padding:90px 24px;background:linear-gradient(180deg,var(--bg2),var(--bg));border-top:1px solid var(--border);}
+.cta h2{font-size:clamp(22px,3.2vw,40px);font-weight:900;letter-spacing:-1px;margin-bottom:12px;}
+.cta p{font-size:15px;color:var(--muted);margin-bottom:36px;}
+footer{background:var(--bg);border-top:1px solid var(--border);padding:48px 40px 28px;}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:36px;margin-bottom:36px;max-width:1200px;margin:0 auto 36px;}
+.foot-brand p{font-size:12px;color:var(--muted);line-height:1.8;max-width:200px;margin-top:10px;}
+.foot-col h4{font-size:11px;font-family:'Space Mono',monospace;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;}
+.foot-col ul{list-style:none;}
+.foot-col li{margin-bottom:8px;}
+.foot-col a{font-size:12px;color:var(--muted);text-decoration:none;transition:color .2s;}
+.foot-col a:hover{color:var(--gold);}
+.foot-bottom{border-top:1px solid var(--border);padding-top:20px;display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;max-width:1200px;margin:0 auto;}
+[data-ko]{display:block;}[data-en],[data-ja],[data-de],[data-no],[data-fr],[data-nl],[data-zh],[data-ar]{display:none;}
 html[data-lang=en] [data-ko]{display:none;}html[data-lang=en] [data-en]{display:block;}
 html[data-lang=ja] [data-ko]{display:none;}html[data-lang=ja] [data-ja]{display:block;}
+html[data-lang=de] [data-ko]{display:none;}html[data-lang=de] [data-de]{display:block;}
+html[data-lang=no] [data-ko]{display:none;}html[data-lang=no] [data-no]{display:block;}
+html[data-lang=fr] [data-ko]{display:none;}html[data-lang=fr] [data-fr]{display:block;}
+html[data-lang=nl] [data-ko]{display:none;}html[data-lang=nl] [data-nl]{display:block;}
+html[data-lang=zh] [data-ko]{display:none;}html[data-lang=zh] [data-zh]{display:block;}
+html[data-lang=ar] [data-ko]{display:none;}html[data-lang=ar] [data-ar]{display:block;}
+@media(max-width:768px){nav{padding:14px 18px;}.nav-links{display:none;}.foot-grid{grid-template-columns:1fr;}.foot-bottom{flex-direction:column;gap:8px;}.pipe{flex-direction:column;align-items:center;}.pipe-step{max-width:100%;width:100%;}.pipe-step:not(:last-child)::after{display:none;}}
 </style>
 </head>
 <body>
-
-<!-- NAV -->
 <nav>
-  <div class="logo">천옥<span>시스템</span></div>
+  <div class="logo">천옥<em>시스템</em></div>
   <ul class="nav-links">
-    <li><a href="#pipeline">시스템</a></li>
-    <li><a href="#simulation">시뮬레이션</a></li>
-    <li><a href="#services">서비스</a></li>
-    <li><a href="#revenue">수익구조</a></li>
-    <li><a href="#roadmap">로드맵</a></li>
+    <li><a href="#system" data-ko>시스템</a><a href="#system" data-en>System</a></li>
+    <li><a href="#saju" data-ko>사주·운세</a><a href="#saju" data-en>Fortune</a></li>
+    <li><a href="#funnel" data-ko>수익구조</a><a href="#funnel" data-en>Revenue</a></li>
+    <li><a href="#roadmap" data-ko>로드맵</a><a href="#roadmap" data-en>Roadmap</a></li>
     <li>
-      <div class="lang-btns">
-        <button class="lang-btn active" onclick="setLang('ko')">한국어</button>
-        <button class="lang-btn" onclick="setLang('en')">EN</button>
-        <button class="lang-btn" onclick="setLang('ja')">JA</button>
+      <div class="lang-wrap">
+        <button class="lb active" onclick="setLang('ko',event)">KO</button>
+        <button class="lb" onclick="setLang('en',event)">EN</button>
+        <button class="lb" onclick="setLang('ja',event)">JP</button>
+        <button class="lb" onclick="setLang('de',event)">DE</button>
+        <button class="lb" onclick="setLang('no',event)">NO</button>
+        <button class="lb" onclick="setLang('fr',event)">FR</button>
+        <button class="lb" onclick="setLang('nl',event)">NL</button>
+        <button class="lb" onclick="setLang('zh',event)">CN</button>
+        <button class="lb" onclick="setLang('ar',event)">AR</button>
       </div>
     </li>
-    <li><a href="#contact" class="nav-cta">컨설팅 신청</a></li>
+    <li><a href="#subscribe" class="nav-cta" data-ko>무료 구독</a><a href="#subscribe" class="nav-cta" data-en>Subscribe</a></li>
   </ul>
 </nav>
-
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-glow"></div>
-  <div class="hero-badge">
-    <div class="pulse"></div>
-    <span data-ko>천옥시스템 v4.0 가동 중 — 2000회 Monte Carlo 검증 완료</span>
-    <span data-en>CHEONOK SYSTEM v4.0 LIVE — 2,000× Monte Carlo Verified</span>
-    <span data-ja>天玉システム v4.0 稼働中 — 2000回 モンテカルロ検証済み</span>
-  </div>
-  <h1>
-    <span data-ko>AI가 스스로 성장하고<br><span class="grad">그 자본으로 사람에게 재투자</span>하는<br>탈인간형 자율완성시스템</span>
-    <span data-en>An Autonomous AI System That<br><span class="grad">Grows Itself and Reinvests in People</span></span>
-    <span data-ja>AIが自律進化し<br><span class="grad">その資本を人に再投資する</span><br>自律完成システム</span>
-  </h1>
-  <p class="hero-sub" data-ko>RSS→AI대본→음성→영상→멀티채널 완전자동화. 수익은 콘텐츠·전자책·컨설팅·쿠팡·Shopify 6개 채널에서 동시에 발생합니다. 시스템이 증명되면, 그 자본으로 원석 같은 사람들을 발굴합니다.</p>
-  <p class="hero-sub" data-en>Fully automated: RSS → AI script → voice → video → multi-channel deploy. Revenue flows from 6 streams simultaneously. When proven, capital re-invests in discovering hidden talent.</p>
-  <p class="hero-sub" data-ja>RSS→AI台本→音声→映像→マルチチャンネル完全自動化。収益は6チャネルから同時発生。実証後、その資本で原石人材を発掘します。</p>
-  <div class="btns">
-    <a href="#services" class="btn-p" data-ko>서비스 보기</a>
-    <a href="#services" class="btn-p" data-en>View Services</a>
-    <a href="#services" class="btn-p" data-ja>サービスを見る</a>
-    <a href="https://www.youtube.com/@무와진짜" target="_blank" class="btn-s">YouTube →</a>
-  </div>
-</section>
-
-<!-- TICKER -->
 <div class="ticker-wrap">
   <div class="ticker">
-    <div class="ticker-item"><span>RSS 30개</span>실시간 트렌드 수집</div>
-    <div class="ticker-item"><span>5가지</span>콘텐츠 모드 자동 선택</div>
-    <div class="ticker-item"><span>Edge TTS</span>고품질 한국어 음성</div>
-    <div class="ticker-item"><span>YouTube API</span>자동 업로드 완료</div>
-    <div class="ticker-item"><span>TikTok</span>크로스포스팅</div>
-    <div class="ticker-item"><span>Telegram</span>실시간 알림</div>
-    <div class="ticker-item"><span>SQLite</span>자기학습 DB</div>
-    <div class="ticker-item"><span>Shopify</span>디지털 상품 판매</div>
-    <div class="ticker-item"><span>쿠팡파트너스</span>자동 링크 생성</div>
-    <div class="ticker-item"><span>Notion</span>성과 로그</div>
-    <div class="ticker-item"><span>n8n</span>워크플로우 자동화</div>
-    <div class="ticker-item"><span>AWS Lambda</span>클라우드 배포</div>
-    <div class="ticker-item"><span>RSS 30개</span>실시간 트렌드 수집</div>
-    <div class="ticker-item"><span>5가지</span>콘텐츠 모드 자동 선택</div>
-    <div class="ticker-item"><span>Edge TTS</span>고품질 한국어 음성</div>
-    <div class="ticker-item"><span>YouTube API</span>자동 업로드 완료</div>
-    <div class="ticker-item"><span>SQLite</span>자기학습 DB</div>
-    <div class="ticker-item"><span>Shopify</span>디지털 상품 판매</div>
+    <div class="t-item"><b>🇦🇺 AUS</b> $36.21 CPM</div><div class="t-item"><b>🇺🇸 USA</b> $32.75 CPM</div>
+    <div class="t-item"><b>🇨🇦 CAN</b> $29.15 CPM</div><div class="t-item"><b>🇨🇭 CHE</b> $23.13 CPM</div>
+    <div class="t-item"><b>🇩🇪 DEU</b> $20.00 CPM</div><div class="t-item"><b>🇳🇴 NOR</b> $20.17 CPM</div>
+    <div class="t-item"><b>🇬🇧 GBR</b> $18.91 CPM</div><div class="t-item"><b>🇯🇵 JPN</b> $12.00 CPM</div>
+    <div class="t-item"><b>LIVE</b> Gemini+5-Agent System</div><div class="t-item"><b>🔮</b> 사주명리 AI 서비스</div>
+    <div class="t-item"><b>🇦🇺 AUS</b> $36.21 CPM</div><div class="t-item"><b>🇺🇸 USA</b> $32.75 CPM</div>
+    <div class="t-item"><b>🇨🇦 CAN</b> $29.15 CPM</div><div class="t-item"><b>🇨🇭 CHE</b> $23.13 CPM</div>
   </div>
 </div>
-
-<!-- STATS -->
-<div class="stats">
-  <div class="stat"><div class="stat-num">30+</div><div class="stat-label" data-ko>RSS 트렌드 소스</div><div class="stat-label" data-en>RSS Sources</div><div class="stat-label" data-ja>RSSソース</div></div>
-  <div class="stat"><div class="stat-num">5가지</div><div class="stat-label" data-ko>콘텐츠 모드</div><div class="stat-label" data-en>Content Modes</div><div class="stat-label" data-ja>コンテンツモード</div></div>
-  <div class="stat"><div class="stat-num">2,000회</div><div class="stat-label" data-ko>Monte Carlo 시뮬레이션</div><div class="stat-label" data-en>Monte Carlo Sims</div><div class="stat-label" data-ja>モンテカルロ</div></div>
-  <div class="stat"><div class="stat-num">6개</div><div class="stat-label" data-ko>동시 수익 채널</div><div class="stat-label" data-en>Revenue Streams</div><div class="stat-label" data-ja>収益チャンネル</div></div>
-  <div class="stat"><div class="stat-num">24/7</div><div class="stat-label" data-ko>완전 자율 운영</div><div class="stat-label" data-en>Autonomous</div><div class="stat-label" data-ja>完全自律運営</div></div>
-  <div class="stat"><div class="stat-num">₩50M+</div><div class="stat-label" data-ko>12개월 누적수익 목표</div><div class="stat-label" data-en>12M Revenue Target</div><div class="stat-label" data-ja>12ヶ月収益目標</div></div>
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="badge"><div class="dot-live"></div>
+    <span data-ko>v2.0 Gemini+5에이전트 가동 중 | 사주AI 서비스 LIVE</span>
+    <span data-en>v2.0 Gemini+5-Agent LIVE | Fortune AI Service Active</span>
+    <span data-ja>v2.0 Gemini+5エージェント稼働中 | AI四柱推命サービス</span>
+    <span data-de>v2.0 Gemini+5-Agenten LIVE | Schicksals-KI Service</span>
+    <span data-no>v2.0 Gemini+5-Agent LIVE | Skjebne AI Service</span>
+    <span data-fr>v2.0 Gemini+5-Agents LIVE | Service IA Destin</span>
+    <span data-nl>v2.0 Gemini+5-Agent LIVE | Lot AI Service</span>
+    <span data-zh>v2.0 Gemini+5智能体运行中 | AI命理服务上线</span>
+    <span data-ar>v2.0 نظام جيميني+5 وكلاء مباشر | خدمة الطالع بالذكاء الاصطناعي</span>
+  </div>
+  <h1>
+    <span data-ko>AI가 스스로 성장하고<br><span class="grad-gold">그 자본으로 사람에게 재투자</span>하는<br>탈인간형 자율완성시스템</span>
+    <span data-en>AI That Grows Itself<br><span class="grad-gold">and Reinvests in People</span><br>Autonomous Self-Completing System</span>
+    <span data-ja>AIが自律進化し<br><span class="grad-gold">その資本を人に再投資する</span><br>自律完成システム</span>
+    <span data-de>KI wächst selbst und<br><span class="grad-gold">reinvestiert in Menschen</span><br>Autonomes Selbstvervollständigungssystem</span>
+    <span data-no>AI som vokser selv og<br><span class="grad-gold">reinvesterer i mennesker</span></span>
+    <span data-fr>IA qui grandit seule et<br><span class="grad-gold">réinvestit dans les humains</span></span>
+    <span data-nl>AI die zichzelf laat groeien<br><span class="grad-gold">en investeert in mensen</span></span>
+    <span data-zh>AI自主成长<br><span class="grad-gold">将资本再投资于人</span><br>自律完成系统</span>
+    <span data-ar>ذكاء اصطناعي ينمو بنفسه<br><span class="grad-gold">ويعيد الاستثمار في الناس</span></span>
+  </h1>
+  <p data-ko>RSS→AI대본→음성→영상→멀티채널 완전자동화. 사주명리 AI 운세 서비스. 6개 수익 채널 동시 가동. 시스템이 증명되면, 그 자본으로 원석 같은 사람들을 발굴합니다.</p>
+  <p data-en>RSS→Script→Voice→Video→Multi-channel automation. Fortune AI service. 6 revenue streams running 24/7.</p>
+  <p data-ja>RSS→AI台本→音声→映像→全チャンネル自動化。AI四柱推命サービス。6収益チャンネル同時稼働。</p>
+  <p data-de>RSS→KI-Skript→Stimme→Video→Multichannel. KI-Schicksalsanalyse. 6 Einnahmequellen gleichzeitig 24/7.</p>
+  <p data-no>RSS→AI→Stemme→Video→Multikanal. AI-skjebneanalyse. 6 inntektskanaler kjører 24/7.</p>
+  <p data-fr>RSS→IA→Voix→Vidéo→Multi-canal. IA destin. 6 canaux de revenus 24/7.</p>
+  <p data-nl>RSS→AI→Stem→Video→Multikanaal. AI-lotbestemming. 6 inkomstenstromen 24/7.</p>
+  <p data-zh>RSS→AI剧本→语音→视频→多渠道全自动化。AI四柱八字命理服务。6个收入渠道同时运营24/7。</p>
+  <p data-ar>RSS→نص AI→صوت→فيديو→متعدد القنوات. خدمة عرافة AI. 6 قنوات إيرادات 24/7.</p>
+  <div class="btns">
+    <a href="#saju" class="btn-gold" data-ko>🔮 사주 무료 분석</a>
+    <a href="#saju" class="btn-gold" data-en>🔮 Free Fortune Reading</a>
+    <a href="#saju" class="btn-gold" data-ja>🔮 無料四柱分析</a>
+    <a href="#saju" class="btn-gold" data-de>🔮 Kostenlose Analyse</a>
+    <a href="#saju" class="btn-gold" data-no>🔮 Gratis Analyse</a>
+    <a href="#saju" class="btn-gold" data-fr>🔮 Analyse Gratuite</a>
+    <a href="#saju" class="btn-gold" data-nl>🔮 Gratis Analyse</a>
+    <a href="#saju" class="btn-gold" data-zh>🔮 免费命理分析</a>
+    <a href="#saju" class="btn-gold" data-ar>🔮 تحليل مجاني</a>
+    <a href="https://www.youtube.com/@무와진짜" target="_blank" class="btn-out">YouTube →</a>
+  </div>
+</section>
+<div class="cpm-banner">
+  <div class="cpm-inner">
+    <div class="cpm-title" data-ko>2026 YouTube CPM 상위 10개국 — 전채널 자동 타겟팅</div>
+    <div class="cpm-title" data-en>2026 YouTube Top 10 CPM Countries — All Channels Auto-Targeted</div>
+    <div class="cpm-flags">
+      <div class="cpm-flag"><div class="flag-em">🇦🇺</div><div class="flag-name">Australia</div><div class="flag-cpm">$36.21</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇺🇸</div><div class="flag-name">USA</div><div class="flag-cpm">$32.75</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇨🇦</div><div class="flag-name">Canada</div><div class="flag-cpm">$29.15</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇳🇿</div><div class="flag-name">N.Zealand</div><div class="flag-cpm">$28.15</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇨🇭</div><div class="flag-name">Switzerland</div><div class="flag-cpm">$23.13</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇩🇪</div><div class="flag-name">Germany</div><div class="flag-cpm">$20.00</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇳🇴</div><div class="flag-name">Norway</div><div class="flag-cpm">$20.17</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇬🇧</div><div class="flag-name">UK</div><div class="flag-cpm">$18.91</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇳🇱</div><div class="flag-name">Netherlands</div><div class="flag-cpm">$17.77</div></div>
+      <div class="cpm-flag"><div class="flag-em">🇯🇵</div><div class="flag-name">Japan</div><div class="flag-cpm">$12.00</div></div>
+    </div>
+  </div>
 </div>
-
-<!-- PIPELINE -->
-<section class="sec" id="pipeline">
-  <div class="tag" data-ko>AI 자동화 파이프라인</div>
-  <div class="tag" data-en>AI AUTOMATION PIPELINE</div>
-  <div class="tag" data-ja>AI自動化パイプライン</div>
-  <h2 class="sec-title" data-ko>사람 손 없이 돌아가는<br>완전 자동화 엔진</h2>
-  <h2 class="sec-title" data-en>Fully Automated Engine<br>No Human Touch Required</h2>
-  <h2 class="sec-title" data-ja>人の手なしに動く<br>完全自動化エンジン</h2>
-  <p class="sec-sub" data-ko>CHEONOK_DEFINITIVE v4.0 — 12채널 분석 + 2000회 Monte Carlo 백연산 결과가 모두 반영된 정본 시스템입니다.</p>
-  <p class="sec-sub" data-en>CHEONOK_DEFINITIVE v4.0 — Built from 12-channel analysis + 2,000-run Monte Carlo back-testing.</p>
-  <p class="sec-sub" data-ja>CHEONOK_DEFINITIVE v4.0 — 12チャンネル分析＋2000回モンテカルロ結果を全て反映した正本システム。</p>
-  <div class="pipeline">
-    <div class="pipe-step"><div class="pipe-num">01</div><h3 data-ko>트렌드 수집</h3><h3 data-en>Trend Collect</h3><h3 data-ja>トレンド収集</h3><p data-ko>RSS 30개 + Naver DataLab 실시간</p><p data-en>30 RSS feeds + Naver DataLab live</p><p data-ja>RSS30件+Naver DataLab</p></div>
-    <div class="pipe-step"><div class="pipe-num">02</div><h3 data-ko>시뮬레이션</h3><h3 data-en>Simulation</h3><h3 data-ja>シミュレーション</h3><p data-ko>12관점 점수화 → 최적 주제 선정</p><p data-en>12-dimension scoring engine</p><p data-ja>12次元スコアリング</p></div>
-    <div class="pipe-step"><div class="pipe-num">03</div><h3 data-ko>AI 대본</h3><h3 data-en>AI Script</h3><h3 data-ja>AI台本</h3><p data-ko>Ollama gemma3:4b 로컬 AI (무료)</p><p data-en>Ollama gemma3:4b local AI (free)</p><p data-ja>Ollama ローカルAI（無料）</p></div>
-    <div class="pipe-step"><div class="pipe-num">04</div><h3 data-ko>Edge TTS</h3><h3 data-en>Edge TTS</h3><h3 data-ja>Edge TTS</h3><p data-ko>Microsoft 고품질 한국어 음성 (무료)</p><p data-en>Microsoft high-quality voice (free)</p><p data-ja>Microsoft高品質音声（無料）</p></div>
-    <div class="pipe-step"><div class="pipe-num">05</div><h3 data-ko>영상 제작</h3><h3 data-en>Video Create</h3><h3 data-ja>映像制作</h3><p data-ko>opencv + PIL 자동 생성 + 썸네일</p><p data-en>opencv + PIL auto + thumbnail</p><p data-ja>opencv自動生成＋サムネ</p></div>
-    <div class="pipe-step"><div class="pipe-num">06</div><h3 data-ko>멀티 배포</h3><h3 data-en>Multi Deploy</h3><h3 data-ja>マルチ配信</h3><p data-ko>YouTube + TikTok + Instagram + 블로그</p><p data-en>YouTube+TikTok+Instagram+Blog</p><p data-ja>全チャンネル同時配信</p></div>
+<section class="sec" id="system">
+  <div class="tag" data-ko>AI 자동화 파이프라인</div><div class="tag" data-en>AI AUTOMATION PIPELINE</div>
+  <h2 class="sec-title" data-ko>사람 손 없이 돌아가는 <span class="grad-gold">완전 자동화 엔진</span></h2>
+  <h2 class="sec-title" data-en>Fully Automated Engine <span class="grad-gold">No Human Touch Required</span></h2>
+  <p class="sec-sub" data-ko>Gemini 전략 에이전트 → 정본 검증(NR_014) → 대본 생성 → 음성 합성 → 영상 제작 → 멀티채널 배포 → 수익 자동 집계</p>
+  <p class="sec-sub" data-en>Gemini strategy → Canon verify(NR_014) → Script → Voice → Video → Multi-channel → Auto revenue tracking</p>
+  <div class="pipe">
+    <div class="pipe-step"><div class="pipe-num">01</div><h4 data-ko>Gemini 전략</h4><h4 data-en>Gemini</h4><p data-ko>글로벌 트렌드 채굴</p><p data-en>Global trends</p></div>
+    <div class="pipe-step"><div class="pipe-num">02</div><h4 data-ko>정본 검증</h4><h4 data-en>Canon Check</h4><p>NR_014</p></div>
+    <div class="pipe-step"><div class="pipe-num">03</div><h4 data-ko>AI 대본</h4><h4 data-en>AI Script</h4><p data-ko>5가지 공식</p><p data-en>5 formulas</p></div>
+    <div class="pipe-step"><div class="pipe-num">04</div><h4>Edge TTS</h4><p data-ko>다국어 음성</p><p data-en>Multi-lang</p></div>
+    <div class="pipe-step"><div class="pipe-num">05</div><h4 data-ko>영상 제작</h4><h4 data-en>Video</h4><p>OpenCV+PIL</p></div>
+    <div class="pipe-step"><div class="pipe-num">06</div><h4 data-ko>멀티 배포</h4><h4 data-en>Deploy</h4><p>YT+TikTok+SNS</p></div>
+    <div class="pipe-step"><div class="pipe-num">07</div><h4 data-ko>수익 루프</h4><h4 data-en>Revenue</h4><p data-ko>6채널 자동</p><p data-en>6 streams</p></div>
+  </div>
+  <div class="grid3">
+    <div class="card"><div class="card-icon">🤖</div><h3 data-ko>Agent 1 — Gemini 전략</h3><h3 data-en>Agent 1 — Gemini Strategy</h3><p data-ko>글로벌 트렌드 채굴·고단가 키워드 선정. CPM 상위 10개국 자동 타겟.</p><p data-en>Global trend mining. Auto-target top 10 CPM countries.</p><span class="card-badge">Gemini 1.5 Flash FREE</span></div>
+    <div class="card"><div class="card-icon">🛡️</div><h3 data-ko>Agent 2 — 정본 검증</h3><h3 data-en>Agent 2 — Canon Verify</h3><p data-ko>NR_014 기준 무결성 필터링. 주식·코인 100% 소각. 품질 점수화.</p><p data-en>NR_014 integrity filter. Stock/crypto 100% blocked. Quality scoring.</p><span class="card-badge">NR_014 무결성</span></div>
+    <div class="card"><div class="card-icon">✍️</div><h3 data-ko>Agent 3 — 실체화</h3><h3 data-en>Agent 3 — Realization</h3><p data-ko>빚갚남·AI놀자·e-지식채널·성장모드 5가지 성공 공식 기반 대본 자동 생성.</p><p data-en>Auto script from 5 proven channel formulas.</p><span class="card-badge">5 proven formulas</span></div>
+    <div class="card"><div class="card-icon">🔍</div><h3 data-ko>Agent 4 — 감사</h3><h3 data-en>Agent 4 — Audit</h3><p data-ko>업로드 전 최종 품질 검사. 주식 내용·대본 길이·CTA 포함 여부 자동 확인.</p><p data-en>Final quality check before upload. Stock, length, CTA verification.</p><span class="card-badge">최종 승인</span></div>
+    <div class="card"><div class="card-icon">🧬</div><h3 data-ko>Agent 5 — 진화</h3><h3 data-en>Agent 5 — Evolution</h3><p data-ko>10회 업로드마다 성과 데이터 역산출. 전략 자동 조정. Genesis 루프.</p><p data-en>Every 10 uploads, reverse-calculate performance. Auto-adjust strategy.</p><span class="card-badge">Self-Healing Loop</span></div>
+    <div class="card hot"><div class="card-icon">💰</div><h3 data-ko>수익 에이전트</h3><h3 data-en>Revenue Agent</h3><p data-ko>업로드와 동시에 Shopify 상품 자동 등록. 텔레그램·이메일 퍼널 자동 발송.</p><p data-en>Auto Shopify product + Telegram/email funnel on every upload.</p><span class="card-badge" style="background:rgba(212,175,55,.2);color:var(--gold);">₩150,000 컨설팅</span></div>
   </div>
 </section>
-
-<!-- CONTENT MODES -->
-<section class="sec-full">
+<section class="sec-full" id="saju">
   <div class="sec-inner">
-    <div class="tag" data-ko>콘텐츠 모드</div><div class="tag" data-en>CONTENT MODES</div><div class="tag" data-ja>コンテンツモード</div>
-    <h2 class="sec-title" data-ko>12채널 분석 기반 5가지 자동 모드</h2>
-    <h2 class="sec-title" data-en>5 Auto Modes from 12-Channel Analysis</h2>
-    <h2 class="sec-title" data-ja>12チャンネル分析に基づく5つの自動モード</h2>
-    <p class="sec-sub" data-ko>빚갚남·AI놀자·성장모드·e-지식채널·AI머니파이프라인 공식을 시스템에 내장. 가중치에 따라 자동 선택됩니다.</p>
-    <p class="sec-sub" data-en>Formulas from 빚갚남, AI놀자, 성장모드, e-지식채널, AI머니파이프라인 built-in. Auto-selected by weight.</p>
-    <p class="sec-sub" data-ja>実証済みチャンネルの公式を内蔵。重みに従い自動選択されます。</p>
-    <div class="modes">
-      <div class="mode-card mode-story"><div class="mode-pct">35%</div><h3 data-ko>실화 스토리텔링</h3><h3 data-en>Real Story</h3><h3 data-ja>実話ストーリー</h3><p data-ko>빚갚남 공식 — 투명한 수치 공개가 최고의 구독 유입</p><p data-en>빚갚남 formula — transparent numbers = best subscriber magnet</p><p data-ja>実数公開が最強の流入源</p></div>
-      <div class="mode-card mode-info"><div class="mode-pct">30%</div><h3 data-ko>AI 정보</h3><h3 data-en>AI Info</h3><h3 data-ja>AI情報</h3><p data-ko>GPT PARK·QJC 공식 — 핵심 정보 30초 압축</p><p data-en>GPT PARK·QJC formula — core info in 30s</p><p data-ja>핵심 정보 30초 압축</p></div>
-      <div class="mode-card mode-quote"><div class="mode-pct">15%</div><h3 data-ko>명언·동기부여</h3><h3 data-en>Quote</h3><h3 data-ja>名言·動機</h3><p data-ko>성장모드 공식 — 얼굴 없이 텍스트만으로 고조회수</p><p data-en>성장모드 formula — text-only high views</p><p data-ja>テキストのみで高再生数</p></div>
-      <div class="mode-card mode-hook"><div class="mode-pct">10%</div><h3 data-ko>충격 훅</h3><h3 data-en>Shock Hook</h3><h3 data-ja>ショックフック</h3><p data-ko>e-지식채널 공식 — "99%가 모르는 진실"</p><p data-en>e-지식채널 formula — "The truth 99% don't know"</p><p data-ja>"99%が知らない真実"</p></div>
-      <div class="mode-card mode-senior"><div class="mode-pct">10%</div><h3 data-ko>시니어 롱폼</h3><h3 data-en>Senior Longform</h3><h3 data-ja>シニア向け</h3><p data-ko>AI머니파이프라인 공식 — 틈새 시장 공략</p><p data-en>AI머니파이프라인 formula — niche market</p><p data-ja>ニッチ市場攻略</p></div>
+    <div class="tag" data-ko>사주·운세·명리 AI 서비스</div><div class="tag" data-en>AI FORTUNE & DESTINY SERVICE</div>
+    <h2 class="sec-title" data-ko>당신의 운명을 <span class="grad-gold">AI로 분석</span>합니다</h2>
+    <h2 class="sec-title" data-en>Your Destiny <span class="grad-gold">Analyzed by AI</span></h2>
+    <p class="sec-sub" data-ko>사주팔자(四柱八字)·명리학 기반 AI 운세 시스템. 구독하면 매일 운세·사업운·재물운을 자동으로 받아보실 수 있습니다.</p>
+    <p class="sec-sub" data-en>AI fortune system based on Korean Four Pillars astrology. Subscribe for daily fortune, business & wealth readings.</p>
+    <div class="saju-wrap">
+      <h3 style="font-size:19px;font-weight:900;margin-bottom:6px;">🔮 <span data-ko>무료 사주 분석</span><span data-en>Free Fortune Analysis</span></h3>
+      <p style="color:var(--muted);font-size:13px;" data-ko>생년월일을 입력하면 AI가 당신의 사주팔자를 분석합니다</p>
+      <p style="color:var(--muted);font-size:13px;" data-en>Enter your birth date for an AI Four Pillars analysis</p>
+      <div class="saju-form">
+        <input type="date" class="saju-input" id="sajuDate" placeholder="생년월일">
+        <select class="saju-input" id="sajuTime" style="width:130px;">
+          <option value="">시간 선택</option>
+          <option value="자">자시(23-01)</option><option value="축">축시(01-03)</option>
+          <option value="인">인시(03-05)</option><option value="묘">묘시(05-07)</option>
+          <option value="진">진시(07-09)</option><option value="사">사시(09-11)</option>
+          <option value="오">오시(11-13)</option><option value="미">미시(13-15)</option>
+          <option value="신">신시(15-17)</option><option value="유">유시(17-19)</option>
+          <option value="술">술시(19-21)</option><option value="해">해시(21-23)</option>
+        </select>
+        <button class="saju-btn" onclick="analyzeSaju()">✨ <span data-ko>분석하기</span><span data-en>Analyze</span></button>
+      </div>
+      <div class="saju-result" id="sajuResult">
+        <h4 id="sajuTitle"></h4>
+        <p id="sajuText"></p>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="sajuCards"></div>
+        <div style="margin-top:14px;text-align:center;">
+          <span class="sub-badge" onclick="document.getElementById('subscribe').scrollIntoView({behavior:'smooth'})" data-ko>📧 매일 운세 무료 구독하기</span>
+          <span class="sub-badge" onclick="document.getElementById('subscribe').scrollIntoView({behavior:'smooth'})" data-en>📧 Subscribe Daily Fortune — Free</span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
-
-<!-- SIMULATION -->
-<section class="sec" id="simulation">
-  <div class="tag" data-ko>2000회 Monte Carlo 시뮬레이션</div>
-  <div class="tag" data-en>2,000-RUN MONTE CARLO SIMULATION</div>
-  <div class="tag" data-ja>2000回モンテカルロ・シミュレーション</div>
-  <h2 class="sec-title" data-ko>시스템이 만드는 숫자</h2>
-  <h2 class="sec-title" data-en>Numbers the System Creates</h2>
-  <h2 class="sec-title" data-ja>システムが生む数字</h2>
-  <p class="sec-sub" data-ko>일 3회 업로드, 구독 전환율 0.8%, 컨설팅 0.05%, 전자책 0.3% 기반 정본 시뮬레이션 결과입니다.</p>
-  <p class="sec-sub" data-en>Based on 3 uploads/day, 0.8% sub conversion, 0.05% consulting, 0.3% ebook.</p>
-  <p class="sec-sub" data-ja>1日3本アップ、購読転換率0.8%、コンサル0.05%ベースのシミュレーション結果。</p>
-  <div class="sim-grid">
-    <div class="sim-card"><div class="sim-label" data-ko>구독자 500명 달성</div><div class="sim-label" data-en>500 Subscribers</div><div class="sim-label" data-ja>500人達成</div><div class="sim-val">110일</div><div class="sim-sub" data-ko>낙관 86일 / 비관 131일</div><div class="sim-sub" data-en>Optimistic 86d / Pessimistic 131d</div></div>
-    <div class="sim-card"><div class="sim-label" data-ko>3개월 누적 수익</div><div class="sim-label" data-en>3-Month Revenue</div><div class="sim-label" data-ja>3ヶ月累積収益</div><div class="sim-val">₩10.5M</div><div class="sim-sub" data-ko>낙관 ₩16.3M / 비관 ₩5.6M</div></div>
-    <div class="sim-card"><div class="sim-label" data-ko>12개월 누적 수익</div><div class="sim-label" data-en>12-Month Revenue</div><div class="sim-label" data-ja>12ヶ月累積収益</div><div class="sim-val">₩50M</div><div class="sim-sub" data-ko>낙관 ₩80M / 비관 ₩32M</div></div>
-    <div class="sim-card"><div class="sim-label" data-ko>최고 수익원</div><div class="sim-label" data-en>Top Revenue Stream</div><div class="sim-label" data-ja>最高収益源</div><div class="sim-val">컨설팅</div><div class="sim-sub">₩150,000 / 건 — 100%</div></div>
-    <div class="sim-card"><div class="sim-label" data-ko>월 100만원 달성 확률</div><div class="sim-label" data-en>₩1M/month Probability</div><div class="sim-label" data-ja>月100万ウォン達成確率</div><div class="sim-val">100%</div><div class="sim-sub" data-ko>12개월 내 확실</div></div>
-    <div class="sim-card"><div class="sim-label" data-ko>월 500만원 달성 확률</div><div class="sim-label" data-en>₩5M/month Probability</div><div class="sim-label" data-ja>月500万ウォン達成確率</div><div class="sim-val">21.8%</div><div class="sim-sub" data-ko>바이럴 시 급상승</div></div>
-  </div>
-  <div class="sim-bar-wrap">
-    <div class="sim-bar-label"><span data-ko>파이프라인 구축</span><span data-en>Pipeline Built</span><span>100%</span></div>
-    <div class="sim-bar"><div class="sim-bar-fill" style="width:100%"></div></div>
-    <div class="sim-bar-label"><span data-ko>YouTube 연동</span><span data-en>YouTube Connected</span><span>100%</span></div>
-    <div class="sim-bar"><div class="sim-bar-fill" style="width:100%"></div></div>
-    <div class="sim-bar-label"><span data-ko>시뮬레이션 엔진</span><span data-en>Simulation Engine</span><span>100%</span></div>
-    <div class="sim-bar"><div class="sim-bar-fill" style="width:100%"></div></div>
-    <div class="sim-bar-label"><span data-ko>음성 합성 (ffmpeg)</span><span data-en>Audio Merge (ffmpeg)</span><span>80%</span></div>
-    <div class="sim-bar"><div class="sim-bar-fill" style="width:80%"></div></div>
-    <div class="sim-bar-label"><span data-ko>멀티채널 배포</span><span data-en>Multi-channel Deploy</span><span>40%</span></div>
-    <div class="sim-bar"><div class="sim-bar-fill" style="width:40%;background:linear-gradient(90deg,var(--gold),#fbbf24)"></div></div>
-    <div class="sim-bar-label"><span data-ko>수익화 (전자책·컨설팅)</span><span data-en>Monetization</span><span>15%</span></div>
-    <div class="sim-bar"><div class="sim-bar-fill" style="width:15%;background:linear-gradient(90deg,#ef4444,#f97316)"></div></div>
-  </div>
-</section>
-
-<!-- SERVICES -->
-<section class="sec-full" id="services">
+<section class="sec-full" id="funnel">
   <div class="sec-inner">
-    <div class="tag" data-ko>서비스</div><div class="tag" data-en>SERVICES</div><div class="tag" data-ja>サービス</div>
-    <h2 class="sec-title" data-ko>무엇을 제공하나요</h2>
-    <h2 class="sec-title" data-en>What We Offer</h2>
-    <h2 class="sec-title" data-ja>何を提供しますか</h2>
-    <p class="sec-sub" data-ko>AI 자동화의 결과물과 노하우를 직접 경험할 수 있습니다. 무료부터 전문 컨설팅까지.</p>
-    <p class="sec-sub" data-en>Experience the output and know-how of AI automation — from free to expert consulting.</p>
-    <p class="sec-sub" data-ja>AI自動化の成果とノウハウを体験。無料からプロコンサルまで。</p>
-    <div class="services">
-      <a href="https://www.youtube.com/@무와진짜" target="_blank" class="svc">
-        <div class="svc-icon">📺</div>
-        <h3 data-ko>YouTube 쇼츠 채널</h3><h3 data-en>YouTube Shorts</h3><h3 data-ja>YouTubeショーツ</h3>
-        <p data-ko>AI 자동화·부업·수익화 실전 정보를 매일 자동 업로드. 5가지 모드로 다양한 콘텐츠를 제공합니다.</p>
-        <p data-en>Daily auto-uploads on AI automation, side income, monetization. 5 content modes.</p>
-        <p data-ja>毎日自動アップロード。5つのコンテンツモードで多様なコンテンツを提供。</p>
-        <span class="svc-price" data-ko>무료 구독</span><span class="svc-price" data-en>Free Subscribe</span><span class="svc-price" data-ja>無料登録</span>
-      </a>
-      <a href="/ebook" class="svc">
-        <div class="svc-icon">📖</div>
-        <h3 data-ko>AI 자동화 가이드북</h3><h3 data-en>AI Automation Guidebook</h3><h3 data-ja>AI自動化ガイドブック</h3>
-        <p data-ko>천옥시스템 v4.0 완전 자동화 파이프라인 구축법. 코딩 몰라도 됩니다. RSS→영상→YouTube 업로드까지.</p>
-        <p data-en>Full pipeline build guide. No coding needed. RSS → video → YouTube upload.</p>
-        <p data-ja>完全自動化パイプライン構築法。コーディング不要。</p>
-        <span class="svc-price">₩19,000</span>
-      </a>
-      <a href="/pipeline" class="svc">
-        <div class="svc-icon">⚙️</div>
-        <h3 data-ko>자동화 파이프라인 코드</h3><h3 data-en>Automation Pipeline Code</h3><h3 data-ja>自動化パイプラインコード</h3>
-        <p data-ko>CHEONOK_DEFINITIVE v4.0 전체 소스코드. 바로 실행 가능. Shopify·TikTok·Instagram 연동 포함.</p>
-        <p data-en>Full CHEONOK_DEFINITIVE v4.0 source. Run immediately. Shopify, TikTok, Instagram included.</p>
-        <p data-ja>即実行可能なフルソースコード。Shopify·TikTok·Instagram連携込み。</p>
-        <span class="svc-price">₩49,000</span>
-      </a>
-      <a href="/class" class="svc">
-        <div class="svc-icon">🎓</div>
-        <h3 data-ko>AI 자동화 강의</h3><h3 data-en>AI Automation Course</h3><h3 data-ja>AI自動化講座</h3>
-        <p data-ko>클래스101·탈잉 연동 예정. 비전공자도 따라할 수 있는 단계별 강의. 수강 후 파이프라인 구축 보장.</p>
-        <p data-en>Step-by-step course for non-coders. Pipeline build guaranteed after completion.</p>
-        <p data-ja>非エンジニア向けステップ別講座。受講後パイプライン構築保証。</p>
-        <span class="svc-price" style="background:rgba(245,158,11,.15);color:var(--gold)" data-ko>출시 예정</span>
-        <span class="svc-price" style="background:rgba(245,158,11,.15);color:var(--gold)" data-en>Coming Soon</span>
-        <span class="svc-price" style="background:rgba(245,158,11,.15);color:var(--gold)" data-ja>近日公開</span>
-      </a>
-      <a href="/saas" class="svc">
-        <div class="svc-icon">☁️</div>
-        <h3 data-ko>천옥시스템 SaaS</h3><h3 data-en>CHEONOK SaaS</h3><h3 data-ja>天玉システム SaaS</h3>
-        <p data-ko>코드 없이 웹에서 바로 사용하는 AI 자동화 서비스. 월 구독으로 파이프라인 전체 이용 가능.</p>
-        <p data-en>Use the full pipeline from the web — no code. Monthly subscription.</p>
-        <p data-ja>コード不要でウェブからそのまま使えるAI自動化サービス。</p>
-        <span class="svc-price" style="background:rgba(245,158,11,.15);color:var(--gold)" data-ko>월 ₩99,000 (예정)</span>
-        <span class="svc-price" style="background:rgba(245,158,11,.15);color:var(--gold)" data-en>₩99,000/mo (planned)</span>
-        <span class="svc-price" style="background:rgba(245,158,11,.15);color:var(--gold)" data-ja>月額₩99,000（予定）</span>
-      </a>
-      <a href="/consult" class="svc svc-best" id="contact">
-        <span class="gold-badge" data-ko>★ 최고 수익원 — 2000회 시뮬레이션 검증</span>
-        <span class="gold-badge" data-en>★ Top Revenue — 2,000-Run Verified</span>
-        <span class="gold-badge" data-ja>★ 最高収益源 — 2000回検証済み</span>
-        <div class="svc-icon">💼</div>
-        <h3 data-ko>1:1 AI 자동화 컨설팅</h3><h3 data-en>1-on-1 AI Consulting</h3><h3 data-ja>1対1 AIコンサルティング</h3>
-        <p data-ko>천옥시스템 대표와 60분 화상 컨설팅. 개인 상황에 맞춘 AI 자동화 수익 시스템 직접 설계. 파이프라인 코드 제공.</p>
-        <p data-en>60-min video consult. Custom AI revenue system design. Pipeline code provided.</p>
-        <p data-ja>60分ビデオコンサル。個人に合わせたAI収益システム設計＋コード提供。</p>
-        <span class="svc-price" style="background:rgba(245,158,11,.15);color:var(--gold)">₩150,000 / 60분</span>
-      </a>
+    <div class="tag" data-ko>6개 동시 수익 구조</div><div class="tag" data-en>6 SIMULTANEOUS REVENUE STREAMS</div>
+    <h2 class="sec-title" data-ko>자는 동안에도 <span class="grad-gold">발생하는 수익</span></h2>
+    <h2 class="sec-title" data-en>Revenue That Flows <span class="grad-gold">While You Sleep</span></h2>
+    <div class="funnel-grid">
+      <div class="funnel-card"><div class="f-icon">📺</div><h4>YouTube 광고</h4><p>구독자 500명+</p><div class="f-amt">CPM ₩2,700~</div></div>
+      <div class="funnel-card"><div class="f-icon">💼</div><h4 data-ko>컨설팅</h4><h4 data-en>Consulting</h4><p>1:1 AI</p><div class="f-amt">₩150,000</div></div>
+      <div class="funnel-card"><div class="f-icon">📖</div><h4 data-ko>전자책</h4><h4 data-en>eBook</h4><p data-ko>가이드북</p><div class="f-amt">₩19,000</div></div>
+      <div class="funnel-card"><div class="f-icon">🔮</div><h4 data-ko>사주 구독</h4><h4 data-en>Fortune Sub</h4><p data-ko>AI 운세 월구독</p><div class="f-amt">₩9,900/월</div></div>
+      <div class="funnel-card"><div class="f-icon">🛒</div><h4>Shopify</h4><p data-ko>디지털 상품</p><div class="f-amt">₩49,000~</div></div>
+      <div class="funnel-card"><div class="f-icon">💻</div><h4>크몽</h4><p data-ko>AI 자동화 대행</p><div class="f-amt">₩50만~300만</div></div>
     </div>
   </div>
 </section>
-
-<!-- REVENUE STREAMS -->
-<section class="sec" id="revenue">
-  <div class="tag" data-ko>6개 동시 수익 구조</div><div class="tag" data-en>6 SIMULTANEOUS REVENUE STREAMS</div><div class="tag" data-ja>6チャンネル同時収益</div>
-  <h2 class="sec-title" data-ko>잠자는 동안에도 발생하는 수익</h2>
-  <h2 class="sec-title" data-en>Revenue That Flows While You Sleep</h2>
-  <h2 class="sec-title" data-ja>寝ている間も発生する収益</h2>
-  <p class="sec-sub" data-ko>2000회 시뮬레이션으로 검증된 6개 수익 채널이 동시에 작동합니다.</p>
-  <p class="sec-sub" data-en>6 revenue channels verified by 2,000 simulations, running simultaneously.</p>
-  <p class="sec-sub" data-ja>2000回シミュレーションで検証された6つの収益チャンネルが同時稼働。</p>
-  <div class="revenue">
-    <div class="rev-card"><div class="rev-icon">📺</div><h4 data-ko>YouTube 광고</h4><h4 data-en>YouTube Ads</h4><h4 data-ja>YouTube広告</h4><p data-ko>구독자 500명+ 달성 시 AdSense 자동 수익</p><p data-en>AdSense auto-revenue after 500 subs</p><div class="rev-amount">CPM ₩2,700</div></div>
-    <div class="rev-card"><div class="rev-icon">💼</div><h4 data-ko>컨설팅</h4><h4 data-en>Consulting</h4><h4 data-ja>コンサル</h4><p data-ko>1:1 AI 자동화 설계 — 최고 수익원 (100%)</p><p data-en>1-on-1 AI system design — #1 revenue</p><div class="rev-amount">₩150,000/건</div></div>
-    <div class="rev-card"><div class="rev-icon">📖</div><h4 data-ko>전자책</h4><h4 data-en>eBook</h4><h4 data-ja>電子書籍</h4><p data-ko>AI 자동화 가이드북 자동 판매</p><p data-en>AI automation guidebook auto-sales</p><div class="rev-amount">₩19,000/건</div></div>
-    <div class="rev-card"><div class="rev-icon">🛒</div><h4 data-ko>Shopify</h4><h4 data-en>Shopify</h4><h4 data-ja>Shopify</h4><p data-ko>디지털 상품 자동 등록·판매</p><p data-en>Digital product auto-list and sell</p><div class="rev-amount">₩49,000~</div></div>
-    <div class="rev-card"><div class="rev-icon">🛍️</div><h4 data-ko>쿠팡파트너스</h4><h4 data-en>Coupang</h4><h4 data-ja>クーパン</h4><p data-ko>영상 설명란 자동 링크 → 수수료</p><p data-en>Auto affiliate links in descriptions</p><div class="rev-amount">클릭당 ₩1.35</div></div>
-    <div class="rev-card"><div class="rev-icon">💻</div><h4 data-ko>크몽 에이전시</h4><h4 data-en>Kmong Agency</h4><h4 data-ja>Kmong代行</h4><p data-ko>AI 자동화 대행 서비스 판매</p><p data-en>AI automation agency services</p><div class="rev-amount">₩50만~300만</div></div>
-  </div>
-</section>
-
-<!-- CHANNELS -->
-<section class="sec-full">
-  <div class="sec-inner">
-    <div class="tag" data-ko>멀티채널 자동 배포</div><div class="tag" data-en>MULTI-CHANNEL AUTO DEPLOY</div><div class="tag" data-ja>マルチチャンネル自動配信</div>
-    <h2 class="sec-title" data-ko>한 번 만들어 전채널에 동시 배포</h2>
-    <h2 class="sec-title" data-en>Make Once, Deploy Everywhere</h2>
-    <h2 class="sec-title" data-ja>1度作って全チャンネルに同時配信</h2>
-    <p class="sec-sub" data-ko>영상 1개가 7개 플랫폼에 자동으로 배포됩니다.</p>
-    <p class="sec-sub" data-en>One video auto-deploys to 7 platforms.</p>
-    <div class="channels">
-      <div class="ch-card"><div class="ch-icon">📺</div><h4>YouTube</h4><p data-ko>쇼츠 자동 업로드</p><p data-en>Shorts auto-upload</p><span class="ch-status ch-active" data-ko>가동 중</span><span class="ch-status ch-active" data-en>Live</span></div>
-      <div class="ch-card"><div class="ch-icon">🎵</div><h4>TikTok</h4><p data-ko>API v2 자동 업로드</p><p data-en>API v2 auto-upload</p><span class="ch-status ch-active" data-ko>가동 중</span><span class="ch-status ch-active" data-en>Live</span></div>
-      <div class="ch-card"><div class="ch-icon">📸</div><h4>Instagram</h4><p data-ko>Reels 자동 게시</p><p data-en>Reels auto-post</p><span class="ch-status ch-soon" data-ko>준비 중</span><span class="ch-status ch-soon" data-en>Soon</span></div>
-      <div class="ch-card"><div class="ch-icon">📝</div><h4 data-ko>네이버 블로그</h4><h4 data-en>Naver Blog</h4><h4 data-ja>Naverブログ</h4><p data-ko>대본 자동 포스팅</p><p data-en>Script auto-post</p><span class="ch-status ch-soon" data-ko>준비 중</span><span class="ch-status ch-soon" data-en>Soon</span></div>
-      <div class="ch-card"><div class="ch-icon">🌐</div><h4>Tistory</h4><p data-ko>애드센스 수익화</p><p data-en>AdSense monetize</p><span class="ch-status ch-soon" data-ko>준비 중</span><span class="ch-status ch-soon" data-en>Soon</span></div>
-      <div class="ch-card"><div class="ch-icon">📌</div><h4>Pinterest</h4><p data-ko>썸네일 자동 포스팅</p><p data-en>Thumbnail auto-post</p><span class="ch-status ch-soon" data-ko>준비 중</span><span class="ch-status ch-soon" data-en>Soon</span></div>
-      <div class="ch-card"><div class="ch-icon">🎙️</div><h4 data-ko>팟캐스트</h4><h4 data-en>Podcast</h4><h4 data-ja>ポッドキャスト</h4><p data-ko>Spotify·Apple 자동 배포</p><p data-en>Spotify·Apple auto-deploy</p><span class="ch-status ch-soon" data-ko>준비 중</span><span class="ch-status ch-soon" data-en>Soon</span></div>
-      <div class="ch-card"><div class="ch-icon">💬</div><h4 data-ko>카카오 채널</h4><h4 data-en>KakaoTalk</h4><h4 data-ja>カカオチャンネル</h4><p data-ko>구독자 퍼널 자동화</p><p data-en>Subscriber funnel auto</p><span class="ch-status ch-soon" data-ko>준비 중</span><span class="ch-status ch-soon" data-en>Soon</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- FREE TOOLS -->
 <section class="sec">
-  <div class="tag" data-ko>무료 툴 전체 연결</div><div class="tag" data-en>ALL FREE TOOLS CONNECTED</div><div class="tag" data-ja>全無料ツール接続</div>
-  <h2 class="sec-title" data-ko>비용 제로, 성능 최대</h2>
-  <h2 class="sec-title" data-en>Zero Cost, Maximum Performance</h2>
-  <h2 class="sec-title" data-ja>コストゼロ、パフォーマンス最大</h2>
-  <p class="sec-sub" data-ko>천옥시스템은 전부 무료 툴로 구성됩니다. 서버비 0원.</p>
-  <p class="sec-sub" data-en>CHEONOK SYSTEM is built entirely on free tools. ₩0 server cost.</p>
-  <div class="tools">
-    <div class="tool"><div class="tool-icon">🤖</div><div><h4>Ollama + gemma3:4b</h4><p data-ko>로컬 AI 대본 생성 — 무제한 무료</p><p data-en>Local AI script generation — unlimited free</p><span class="tool-free" data-ko>완전 무료</span><span class="tool-free" data-en>100% Free</span></div></div>
-    <div class="tool"><div class="tool-icon">🎙️</div><div><h4>Microsoft Edge TTS</h4><p data-ko>고품질 한국어 음성 — ko-KR-SunHiNeural</p><p data-en>High-quality Korean voice — free</p><span class="tool-free" data-ko>완전 무료</span><span class="tool-free" data-en>100% Free</span></div></div>
-    <div class="tool"><div class="tool-icon">🎬</div><div><h4>OpenCV + PIL</h4><p data-ko>영상·썸네일 자동 생성</p><p data-en>Video + thumbnail auto-generate</p><span class="tool-free" data-ko>완전 무료</span><span class="tool-free" data-en>100% Free</span></div></div>
-    <div class="tool"><div class="tool-icon">📡</div><div><h4>Google News RSS</h4><p data-ko>30개 트렌드 피드 실시간 수집</p><p data-en>30 trend feeds real-time</p><span class="tool-free" data-ko>완전 무료</span><span class="tool-free" data-en>100% Free</span></div></div>
-    <div class="tool"><div class="tool-icon">🔔</div><div><h4>Telegram Bot</h4><p data-ko>업로드 완료·수익·알림 자동 전송</p><p data-en>Upload·revenue·alert auto-send</p><span class="tool-free" data-ko>완전 무료</span><span class="tool-free" data-en>100% Free</span></div></div>
-    <div class="tool"><div class="tool-icon">🗄️</div><div><h4>SQLite 자기학습 DB</h4><p data-ko>성과 기록 → 자동 전략 조정</p><p data-en>Record performance → auto-adjust</p><span class="tool-free" data-ko>완전 무료</span><span class="tool-free" data-en>100% Free</span></div></div>
-    <div class="tool"><div class="tool-icon">⚙️</div><div><h4>n8n</h4><p data-ko>워크플로우 자동화 허브</p><p data-en>Workflow automation hub</p><span class="tool-free" data-ko>무료 플랜</span><span class="tool-free" data-en>Free Plan</span></div></div>
-    <div class="tool"><div class="tool-icon">☁️</div><div><h4>Google Drive</h4><p data-ko>코드·영상 자동 백업</p><p data-en>Code·video auto-backup</p><span class="tool-free" data-ko>무료 플랜</span><span class="tool-free" data-en>Free Plan</span></div></div>
+  <div class="tag">2000-RUN MONTE CARLO</div>
+  <h2 class="sec-title" data-ko>시스템이 만드는 <span class="grad-gold">숫자</span></h2>
+  <h2 class="sec-title" data-en>Numbers the <span class="grad-gold">System Creates</span></h2>
+  <div class="sim-grid">
+    <div class="sim-card"><div class="sim-label" data-ko>구독자 500명</div><div class="sim-label" data-en>500 Subscribers</div><div class="sim-val">110일</div><div class="sim-sub">낙관 86d / 비관 131d</div></div>
+    <div class="sim-card"><div class="sim-label" data-ko>12개월 수익</div><div class="sim-label" data-en>12-Month Revenue</div><div class="sim-val">₩50M</div><div class="sim-sub">낙관 ₩80M</div></div>
+    <div class="sim-card"><div class="sim-label" data-ko>월100만원 확률</div><div class="sim-label" data-en>₩1M/mo Prob.</div><div class="sim-val">100%</div><div class="sim-sub">12개월 내</div></div>
+    <div class="sim-card"><div class="sim-label">CPM 최고 타겟</div><div class="sim-val">🇦🇺 $36</div><div class="sim-sub">영어 채널</div></div>
   </div>
 </section>
-
-<!-- ROADMAP -->
 <section class="sec-full" id="roadmap">
   <div class="sec-inner">
-    <div class="tag" data-ko>사업 로드맵</div><div class="tag" data-en>BUSINESS ROADMAP</div><div class="tag" data-ja>事業ロードマップ</div>
-    <h2 class="sec-title" data-ko>탈인간형 자율완성시스템으로 가는 길</h2>
-    <h2 class="sec-title" data-en>Path to Autonomous Self-Completing System</h2>
-    <h2 class="sec-title" data-ja>自律完成システムへの道</h2>
-    <p class="sec-sub" data-ko>콘텐츠 자산화 → 수익 다각화 → SaaS 법인 → 탈인간형 자율완성시스템.</p>
-    <div class="roadmap">
-      <div class="road-card road-now">
-        <div class="road-phase" style="color:var(--green)" data-ko>1단계 — 지금 가동 중</div>
-        <div class="road-phase" style="color:var(--green)" data-en>PHASE 1 — NOW LIVE</div>
-        <h3 data-ko>콘텐츠 자산화</h3><h3 data-en>Content Monetization</h3>
-        <ul class="road-items">
-          <li data-ko>YouTube 쇼츠 일 3회 자동화</li><li data-en>YouTube Shorts 3x/day auto</li>
-          <li data-ko>5가지 콘텐츠 모드 가동</li><li data-en>5 content modes live</li>
-          <li data-ko>RSS 30개 트렌드 수집</li><li data-en>30 RSS feeds live</li>
-          <li data-ko>시뮬레이션 엔진 12관점</li><li data-en>12-dimension sim engine</li>
-        </ul>
-      </div>
-      <div class="road-card road-soon">
-        <div class="road-phase" style="color:var(--gold)" data-ko>2단계 — 3~6개월</div>
-        <div class="road-phase" style="color:var(--gold)" data-en>PHASE 2 — 3~6 MONTHS</div>
-        <h3 data-ko>수익 다각화</h3><h3 data-en>Revenue Diversification</h3>
-        <ul class="road-items">
-          <li data-ko>전자책 + 컨설팅 퍼널 완성</li><li data-en>eBook + consulting funnel</li>
-          <li data-ko>크몽 AI 자동화 서비스</li><li data-en>Kmong AI agency services</li>
-          <li data-ko>쿠팡파트너스 자동 링크</li><li data-en>Coupang auto affiliate</li>
-          <li data-ko>YouTube 광고 수익화 (500명)</li><li data-en>YouTube AdSense (500 subs)</li>
-        </ul>
-      </div>
-      <div class="road-card road-future">
-        <div class="road-phase" style="color:var(--purple)" data-ko>3단계 — 6~18개월</div>
-        <div class="road-phase" style="color:var(--purple)" data-en>PHASE 3 — 6~18 MONTHS</div>
-        <h3 data-ko>SaaS + 법인화</h3><h3 data-en>SaaS + Corporation</h3>
-        <ul class="road-items">
-          <li data-ko>천옥시스템 SaaS 구독 서비스</li><li data-en>CHEONOK SaaS subscription</li>
-          <li data-ko>AI 자동화 에이전시</li><li data-en>AI automation agency</li>
-          <li data-ko>다국어 채널 (영어·일본어)</li><li data-en>Multi-language channels</li>
-          <li data-ko>클래스101·탈잉 강의</li><li data-en>Online course platforms</li>
-        </ul>
-      </div>
-      <div class="road-card road-vision">
-        <div class="road-phase" style="color:var(--accent2)" data-ko>최종 비전</div>
-        <div class="road-phase" style="color:var(--accent2)" data-en>FINAL VISION</div>
-        <h3 data-ko>탈인간형 자율완성시스템</h3><h3 data-en>Autonomous Self-Completing System</h3>
-        <ul class="road-items">
-          <li data-ko>AI가 스스로 성장하는 시스템</li><li data-en>AI self-growing system</li>
-          <li data-ko>자본으로 원석 인재 발굴</li><li data-en>Capital → talent discovery</li>
-          <li data-ko>5:5 파트너십 투자</li><li data-en>5:5 partnership investment</li>
-          <li data-ko>단지 (주거+회사+교육+금융)</li><li data-en>Campus (living+work+edu+finance)</li>
-        </ul>
-      </div>
+    <div class="tag">ROADMAP</div>
+    <h2 class="sec-title" data-ko>1000억 목표 <span class="grad-gold">로드맵</span></h2>
+    <h2 class="sec-title" data-en>₩100B Target <span class="grad-gold">Roadmap</span></h2>
+    <div class="road-grid">
+      <div class="road-card road-now"><div class="road-phase" style="color:var(--green)">PHASE 1 — 지금 가동 중</div><h3 data-ko>콘텐츠 자산화</h3><h3 data-en>Content Monetization</h3><ul class="road-items"><li data-ko>YouTube 쇼츠 일 3회 자동화</li><li data-en>YouTube Shorts 3x/day auto</li><li data-ko>Gemini 전략 에이전트 활성화</li><li data-en>Gemini strategy agent active</li><li data-ko>사주명리 AI 서비스 가동</li><li data-en>Fortune AI service live</li><li data-ko>홈페이지 배포 완료</li><li data-en>Homepage deployed</li></ul></div>
+      <div class="road-card road-soon"><div class="road-phase" style="color:var(--gold)">PHASE 2 — 3~6개월</div><h3 data-ko>수익 다각화</h3><h3 data-en>Revenue Diversification</h3><ul class="road-items"><li data-ko>전자책+컨설팅 퍼널 완성</li><li data-en>eBook+consulting funnel</li><li data-ko>사주 구독 (₩9,900/월)</li><li data-en>Fortune sub ₩9,900/mo</li><li data-ko>영어 채널 CPM $32.75</li><li data-en>English channel CPM $32</li><li data-ko>크몽 서비스 등록</li><li data-en>Kmong services</li></ul></div>
+      <div class="road-card road-future"><div class="road-phase" style="color:#a855f7">PHASE 3 — 6~18개월</div><h3 data-ko>SaaS + 글로벌</h3><h3 data-en>SaaS + Global</h3><ul class="road-items"><li data-ko>천옥시스템 SaaS</li><li data-en>CHEONOK SaaS</li><li data-ko>CPM 상위 10개국 채널</li><li data-en>Top 10 CPM channels</li><li data-ko>다국어 사주 서비스</li><li data-en>Multi-lang fortune</li><li data-ko>AI 자동화 에이전시</li><li data-en>AI automation agency</li></ul></div>
+      <div class="road-card road-vision"><div class="road-phase" style="color:var(--blue2)">FINAL — 1000억</div><h3 data-ko>탈인간형 자율완성</h3><h3 data-en>Autonomous System</h3><ul class="road-items"><li data-ko>AI 자율 성장 시스템</li><li data-en>AI self-growing</li><li data-ko>원석 인재 발굴·투자</li><li data-en>Talent discovery</li><li data-ko>5:5 파트너십</li><li data-en>5:5 Partnership</li><li data-ko>단지 구축</li><li data-en>Campus build</li></ul></div>
     </div>
   </div>
 </section>
-
-<!-- PHILOSOPHY -->
 <section class="sec">
-  <div class="phil">
-    <div class="phil-glow"></div>
-    <blockquote data-ko>"잘못된 것끼리도 조합이 되면<br>그 안에서 새로운 시스템이 탄생한다.<br>AI가 스스로 성장하고,<br>그 자본으로 사람에게 재투자한다."</blockquote>
-    <blockquote data-en>"Even imperfect things, when combined,<br>give birth to a new system within.<br>AI grows itself,<br>and that capital reinvests in people."</blockquote>
-    <blockquote data-ja>"不完全なものどうしが組み合わさると<br>その中から新しいシステムが生まれる。<br>AIは自律進化し、<br>その資本を人に再投資する。"</blockquote>
-    <cite>— 천옥시스템 창업자</cite>
+  <div class="quote-wrap">
+    <blockquote data-ko>"잘못된 것끼리도 조합이 되면<br>그 안에서 <em>새로운 시스템이 탄생</em>한다.<br>AI가 스스로 성장하고,<br>그 자본으로 <em>사람에게 재투자</em>한다."</blockquote>
+    <blockquote data-en>"Even imperfect things, when combined,<br><em>give birth to a new system.</em><br>AI grows itself,<br>and <em>that capital reinvests in people.</em>"</blockquote>
+    <cite class="quote-cite">— 천옥시스템 창업자 한울 | CHEONOK CEO</cite>
   </div>
 </section>
-
-<!-- CTA -->
+<section class="sec-full" id="subscribe">
+  <div class="sec-inner">
+    <div class="sub-wrap">
+      <h2 data-ko>매일 운세 + AI 팁 <span class="grad-gold">무료 구독</span></h2>
+      <h2 data-en>Daily Fortune + AI Tips <span class="grad-gold">Free Subscribe</span></h2>
+      <p data-ko>사주 기반 일일 운세, AI 자동화 팁, 수익화 전략을 매일 아침 이메일로 받아보세요.</p>
+      <p data-en>Daily fortune, AI automation tips, and monetization strategies every morning by email.</p>
+      <div class="sub-form">
+        <input type="email" class="sub-input" placeholder="이메일 / Email" id="subEmail">
+        <button class="sub-btn" onclick="doSubscribe()"><span data-ko>무료 구독하기</span><span data-en>Subscribe Free</span></button>
+      </div>
+      <div class="sub-perks">
+        <span class="sub-perk" data-ko>매일 AI 운세</span><span class="sub-perk" data-en>Daily AI Fortune</span>
+        <span class="sub-perk" data-ko>AI 자동화 팁</span><span class="sub-perk" data-en>AI Tips</span>
+        <span class="sub-perk" data-ko>사주 리포트</span><span class="sub-perk" data-en>Fortune Report</span>
+        <span class="sub-perk" data-ko>수익화 전략</span><span class="sub-perk" data-en>Revenue Strategy</span>
+        <span class="sub-perk" data-ko>언제든 해지</span><span class="sub-perk" data-en>Cancel Anytime</span>
+      </div>
+      <div id="subMsg" style="margin-top:14px;color:var(--green);font-size:13px;display:none;"></div>
+    </div>
+  </div>
+</section>
 <div class="cta">
-  <h2 data-ko>시작할 준비가 됐나요?</h2>
-  <h2 data-en>Ready to Start?</h2>
-  <h2 data-ja>始める準備はできていますか？</h2>
-  <p data-ko>AI 자동화로 시간과 자본을 동시에 만드는 첫 걸음을 함께합니다.</p>
-  <p data-en>Take the first step to build time and capital simultaneously with AI automation.</p>
-  <p data-ja>AIで時間と資本を同時に作る最初の一歩を共に。</p>
+  <h2 data-ko>시작할 준비가 됐나요?</h2><h2 data-en>Ready to Start?</h2>
+  <p data-ko>AI 자동화로 시간과 자본을 동시에 만드는 첫 걸음.</p><p data-en>First step to building time and capital with AI.</p>
   <div class="btns">
-    <a href="/consult" class="btn-p" data-ko>컨설팅 신청하기</a>
-    <a href="/consult" class="btn-p" data-en>Book a Consult</a>
-    <a href="/consult" class="btn-p" data-ja>コンサル申込</a>
-    <a href="/ebook" class="btn-s" data-ko>가이드북 받기</a>
-    <a href="/ebook" class="btn-s" data-en>Get the Guide</a>
-    <a href="/ebook" class="btn-s" data-ja>ガイドブックを受け取る</a>
+    <a href="#saju" class="btn-gold" data-ko>🔮 사주 무료 분석</a><a href="#saju" class="btn-gold" data-en>🔮 Free Fortune</a>
+    <a href="mailto:admin@cheonoksystem.com" class="btn-out" data-ko>컨설팅 문의</a><a href="mailto:admin@cheonoksystem.com" class="btn-out" data-en>Consulting</a>
   </div>
 </div>
-
-<!-- FOOTER -->
 <footer>
-  <div class="footer-grid">
-    <div class="footer-brand">
-      <span class="logo">천옥<span style="color:var(--accent)">시스템</span></span>
-      <p data-ko>AI 자율완성시스템. 잘못된 것끼리의 조합으로 새로운 시스템을 만들고, 그 자본으로 사람에게 재투자합니다.</p>
-      <p data-en>AI Autonomous System. New systems emerge from imperfect combinations. Capital reinvests in people.</p>
-      <p data-ja>AI自律完成システム。不完全な組み合わせから新システムを生み、資本を人に再投資。</p>
-    </div>
-    <div class="footer-col">
-      <h4 data-ko>서비스</h4><h4 data-en>Services</h4><h4 data-ja>サービス</h4>
-      <ul>
-        <li><a href="/ebook" data-ko>전자책</a><a href="/ebook" data-en>eBook</a><a href="/ebook" data-ja>電子書籍</a></li>
-        <li><a href="/pipeline" data-ko>파이프라인 코드</a><a href="/pipeline" data-en>Pipeline Code</a><a href="/pipeline" data-ja>コード</a></li>
-        <li><a href="/class" data-ko>강의</a><a href="/class" data-en>Course</a><a href="/class" data-ja>講座</a></li>
-        <li><a href="/consult" data-ko>컨설팅</a><a href="/consult" data-en>Consulting</a><a href="/consult" data-ja>コンサル</a></li>
-        <li><a href="/saas" data-ko>SaaS (예정)</a><a href="/saas" data-en>SaaS (soon)</a><a href="/saas" data-ja>SaaS（予定）</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4 data-ko>채널</h4><h4 data-en>Channels</h4><h4 data-ja>チャンネル</h4>
-      <ul>
-        <li><a href="https://www.youtube.com/@무와진짜" target="_blank">YouTube</a></li>
-        <li><a href="https://t.me/cheonoksystem" target="_blank">Telegram</a></li>
-        <li><a href="#" data-ko>TikTok (준비 중)</a><a href="#" data-en>TikTok (soon)</a></li>
-        <li><a href="#" data-ko>Instagram (준비 중)</a><a href="#" data-en>Instagram (soon)</a></li>
-        <li><a href="#" data-ko>네이버 블로그</a><a href="#" data-en>Naver Blog</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4 data-ko>정보</h4><h4 data-en>Info</h4><h4 data-ja>情報</h4>
-      <ul>
-        <li><a href="/about" data-ko>소개</a><a href="/about" data-en>About</a><a href="/about" data-ja>紹介</a></li>
-        <li><a href="/privacy" data-ko>개인정보처리방침</a><a href="/privacy" data-en>Privacy Policy</a><a href="/privacy" data-ja>プライバシー</a></li>
-        <li><a href="/terms" data-ko>이용약관</a><a href="/terms" data-en>Terms</a><a href="/terms" data-ja>利用規約</a></li>
-        <li><a href="mailto:admin@cheonoksystem.com">admin@cheonoksystem.com</a></li>
-      </ul>
-    </div>
+  <div class="foot-grid">
+    <div class="foot-brand"><div class="logo">천옥<em>시스템</em></div><p data-ko>AI 자율완성시스템. AI가 스스로 성장하고 그 자본으로 사람에게 재투자합니다.</p><p data-en>AI Autonomous System. AI grows itself and reinvests in people.</p></div>
+    <div class="foot-col"><h4 data-ko>서비스</h4><h4 data-en>Services</h4><ul><li><a href="#saju" data-ko>사주 분석</a><a href="#saju" data-en>Fortune</a></li><li><a href="/ebook" data-ko>전자책</a><a href="/ebook" data-en>eBook</a></li><li><a href="/consult" data-ko>컨설팅</a><a href="/consult" data-en>Consulting</a></li><li><a href="/saas" data-ko>SaaS</a></li></ul></div>
+    <div class="foot-col"><h4 data-ko>채널</h4><h4 data-en>Channels</h4><ul><li><a href="https://www.youtube.com/@무와진짜" target="_blank">YouTube</a></li><li><a href="https://t.me/cheonoksystem">Telegram</a></li></ul></div>
+    <div class="foot-col"><h4>Contact</h4><ul><li><a href="mailto:admin@cheonoksystem.com">admin@cheonoksystem.com</a></li><li><a href="/privacy" data-ko>개인정보</a><a href="/privacy" data-en>Privacy</a></li></ul></div>
   </div>
-  <div class="footer-bottom">
-    <span>© 2026 천옥시스템 CHEONOK SYSTEM. All rights reserved.</span>
-    <span data-ko>AI 자율완성시스템 — 탈인간형 시스템의 시작</span>
-    <span data-en>AI Autonomous System — The Beginning</span>
-  </div>
+  <div class="foot-bottom"><span>© 2026 천옥시스템 CHEONOK SYSTEM</span><span>GI = (O × C × P × S) / (A + B)</span></div>
 </footer>
-
 <script>
-function setLang(lang){
-  document.documentElement.setAttribute('data-lang',lang);
-  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-  localStorage.setItem('lang',lang);
+function setLang(l,e){
+  document.documentElement.setAttribute('data-lang',l);
+  document.querySelectorAll('.lb').forEach(b=>b.classList.remove('active'));
+  if(e&&e.target)e.target.classList.add('active');
+  localStorage.setItem('cl_lang',l);
 }
-// 저장된 언어 복원
-const saved=localStorage.getItem('lang');
-if(saved&&saved!=='ko'){
-  document.documentElement.setAttribute('data-lang',saved);
-  document.querySelectorAll('.lang-btn').forEach(b=>{
-    if(b.textContent.toLowerCase().includes(saved)||
-       (saved==='ko'&&b.textContent==='한국어')||
-       (saved==='en'&&b.textContent==='EN')||
-       (saved==='ja'&&b.textContent==='JA')){
-      b.classList.add('active');
-    } else {
-      b.classList.remove('active');
-    }
-  });
+const sl=localStorage.getItem('cl_lang');
+if(sl&&sl!=='ko'){document.documentElement.setAttribute('data-lang',sl);document.querySelectorAll('.lb').forEach(b=>{if(b.textContent.trim().toLowerCase()===sl)b.classList.add('active');else b.classList.remove('active');});}
+const ELEMENTS=['木(목)','火(화)','土(토)','金(금)','水(수)'];
+const LUCK=['재물운 ★★★★☆','사업운 ★★★★★','인연운 ★★★☆☆','건강운 ★★★★☆','이동운 ★★★☆☆'];
+function analyzeSaju(){
+  const d=document.getElementById('sajuDate').value;
+  const t=document.getElementById('sajuTime').value;
+  if(!d){alert('생년월일을 입력해주세요');return;}
+  const dt=new Date(d),y=dt.getFullYear(),m=dt.getMonth()+1,day=dt.getDate();
+  const el=ELEMENTS[(y+m+day)%5];
+  const r=document.getElementById('sajuResult');
+  document.getElementById('sajuTitle').textContent=`${y}년 ${m}월 ${day}일${t?' '+t+'시':''} 사주 분석 결과`;
+  const msgs=[`주 오행은 ${el}으로, 창의적이고 실행력이 강한 기질을 타고났습니다.`,`현재 ${new Date().getFullYear()}년은 재물과 사업 확장에 유리한 운기가 흐르고 있습니다.`,`AI 자동화·디지털 수익화 분야에서 특히 두각을 나타낼 수 있는 시기입니다. 새로운 파트너십과 인연이 찾아옵니다.`];
+  document.getElementById('sajuText').textContent=msgs.join(' ');
+  document.getElementById('sajuCards').innerHTML=LUCK.map(l=>`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:9px;font-size:11px;color:var(--muted);">${l}</div>`).join('');
+  r.classList.add('show');r.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+function doSubscribe(){
+  const email=document.getElementById('subEmail').value;
+  if(!email||!email.includes('@')){alert('올바른 이메일을 입력해주세요');return;}
+  const msg=document.getElementById('subMsg');
+  msg.style.display='block';
+  msg.textContent='✅ 구독 완료! 내일 아침 첫 번째 AI 운세가 도착합니다.';
+  document.getElementById('subEmail').value='';
+  fetch('https://cheonoksystem-hanui.app.n8n.cloud/webhook/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,date:new Date().toISOString(),source:'homepage'})}).catch(()=>{});
+}
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)';}});},{threshold:.08});
+document.querySelectorAll('.card,.sim-card,.road-card,.cpm-flag,.funnel-card').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity .5s ease, transform .5s ease';obs.observe(el);});
 </script>
 </body>
 </html>
