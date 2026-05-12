@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/ebook", "destination": "/index.html" },
+    { "source": "/consult", "destination": "/index.html" }
+  ]
+}
