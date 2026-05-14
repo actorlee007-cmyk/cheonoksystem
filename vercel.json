@@ -1,6 +1,22 @@
 {
+  "redirects": [
+    {
+      "source": "/pay",
+      "destination": "https://www.paypal.com/ncp/payment/273BK498AYG6L",
+      "permanent": false
+    },
+    {
+      "source": "/operator-os",
+      "destination": "https://www.paypal.com/ncp/payment/273BK498AYG6L",
+      "permanent": false
+    },
+    {
+      "source": "/consult",
+      "destination": "https://www.paypal.com/ncp/payment/273BK498AYG6L",
+      "permanent": false
+    }
+  ],
   "rewrites": [
-    { "source": "/ebook", "destination": "/index.html" },
-    { "source": "/consult", "destination": "/index.html" }
+    { "source": "/ebook", "destination": "/index.html" }
   ]
 }
