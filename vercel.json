@@ -2,17 +2,17 @@
   "redirects": [
     {
       "source": "/pay",
-      "destination": "https://www.paypal.com/ncp/payment/273BK498AYG6L",
+      "destination": "https://www.paypal.com/ncp/payment/394P6QWWX3Y8G",
       "permanent": false
     },
     {
       "source": "/operator-os",
-      "destination": "https://www.paypal.com/ncp/payment/273BK498AYG6L",
+      "destination": "https://www.paypal.com/ncp/payment/394P6QWWX3Y8G",
       "permanent": false
     },
     {
       "source": "/consult",
-      "destination": "https://www.paypal.com/ncp/payment/273BK498AYG6L",
+      "destination": "https://www.paypal.com/ncp/payment/394P6QWWX3Y8G",
       "permanent": false
     }
   ],
