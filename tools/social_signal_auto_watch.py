@@ -2,15 +2,16 @@
 """
 CHEONOK Social Signal Scout AUTO WATCH
 --------------------------------------
-Zero-friction mode.
+Zero-friction universal mode.
 
 How it works:
 1. Run this app once.
-2. Copy any TikTok / YouTube / Shorts / Reels / Threads URL.
+2. Copy any SNS/web URL.
 3. The app detects the URL from clipboard automatically.
-4. It runs collect -> analyze -> DB append.
-5. It copies ChatGPT-ready brief back to clipboard.
-6. Paste into ChatGPT with Ctrl+V.
+4. Universal reader decides media/text/fallback path.
+5. DB appender runs.
+6. ChatGPT-ready brief is copied back to clipboard.
+7. Paste into ChatGPT with Ctrl+V.
 
 No manual PowerShell command. No file hunting.
 """
@@ -36,20 +37,11 @@ SCRIPTS = {
     "social_signal_scout_v02.py": f"{RAW_BASE}/social_signal_scout_v02.py",
     "social_signal_scout_v03_analyze.py": f"{RAW_BASE}/social_signal_scout_v03_analyze.py",
     "social_signal_scout_v04_db.py": f"{RAW_BASE}/social_signal_scout_v04_db.py",
-    "social_signal_threads_v01.py": f"{RAW_BASE}/social_signal_threads_v01.py",
+    "social_signal_universal_v01.py": f"{RAW_BASE}/social_signal_universal_v01.py",
 }
 
-# Supported:
-# - TikTok: vt.tiktok.com, www.tiktok.com
-# - YouTube normal: youtube.com/watch?v=...
-# - YouTube Shorts: youtube.com/shorts/...
-# - YouTube short links: youtu.be/...
-# - Instagram Reels: instagram.com/reel/...
-# - Threads: threads.net, threads.com
-URL_RE = re.compile(
-    r"https?://[^\s\"']*(tiktok\.com|vt\.tiktok\.com|youtube\.com/watch|youtube\.com/shorts|m\.youtube\.com/watch|youtu\.be|instagram\.com/reel|threads\.net|threads\.com)[^\s\"']*",
-    re.I,
-)
+# Broad URL detection. Universal reader decides how to process it.
+URL_RE = re.compile(r"https?://[^\s\"'<>]+", re.I)
 
 
 def ensure_dirs() -> None:
@@ -109,7 +101,7 @@ URL:
 {url}
 
 REQUEST TO CHATGPT:
-아래 TikTok/YouTube/Shorts/Reels/Threads 분석 결과를 정본 기준으로 다시 판단해줘.
+아래 SNS/웹 분석 결과를 정본 기준으로 다시 판단해줘.
 특히 다음을 보고해줘:
 1. 핵심 신호
 2. 사람들이 반응한 원초적 욕망
@@ -134,11 +126,6 @@ def open_file(path: Path) -> None:
         os.startfile(str(path))
 
 
-def is_threads_url(url: str) -> bool:
-    low = url.lower()
-    return "threads.net" in low or "threads.com" in low
-
-
 class AutoWatchApp:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -146,14 +133,14 @@ class AutoWatchApp:
         root.geometry("860x600")
         root.configure(bg="#07111f")
         self.enabled = tk.BooleanVar(value=True)
-        self.status_var = tk.StringVar(value="AUTO ON — Copy a TikTok/YouTube/Threads link. I will analyze it automatically.")
+        self.status_var = tk.StringVar(value="AUTO ON — Copy any SNS/web link. I will analyze it automatically.")
         self.processing = False
         self.processed_urls: set[str] = set()
         self.last_brief_path: Path | None = None
 
-        title = tk.Label(root, text="CHEONOK AUTO WATCH", fg="#bbf7d0", bg="#07111f", font=("Arial", 20, "bold"))
+        title = tk.Label(root, text="CHEONOK UNIVERSAL AUTO WATCH", fg="#bbf7d0", bg="#07111f", font=("Arial", 18, "bold"))
         title.pack(pady=(18, 4))
-        sub = tk.Label(root, text="Copy link anywhere → auto analyze → ChatGPT brief copied", fg="#cbd5e1", bg="#07111f", font=("Arial", 11))
+        sub = tk.Label(root, text="Copy SNS/web link anywhere → auto analyze → ChatGPT brief copied", fg="#cbd5e1", bg="#07111f", font=("Arial", 11))
         sub.pack(pady=(0, 14))
 
         top = tk.Frame(root, bg="#07111f")
@@ -171,7 +158,7 @@ class AutoWatchApp:
         self.logbox.pack(fill="both", expand=True, padx=22, pady=(0, 22))
 
         ensure_dirs()
-        self.log("AUTO WATCH READY")
+        self.log("UNIVERSAL AUTO WATCH READY")
         self.root.after(1000, self.poll_clipboard)
 
     def log(self, msg: str) -> None:
@@ -196,12 +183,13 @@ class AutoWatchApp:
             return ""
 
     def find_url(self, text: str) -> str | None:
-        if not text or len(text) > 3000:
+        if not text or len(text) > 5000:
             return None
         m = URL_RE.search(text)
         if not m:
             return None
-        return m.group(0).strip()
+        url = m.group(0).strip().rstrip(").,;]")
+        return url
 
     def poll_clipboard(self):
         try:
@@ -222,10 +210,7 @@ class AutoWatchApp:
             download_scripts(self.async_log)
             run_cmd([sys.executable, "-m", "pip", "install", "--upgrade", "yt-dlp"], self.async_log, timeout=600)
 
-            if is_threads_url(url):
-                run_cmd([sys.executable, str(TOOLS / "social_signal_threads_v01.py"), url], self.async_log, timeout=300)
-            else:
-                run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v02.py"), url], self.async_log, timeout=1800)
+            run_cmd([sys.executable, str(TOOLS / "social_signal_universal_v01.py"), url], self.async_log, timeout=1800)
 
             rep = latest_report()
             if not rep:
@@ -233,10 +218,7 @@ class AutoWatchApp:
             workdir = rep.parent
             self.async_log(f"WORKDIR: {workdir}")
 
-            # Threads reader already creates content_ideas.md, but normal pipeline needs v03.
-            if not is_threads_url(url):
-                run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v03_analyze.py"), str(workdir)], self.async_log, timeout=600)
-
+            # Universal reader creates content_ideas.md itself, but media pipeline may already run v03.
             run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v04_db.py"), str(workdir)], self.async_log, timeout=600)
 
             brief_path = make_chatgpt_brief(workdir)
