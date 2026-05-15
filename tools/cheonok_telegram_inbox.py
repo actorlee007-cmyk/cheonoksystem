@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-CHEONOK Telegram Inbox v0.1
+CHEONOK Telegram Inbox v0.2
 ---------------------------
 Mobile-first inbox for Social Signal Scout.
 
@@ -14,10 +14,11 @@ Mobile workflow:
 Supported input:
 - text containing URL
 - text memo
-- photo/document screenshot: saved for later review; bot replies with file path
+- photo/document screenshot: saved for later review
 
-Required env/config:
-- TELEGRAM_BOT_TOKEN
+Required:
+- Telegram bot token.
+- If missing, this runner asks for the token locally and saves it to config/telegram_inbox_token.txt.
 
 Run:
 python tools/cheonok_telegram_inbox.py
@@ -38,27 +39,72 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+import webbrowser
 from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / "tools"
+CONFIG = ROOT / "config"
 DATA = ROOT / "data" / "social_signal_scout"
 INBOX = DATA / "telegram_inbox"
 FILES = INBOX / "files"
+CONFIG.mkdir(parents=True, exist_ok=True)
 INBOX.mkdir(parents=True, exist_ok=True)
 FILES.mkdir(parents=True, exist_ok=True)
 
 URL_RE = re.compile(r"https?://[^\s\"'<>]+", re.I)
 
 
-def env_token() -> str:
-    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-    cfg = ROOT / "config" / "telegram_inbox_token.txt"
-    if not token and cfg.exists():
-        token = cfg.read_text(encoding="utf-8", errors="replace").strip()
+def token_path() -> Path:
+    return CONFIG / "telegram_inbox_token.txt"
+
+
+def normalize_token(token: str) -> str:
+    return (token or "").strip().replace("\ufeff", "")
+
+
+def looks_like_token(token: str) -> bool:
+    # Telegram bot tokens commonly look like 123456789:ABCdef...
+    return bool(re.match(r"^\d{6,}:[A-Za-z0-9_-]{20,}$", token or ""))
+
+
+def local_token_setup() -> str:
+    cfg = token_path()
+    print("=" * 72)
+    print("CHEONOK TELEGRAM INBOX TOKEN SETUP")
+    print("=" * 72)
+    print("Telegram bot token is missing.")
+    print("1) Open Telegram")
+    print("2) Search: @BotFather")
+    print("3) Send: /newbot")
+    print("4) Copy the bot token")
+    print("5) Paste it here. It will be saved only on this PC.")
+    print("")
+    print("Token file:", cfg)
+    print("Do NOT paste the token into ChatGPT.")
+    print("=" * 72)
+    try:
+        webbrowser.open("https://t.me/BotFather")
+    except Exception:
+        pass
+    token = normalize_token(input("Paste Telegram bot token here: "))
     if not token:
-        raise RuntimeError("TELEGRAM_BOT_TOKEN missing. Put token in env or config/telegram_inbox_token.txt")
+        raise RuntimeError("TOKEN_EMPTY")
+    if not looks_like_token(token):
+        print("WARN: This does not look like a normal Telegram bot token. Saving anyway.")
+    cfg.write_text(token, encoding="utf-8")
+    print("Saved token:", cfg)
+    return token
+
+
+def env_token() -> str:
+    token = normalize_token(os.environ.get("TELEGRAM_BOT_TOKEN", ""))
+    cfg = token_path()
+    if not token and cfg.exists():
+        token = normalize_token(cfg.read_text(encoding="utf-8", errors="replace"))
+    if not token:
+        token = local_token_setup()
     return token
 
 
@@ -74,6 +120,18 @@ def http_json(url: str, data: dict | None = None) -> dict:
     req = urllib.request.Request(url, data=body)
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read().decode("utf-8", errors="replace"))
+
+
+def validate_token(token: str) -> tuple[bool, str]:
+    try:
+        res = http_json(api_url(token, "getMe"))
+        if not res.get("ok"):
+            return False, str(res)
+        bot = res.get("result", {})
+        username = bot.get("username", "")
+        return True, username
+    except Exception as e:
+        return False, str(e)
 
 
 def send_message(token: str, chat_id: int | str, text: str) -> None:
@@ -175,7 +233,6 @@ def handle_message(token: str, message: dict) -> None:
         send_message(token, chat_id, ("PASS\n" if ok else "ERROR\n") + result)
         return
 
-    # Photo handling
     if "photo" in message:
         photo = message["photo"][-1]
         fid = photo["file_id"]
@@ -183,10 +240,9 @@ def handle_message(token: str, message: dict) -> None:
         ext = Path(fpath).suffix or ".jpg"
         out = FILES / (datetime.now().strftime("photo_%Y%m%d_%H%M%S") + ext)
         download_file(token, fpath, out)
-        send_message(token, chat_id, f"CHEONOK INBOX saved image:\n{out}\n\nImage analysis is handled in ChatGPT vision or later OCR module.")
+        send_message(token, chat_id, f"CHEONOK INBOX saved image:\n{out}\n\nImage saved. Vision analysis can be added as next module.")
         return
 
-    # Document/image handling
     if "document" in message:
         doc = message["document"]
         fid = doc["file_id"]
@@ -197,7 +253,6 @@ def handle_message(token: str, message: dict) -> None:
         send_message(token, chat_id, f"CHEONOK INBOX saved document:\n{out}")
         return
 
-    # Plain memo
     if text:
         out = save_text_memo(message)
         send_message(token, chat_id, f"CHEONOK INBOX saved memo:\n{out}")
@@ -208,8 +263,18 @@ def handle_message(token: str, message: dict) -> None:
 
 def main():
     token = env_token()
+    ok, bot_info = validate_token(token)
+    if not ok:
+        bad = token_path()
+        print("TOKEN_VALIDATION_FAILED:", bot_info)
+        print("Delete or edit token file:", bad)
+        raise RuntimeError("Invalid Telegram bot token")
+
     print("CHEONOK Telegram Inbox START")
+    print("Bot:", "@" + bot_info if bot_info else "OK")
     print("INBOX:", INBOX)
+    print("Send a message/link/photo to your Telegram bot from the phone.")
+
     offset = 0
     state = INBOX / "telegram_offset.txt"
     if state.exists():
@@ -231,6 +296,7 @@ def main():
                 state.write_text(str(offset), encoding="utf-8")
                 msg = upd.get("message") or upd.get("edited_message")
                 if msg:
+                    print("MESSAGE_RECEIVED", datetime.now().strftime("%H:%M:%S"))
                     handle_message(token, msg)
         except KeyboardInterrupt:
             print("STOP")
