@@ -12,6 +12,7 @@ Output:
 - content_ideas.md
 - social_signal_index.md
 - social_signal_index.csv
+- chatgpt_brief.txt copied to clipboard automatically
 """
 
 from __future__ import annotations
@@ -20,7 +21,6 @@ import os
 import subprocess
 import sys
 import threading
-import time
 import urllib.request
 from pathlib import Path
 import tkinter as tk
@@ -89,20 +89,57 @@ def open_folder(path: Path) -> None:
     os.startfile(str(path))
 
 
+def read_text(path: Path, limit: int = 18000) -> str:
+    if not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8", errors="replace")[:limit]
+
+
+def make_chatgpt_brief(workdir: Path) -> Path:
+    ideas = read_text(workdir / "content_ideas.md", limit=16000)
+    report = read_text(workdir / "report.md", limit=6000)
+    url = read_text(workdir / "input_url.txt", limit=2000).strip()
+    brief = f"""[CHEONOK SOCIAL SIGNAL SCOUT RESULT]
+
+URL:
+{url}
+
+REQUEST TO CHATGPT:
+아래 TikTok/Shorts/Reels 분석 결과를 정본 기준으로 다시 판단해줘.
+특히 다음을 보고해줘:
+1. 핵심 신호
+2. 사람들이 반응한 원초적 욕망
+3. 과장/위험 요소
+4. CHEONOK 홈페이지/콘텐츠/상품에 어떻게 반영할지
+5. PASS / HOLD / BLOCK
+6. 다음 실행 3개
+
+=== CONTENT IDEAS ===
+{ideas}
+
+=== RAW REPORT SUMMARY ===
+{report}
+"""
+    out = workdir / "chatgpt_brief.txt"
+    out.write_text(brief, encoding="utf-8")
+    return out
+
+
 class App:
     def __init__(self, root: tk.Tk):
         self.root = root
         root.title("CHEONOK Social Signal Scout")
-        root.geometry("760x560")
+        root.geometry("820x620")
         root.configure(bg="#0f172a")
+        self.last_brief_path: Path | None = None
 
         self.url_var = tk.StringVar()
-        self.status_var = tk.StringVar(value="Paste a TikTok / Shorts / Reels URL and click Analyze.")
+        self.status_var = tk.StringVar(value="Paste a URL and click Analyze. Result will be copied for ChatGPT automatically.")
 
         title = tk.Label(root, text="CHEONOK Social Signal Scout", fg="#d1fae5", bg="#0f172a", font=("Arial", 18, "bold"))
         title.pack(pady=(18, 6))
 
-        sub = tk.Label(root, text="Link → collect → analyze → content ideas → DB index", fg="#cbd5e1", bg="#0f172a", font=("Arial", 10))
+        sub = tk.Label(root, text="Link → collect → analyze → DB index → copy ChatGPT brief", fg="#cbd5e1", bg="#0f172a", font=("Arial", 10))
         sub.pack(pady=(0, 14))
 
         frame = tk.Frame(root, bg="#0f172a")
@@ -111,12 +148,13 @@ class App:
         self.entry = tk.Entry(frame, textvariable=self.url_var, font=("Arial", 12), bd=0, relief="flat")
         self.entry.pack(side="left", fill="x", expand=True, ipady=10, padx=(0, 8))
 
-        self.btn = tk.Button(frame, text="Analyze", command=self.start_analysis, bg="#86efac", fg="#052e16", font=("Arial", 11, "bold"), bd=0, padx=18, pady=10)
+        self.btn = tk.Button(frame, text="Analyze + Copy", command=self.start_analysis, bg="#86efac", fg="#052e16", font=("Arial", 11, "bold"), bd=0, padx=18, pady=10)
         self.btn.pack(side="left")
 
         action = tk.Frame(root, bg="#0f172a")
         action.pack(fill="x", padx=22, pady=14)
 
+        tk.Button(action, text="Copy Last Brief", command=self.copy_last_brief, bg="#facc15", fg="#111827", bd=0, padx=12, pady=8).pack(side="left", padx=(0, 8))
         tk.Button(action, text="Open Latest Ideas", command=self.open_latest_ideas, bg="#1e293b", fg="white", bd=0, padx=12, pady=8).pack(side="left", padx=(0, 8))
         tk.Button(action, text="Open Index", command=self.open_index, bg="#1e293b", fg="white", bd=0, padx=12, pady=8).pack(side="left", padx=(0, 8))
         tk.Button(action, text="Open Data Folder", command=lambda: open_folder(SCOUT_DATA), bg="#1e293b", fg="white", bd=0, padx=12, pady=8).pack(side="left")
@@ -135,6 +173,11 @@ class App:
 
     def set_status(self, msg: str) -> None:
         self.root.after(0, lambda: self.status_var.set(msg))
+
+    def set_clipboard(self, text: str) -> None:
+        self.root.clipboard_clear()
+        self.root.clipboard_append(text)
+        self.root.update()
 
     def start_analysis(self) -> None:
         url = self.url_var.get().strip()
@@ -170,10 +213,15 @@ class App:
             self.set_status("Appending DB index...")
             run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v04_db.py"), str(workdir)], self.log, timeout=600)
 
+            brief_path = make_chatgpt_brief(workdir)
+            brief_text = read_text(brief_path, limit=24000)
+            self.last_brief_path = brief_path
+            self.root.after(0, lambda: self.set_clipboard(brief_text))
+
             ideas = workdir / "content_ideas.md"
             index = SCOUT_DATA / "social_signal_index.md"
-            self.set_status("DONE")
-            self.log("DONE")
+            self.set_status("DONE — ChatGPT brief copied. Paste into ChatGPT with Ctrl+V.")
+            self.log("DONE — chatgpt_brief.txt copied to clipboard")
             if ideas.exists():
                 open_file(ideas)
             if index.exists():
@@ -184,6 +232,17 @@ class App:
             messagebox.showerror("CHEONOK Social Signal Scout", str(e))
         finally:
             self.root.after(0, lambda: self.btn.config(state="normal"))
+
+    def copy_last_brief(self) -> None:
+        if not self.last_brief_path or not self.last_brief_path.exists():
+            files = list(SCOUT_DATA.rglob("chatgpt_brief.txt"))
+            if not files:
+                messagebox.showinfo("No file", "No chatgpt_brief.txt yet.")
+                return
+            self.last_brief_path = max(files, key=lambda p: p.stat().st_mtime)
+        text = read_text(self.last_brief_path, limit=24000)
+        self.set_clipboard(text)
+        self.set_status("Last ChatGPT brief copied. Paste into ChatGPT with Ctrl+V.")
 
     def open_latest_ideas(self) -> None:
         files = list(SCOUT_DATA.rglob("content_ideas.md"))
