@@ -6,7 +6,7 @@ Zero-friction mode.
 
 How it works:
 1. Run this app once.
-2. Copy any TikTok / YouTube / Shorts / Reels URL.
+2. Copy any TikTok / YouTube / Shorts / Reels / Threads URL.
 3. The app detects the URL from clipboard automatically.
 4. It runs collect -> analyze -> DB append.
 5. It copies ChatGPT-ready brief back to clipboard.
@@ -36,6 +36,7 @@ SCRIPTS = {
     "social_signal_scout_v02.py": f"{RAW_BASE}/social_signal_scout_v02.py",
     "social_signal_scout_v03_analyze.py": f"{RAW_BASE}/social_signal_scout_v03_analyze.py",
     "social_signal_scout_v04_db.py": f"{RAW_BASE}/social_signal_scout_v04_db.py",
+    "social_signal_threads_v01.py": f"{RAW_BASE}/social_signal_threads_v01.py",
 }
 
 # Supported:
@@ -44,8 +45,9 @@ SCRIPTS = {
 # - YouTube Shorts: youtube.com/shorts/...
 # - YouTube short links: youtu.be/...
 # - Instagram Reels: instagram.com/reel/...
+# - Threads: threads.net, threads.com
 URL_RE = re.compile(
-    r"https?://[^\s\"']*(tiktok\.com|vt\.tiktok\.com|youtube\.com/watch|youtube\.com/shorts|m\.youtube\.com/watch|youtu\.be|instagram\.com/reel)[^\s\"']*",
+    r"https?://[^\s\"']*(tiktok\.com|vt\.tiktok\.com|youtube\.com/watch|youtube\.com/shorts|m\.youtube\.com/watch|youtu\.be|instagram\.com/reel|threads\.net|threads\.com)[^\s\"']*",
     re.I,
 )
 
@@ -107,7 +109,7 @@ URL:
 {url}
 
 REQUEST TO CHATGPT:
-아래 TikTok/YouTube/Shorts/Reels 분석 결과를 정본 기준으로 다시 판단해줘.
+아래 TikTok/YouTube/Shorts/Reels/Threads 분석 결과를 정본 기준으로 다시 판단해줘.
 특히 다음을 보고해줘:
 1. 핵심 신호
 2. 사람들이 반응한 원초적 욕망
@@ -132,6 +134,11 @@ def open_file(path: Path) -> None:
         os.startfile(str(path))
 
 
+def is_threads_url(url: str) -> bool:
+    low = url.lower()
+    return "threads.net" in low or "threads.com" in low
+
+
 class AutoWatchApp:
     def __init__(self, root: tk.Tk):
         self.root = root
@@ -139,7 +146,7 @@ class AutoWatchApp:
         root.geometry("860x600")
         root.configure(bg="#07111f")
         self.enabled = tk.BooleanVar(value=True)
-        self.status_var = tk.StringVar(value="AUTO ON — Copy a TikTok/YouTube/Shorts/Reels link. I will analyze it automatically.")
+        self.status_var = tk.StringVar(value="AUTO ON — Copy a TikTok/YouTube/Threads link. I will analyze it automatically.")
         self.processing = False
         self.processed_urls: set[str] = set()
         self.last_brief_path: Path | None = None
@@ -214,7 +221,11 @@ class AutoWatchApp:
             self.set_status("Processing detected link...")
             download_scripts(self.async_log)
             run_cmd([sys.executable, "-m", "pip", "install", "--upgrade", "yt-dlp"], self.async_log, timeout=600)
-            run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v02.py"), url], self.async_log, timeout=1800)
+
+            if is_threads_url(url):
+                run_cmd([sys.executable, str(TOOLS / "social_signal_threads_v01.py"), url], self.async_log, timeout=300)
+            else:
+                run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v02.py"), url], self.async_log, timeout=1800)
 
             rep = latest_report()
             if not rep:
@@ -222,7 +233,10 @@ class AutoWatchApp:
             workdir = rep.parent
             self.async_log(f"WORKDIR: {workdir}")
 
-            run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v03_analyze.py"), str(workdir)], self.async_log, timeout=600)
+            # Threads reader already creates content_ideas.md, but normal pipeline needs v03.
+            if not is_threads_url(url):
+                run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v03_analyze.py"), str(workdir)], self.async_log, timeout=600)
+
             run_cmd([sys.executable, str(TOOLS / "social_signal_scout_v04_db.py"), str(workdir)], self.async_log, timeout=600)
 
             brief_path = make_chatgpt_brief(workdir)
