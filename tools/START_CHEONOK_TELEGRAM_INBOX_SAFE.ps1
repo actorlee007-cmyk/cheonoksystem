@@ -74,6 +74,6 @@ try {
 
 Write-Host "[5/5] Start inbox runner" -ForegroundColor Cyan
 Write-Host "Keep this window open. Send link/photo/text to your bot from phone." -ForegroundColor Yellow
-cd /d $Base
-python tools\cheonok_telegram_inbox.py
+Set-Location -LiteralPath $Base
+python "tools\cheonok_telegram_inbox.py"
 pause
