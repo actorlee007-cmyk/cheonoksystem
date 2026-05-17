@@ -1,0 +1,8 @@
+{
+  "version": "CHEONOK_MASTER_GATE_MARKER_001",
+  "final_goal": "1000B_SYSTEM",
+  "monthly_metric": "MONTHLY_1B_KRW",
+  "legacy_report": "BLOCKED",
+  "routes": ["/gate.html", "/api/master_diag", "/api/cron_master", "/api/lead", "/api/os_status"],
+  "status": "READY_CHECK_REQUESTED"
+}
