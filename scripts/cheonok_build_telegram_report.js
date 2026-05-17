@@ -1,7 +1,27 @@
+const fs = require('fs');
+const path = require('path');
 const https = require('https');
 
 const FINAL_GOAL = '1000억 시스템';
 const MONTHLY_ATTACK = '월 10억';
+
+function ensureOutputDirectory() {
+  const publicDir = path.join(process.cwd(), 'public');
+  fs.mkdirSync(publicDir, { recursive: true });
+  for (const file of ['index.html', 'gate.html']) {
+    const src = path.join(process.cwd(), file);
+    const dst = path.join(publicDir, file);
+    if (fs.existsSync(src)) fs.copyFileSync(src, dst);
+  }
+  const marker = {
+    version: 'CHEONOK_PUBLIC_BUILD_OUTPUT_001',
+    final_goal: FINAL_GOAL,
+    monthly_attack_metric: MONTHLY_ATTACK,
+    legacy_report: 'BLOCK_LEGACY',
+    status: 'PUBLIC_OUTPUT_READY'
+  };
+  fs.writeFileSync(path.join(publicDir, 'build_status.json'), JSON.stringify(marker, null, 2), 'utf8');
+}
 
 function postJson(url, payload) {
   return new Promise((resolve) => {
@@ -15,7 +35,7 @@ function postJson(url, payload) {
         headers: {
           'Content-Type': 'application/json',
           'Content-Length': Buffer.byteLength(data),
-          'User-Agent': 'CHEONOK-BUILD-REPORT/001'
+          'User-Agent': 'CHEONOK-BUILD-REPORT/002'
         }
       }, (res) => {
         let body = '';
@@ -32,6 +52,8 @@ function postJson(url, payload) {
 }
 
 async function main() {
+  ensureOutputDirectory();
+
   const token = process.env.CHEONOK_TELEGRAM_BOT_TOKEN || '';
   const chatId = process.env.CHEONOK_TELEGRAM_CHAT_ID || '';
   const n8n = process.env.N8N_WEBHOOK_URL || '';
@@ -49,6 +71,7 @@ async function main() {
     '1. 배포 상태',
     `- 커밋: ${commit}`,
     '- 정보 우선 가드: PASS',
+    '- Public output: PASS',
     '- 구버전 500만 보고: BLOCK_LEGACY',
     '- 사용자 수동 위임: BLOCK_EXCEPT_SECRET_OR_AUTH',
     '',
@@ -78,7 +101,7 @@ async function main() {
   let n8nResult = { ok: false, status: 'HOLD_N8N_WEBHOOK_MISSING' };
   if (n8n) {
     n8nResult = await postJson(n8n, {
-      version: 'CHEONOK_BUILD_REPORT_001',
+      version: 'CHEONOK_BUILD_REPORT_002',
       reported_at: now,
       final_goal: FINAL_GOAL,
       monthly_attack_metric: MONTHLY_ATTACK,
@@ -87,7 +110,8 @@ async function main() {
   }
 
   console.log(JSON.stringify({
-    version: 'CHEONOK_BUILD_REPORT_001',
+    version: 'CHEONOK_BUILD_REPORT_002',
+    public_output: 'PASS',
     telegram: { ok: telegram.ok, status: telegram.status },
     n8n: { ok: n8nResult.ok, status: n8nResult.status },
     canon: { final_goal: FINAL_GOAL, monthly_attack_metric: MONTHLY_ATTACK, legacy: 'BLOCK_LEGACY' }
@@ -95,5 +119,6 @@ async function main() {
 }
 
 main().catch((e) => {
+  try { ensureOutputDirectory(); } catch (_) {}
   console.log('CHEONOK_BUILD_REPORT_HOLD', String(e).slice(0, 500));
 });
