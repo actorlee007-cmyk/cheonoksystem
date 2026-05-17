@@ -3,11 +3,16 @@ import json
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
 KST = timezone(timedelta(hours=9))
 FINAL_GOAL_KRW = 100_000_000_000
 MONTHLY_ATTACK_KRW = 1_000_000_000
 DEFAULT_BASE_URL = "https://cheonoksystem.com"
+ROOT = Path(__file__).resolve().parents[1]
+CANON_PATH = ROOT / "canon" / "CHEONOK_INFORMATION_FIRST_CONSTITUTION.json"
+REPORT_DIR = ROOT / "_reports"
+REPORT_DIR.mkdir(exist_ok=True)
 
 PRODUCTS = [
     {"name": "무료진단", "price": 0, "role": "lead"},
@@ -21,6 +26,57 @@ PRODUCTS = [
 ]
 
 COUNTRIES = ["AU", "US", "CA", "NZ", "CH", "DE", "NO", "GB", "NL", "JP"]
+
+BLOCKED_REPORT_PATTERNS = [
+    "월 500만 원 부족분",
+    "일 목표 부족분",
+    "무료진단 제안: 0",
+    "CEO 보고서 판매: 0",
+    "명령어를 계속 입력하세요",
+    "직접 확인해주세요",
+    "파일을 열어보세요",
+    "대표님이 판단하세요"
+]
+
+
+def load_canon():
+    if CANON_PATH.exists():
+        try:
+            return json.loads(CANON_PATH.read_text(encoding="utf-8"))
+        except Exception as e:
+            return {"version": "CANON_READ_FAILED", "error": str(e)}
+    return {"version": "CANON_MISSING"}
+
+
+def information_first_gate(task_name="MASTER_ORCHESTRATOR"):
+    canon = load_canon()
+    return {
+        "version": "INFO_FIRST_GATE_INLINE_001",
+        "task": task_name,
+        "canon_version": canon.get("version"),
+        "operator_rule": "USER_SECRET_OR_APPROVAL_ONLY",
+        "manual_delegation": "BLOCK_EXCEPT_SECRET_OR_AUTH",
+        "decision_order": canon.get("decision_order", [
+            "READ_EXISTING_INFO_AND_LOGS",
+            "PASS_HOLD_BLOCK",
+            "SYSTEM_EXECUTE_AVAILABLE_ACTIONS",
+            "ASK_ONLY_SECRET_OR_APPROVAL_IF_ABSOLUTELY_NEEDED"
+        ]),
+        "final_goal": canon.get("final_goal", "1000억 시스템"),
+        "monthly_attack_metric": canon.get("monthly_attack_metric", "월 10억")
+    }
+
+
+def validate_report(report):
+    violations = [p for p in BLOCKED_REPORT_PATTERNS if p in report]
+    required = ["1000억 시스템", "월 10억", "BLOCK_LEGACY", "자율 학습 및 PAPER 데이터 축적 상태"]
+    missing = [r for r in required if r not in report]
+    return {
+        "ok": not violations and not missing,
+        "violations": violations,
+        "missing": missing,
+        "status": "PASS_REPORT_CANON" if not violations and not missing else "BLOCK_REPORT_CANON_VIOLATION"
+    }
 
 
 def won(n):
@@ -37,7 +93,7 @@ def env_int(name, default=0):
 def http_json(url, method="GET", payload=None, timeout=30):
     try:
         data = None
-        headers = {"User-Agent": "CHEONOK-MASTER-ORCHESTRATOR/001"}
+        headers = {"User-Agent": "CHEONOK-MASTER-ORCHESTRATOR/INFO-FIRST"}
         if payload is not None:
             data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
             headers["Content-Type"] = "application/json"
@@ -89,17 +145,18 @@ def post_n8n(payload):
 
 def build_lead_probe():
     return {
-        "source": "master_orchestrator_smoke_test",
+        "source": "master_orchestrator_info_first_probe",
         "type": "system_probe",
         "product": "CHEONOK Supreme Master OS",
         "price": 0,
         "country": "KR",
-        "question": "MASTER_ORCHESTRATOR_SMOKE_TEST: 1000억 시스템 / 월 10억 중간 지표 / legacy blocked / API lead bridge check"
+        "question": "INFO_FIRST_GATE_TEST: 1000억 시스템 / 월 10억 / legacy blocked / API lead bridge check"
     }
 
 
 def run():
     now = datetime.now(KST)
+    gate = information_first_gate()
     base_url = os.environ.get("CHEONOK_BASE_URL", DEFAULT_BASE_URL).rstrip("/")
 
     revenue = env_int("CHEONOK_MANUAL_REVENUE")
@@ -116,9 +173,10 @@ def run():
         "lead_api": http_json(f"{base_url}/api/lead", "POST", build_lead_probe())
     }
 
-    n8n_result = post_n8n({
-        "version": "CHEONOK_MASTER_ORCHESTRATOR_001",
+    n8n_payload = {
+        "version": "CHEONOK_MASTER_ORCHESTRATOR_INFO_FIRST_002",
         "reported_at": now.isoformat(),
+        "information_first_gate": gate,
         "final_goal_krw": FINAL_GOAL_KRW,
         "monthly_attack_krw": MONTHLY_ATTACK_KRW,
         "metrics": {
@@ -133,7 +191,8 @@ def run():
         "probes": probes,
         "products": PRODUCTS,
         "countries": COUNTRIES
-    })
+    }
+    n8n_result = post_n8n(n8n_payload)
 
     monthly_gap = max(MONTHLY_ATTACK_KRW - revenue, 0)
     final_gap = max(FINAL_GOAL_KRW - revenue, 0)
@@ -144,9 +203,15 @@ def run():
     report = f"""📊 CHEONOK SUPREME MASTER OS 보고
 
 보고시각: {now.strftime('%Y-%m-%d %H:%M:%S')} KST
-운영방식: MASTER ORCHESTRATOR / 분산 단계 통합
+운영방식: INFORMATION-FIRST MASTER ORCHESTRATOR
 최종목표: 1000억 시스템
 중간 공격 지표: 월 10억
+
+0. 정보 우선 가드
+- 정본 버전: {gate.get('canon_version')}
+- 사용자 수동 위임: BLOCK_EXCEPT_SECRET_OR_AUTH
+- 사용자 역할: CEO / 승인 / 보안값 제공 한정
+- 시스템 역할: 조회 / 실행 / 검증 / 복구 / 보고
 
 1. 시스템 상태
 - 홈 배포: {passhold(probes['home'].get('ok'))} / HTTP {probes['home'].get('status')}
@@ -170,12 +235,12 @@ def run():
 - 구버전 500만 보고: BLOCK_LEGACY
 - 무단 자동결제/스팸: BLOCK
 
-4. 실행 큐
-A. 저마찰 리드 10건 또는 결제요청 1건
-B. 300만 원 AI 매출 시스템 진단 제안 1건
-C. TikTok/Shorts/Reels 돈 번 사례 1개 역추적
-D. 고단가 10개국 소재 생성
-E. 결제 링크/수동 결제 브릿지 연결
+4. 시스템 실행 큐
+A. 시스템이 기존 정보/정본/로그를 먼저 조회한다.
+B. 시스템이 가능한 조치는 직접 실행한다.
+C. 사용자 요청은 보안값/계정 승인/최종 승인으로 제한한다.
+D. JoCoding/TikTok/Shorts 도구를 상품·결제·보고 루프로 변환한다.
+E. 고단가 10개국 소재와 고액 B2B 제안을 생성한다.
 
 5. 정본
 쪼개진 단계는 내부 구현 단위일 뿐이다. 외부 운영 기준은 SUPREME MASTER OS 단일 원소스다.
@@ -183,13 +248,25 @@ E. 결제 링크/수동 결제 브릿지 연결
 현재 시스템 상태:
 자율 학습 및 PAPER 데이터 축적 상태."""
 
-    sent = send_telegram(report)
-    print(json.dumps({
-        "version": "CHEONOK_MASTER_ORCHESTRATOR_001",
-        "telegram_sent": sent,
+    report_validation = validate_report(report)
+    result = {
+        "version": "CHEONOK_MASTER_ORCHESTRATOR_INFO_FIRST_002",
+        "telegram_sent": False,
         "n8n_result": n8n_result,
-        "probes": probes
-    }, ensure_ascii=False, indent=2))
+        "probes": probes,
+        "information_first_gate": gate,
+        "report_validation": report_validation
+    }
+
+    if report_validation["ok"]:
+        result["telegram_sent"] = send_telegram(report)
+    else:
+        print("BLOCK_REPORT_CANON_VIOLATION")
+        print(json.dumps(report_validation, ensure_ascii=False, indent=2))
+
+    (REPORT_DIR / "latest_master_orchestrator_info_first.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    (REPORT_DIR / "latest_master_orchestrator_info_first.txt").write_text(report, encoding="utf-8")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
 
 if __name__ == "__main__":
     run()
