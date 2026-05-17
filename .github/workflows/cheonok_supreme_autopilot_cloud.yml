@@ -8,24 +8,44 @@ on:
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cheonok-supreme-master-os-loop
+  cancel-in-progress: false
+
 jobs:
   master-os:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Run Information-First Guard
+        run: python cloud_runtime/cheonok_information_first_guard.py "SUPREME MASTER OS scheduled Telegram report loop"
+
       - name: Run Master Orchestrator
         env:
-          CHEONOK_BASE_URL: ${{ vars.CHEONOK_BASE_URL }}
+          CHEONOK_BASE_URL: ${{ vars.CHEONOK_BASE_URL || 'https://cheonoksystem.com' }}
           CHEONOK_TELEGRAM_BOT_TOKEN: ${{ secrets.CHEONOK_TELEGRAM_BOT_TOKEN }}
           CHEONOK_TELEGRAM_CHAT_ID: ${{ secrets.CHEONOK_TELEGRAM_CHAT_ID }}
           N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
-          CHEONOK_MANUAL_REVENUE: ${{ vars.CHEONOK_MANUAL_REVENUE }}
-          CHEONOK_MANUAL_LEADS: ${{ vars.CHEONOK_MANUAL_LEADS }}
-          CHEONOK_MANUAL_CHECKOUT: ${{ vars.CHEONOK_MANUAL_CHECKOUT }}
-          CHEONOK_MANUAL_HIGH_TICKET: ${{ vars.CHEONOK_MANUAL_HIGH_TICKET }}
-          CHEONOK_REVERSE_CASES: ${{ vars.CHEONOK_REVERSE_CASES }}
-          CHEONOK_GLOBAL_TESTS: ${{ vars.CHEONOK_GLOBAL_TESTS }}
-          CHEONOK_CONTENT_PUBLISHED: ${{ vars.CHEONOK_CONTENT_PUBLISHED }}
+          CHEONOK_MANUAL_REVENUE: ${{ vars.CHEONOK_MANUAL_REVENUE || '0' }}
+          CHEONOK_MANUAL_LEADS: ${{ vars.CHEONOK_MANUAL_LEADS || '0' }}
+          CHEONOK_MANUAL_CHECKOUT: ${{ vars.CHEONOK_MANUAL_CHECKOUT || '0' }}
+          CHEONOK_MANUAL_HIGH_TICKET: ${{ vars.CHEONOK_MANUAL_HIGH_TICKET || '0' }}
+          CHEONOK_REVERSE_CASES: ${{ vars.CHEONOK_REVERSE_CASES || '0' }}
+          CHEONOK_GLOBAL_TESTS: ${{ vars.CHEONOK_GLOBAL_TESTS || '0' }}
+          CHEONOK_CONTENT_PUBLISHED: ${{ vars.CHEONOK_CONTENT_PUBLISHED || '0' }}
         run: python cloud_runtime/cheonok_master_orchestrator.py
+
+      - name: Upload Master Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cheonok-master-os-report
+          path: _reports/
+          if-no-files-found: warn
