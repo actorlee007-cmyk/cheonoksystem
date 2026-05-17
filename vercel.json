@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/api/cron_master",
+      "schedule": "*/15 * * * *"
+    }
+  ],
   "redirects": [
     {
       "source": "/pay",
