@@ -1,0 +1,28 @@
+name: CHEONOK Supreme Autopilot Cloud Loop
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  autopilot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run CHEONOK Supreme Autopilot cloud report
+        env:
+          CHEONOK_TELEGRAM_BOT_TOKEN: ${{ secrets.CHEONOK_TELEGRAM_BOT_TOKEN }}
+          CHEONOK_TELEGRAM_CHAT_ID: ${{ secrets.CHEONOK_TELEGRAM_CHAT_ID }}
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+          CHEONOK_MANUAL_REVENUE: ${{ vars.CHEONOK_MANUAL_REVENUE }}
+          CHEONOK_MANUAL_LEADS: ${{ vars.CHEONOK_MANUAL_LEADS }}
+          CHEONOK_MANUAL_CHECKOUT: ${{ vars.CHEONOK_MANUAL_CHECKOUT }}
+          CHEONOK_MANUAL_HIGH_TICKET: ${{ vars.CHEONOK_MANUAL_HIGH_TICKET }}
+          CHEONOK_REVERSE_CASES: ${{ vars.CHEONOK_REVERSE_CASES }}
+          CHEONOK_GLOBAL_TESTS: ${{ vars.CHEONOK_GLOBAL_TESTS }}
+          CHEONOK_CONTENT_PUBLISHED: ${{ vars.CHEONOK_CONTENT_PUBLISHED }}
+        run: |
+          python cloud_runtime/cheonok_supreme_autopilot_cloud.py
