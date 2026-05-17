@@ -1,4 +1,4 @@
-name: CHEONOK Supreme Autopilot Cloud Loop
+name: CHEONOK Supreme Master OS Loop
 
 on:
   schedule:
@@ -6,14 +6,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  autopilot:
+  master-os:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run CHEONOK Supreme Autopilot cloud report
+      - name: Run CHEONOK Supreme Master Orchestrator
         env:
+          CHEONOK_BASE_URL: ${{ vars.CHEONOK_BASE_URL }}
           CHEONOK_TELEGRAM_BOT_TOKEN: ${{ secrets.CHEONOK_TELEGRAM_BOT_TOKEN }}
           CHEONOK_TELEGRAM_CHAT_ID: ${{ secrets.CHEONOK_TELEGRAM_CHAT_ID }}
           N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
@@ -25,4 +26,4 @@ jobs:
           CHEONOK_GLOBAL_TESTS: ${{ vars.CHEONOK_GLOBAL_TESTS }}
           CHEONOK_CONTENT_PUBLISHED: ${{ vars.CHEONOK_CONTENT_PUBLISHED }}
         run: |
-          python cloud_runtime/cheonok_supreme_autopilot_cloud.py
+          python cloud_runtime/cheonok_master_orchestrator.py
