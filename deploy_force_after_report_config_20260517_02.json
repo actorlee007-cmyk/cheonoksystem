@@ -1,0 +1,8 @@
+{
+  "version": "CHEONOK_FORCE_REDEPLOY_AFTER_REPORT_CONFIG_002",
+  "reason": "Trigger Vercel redeploy after report delivery config update",
+  "final_goal": "1000억 시스템",
+  "monthly_attack_metric": "월 10억",
+  "legacy_report": "BLOCK_LEGACY",
+  "status": "REDEPLOY_TRIGGERED_BY_GIT_COMMIT"
+}
