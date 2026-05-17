@@ -1,0 +1,8 @@
+{
+  "name": "cheonoksystem",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/cheonok_build_telegram_report.js"
+  }
+}
