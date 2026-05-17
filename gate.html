@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CHEONOK Master Gate Console</title>
+<style>
+:root{--bg:#0b1020;--card:#121a2f;--ink:#f8fafc;--muted:#94a3b8;--line:#24304c;--gold:#d4af37;--green:#22c55e;--red:#ef4444;--blue:#38bdf8}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top left,rgba(212,175,55,.18),transparent 35%),var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:1100px;margin:0 auto;padding:34px 18px 80px}.hero{border:1px solid var(--line);background:rgba(18,26,47,.88);border-radius:28px;padding:30px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.badge{display:inline-flex;border:1px solid rgba(212,175,55,.35);color:var(--gold);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;margin-bottom:16px}h1{font-size:clamp(34px,5vw,64px);line-height:1.05;margin:0 0 14px}p{color:var(--muted);line-height:1.7}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}.card{border:1px solid var(--line);background:rgba(18,26,47,.82);border-radius:22px;padding:20px}.card h3{margin:0 0 8px}.k{font-size:12px;color:var(--muted);font-weight:800}.v{font-size:26px;font-weight:950;margin-top:6px}.pass{color:var(--green)}.hold{color:var(--red)}.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:14px;padding:13px 16px;font-weight:900;cursor:pointer;background:var(--gold);color:#111}.btn.blue{background:var(--blue)}.btn.dark{background:#24304c;color:var(--ink)}pre{white-space:pre-wrap;background:#050816;border:1px solid var(--line);border-radius:20px;padding:18px;line-height:1.55;max-height:520px;overflow:auto}.small{font-size:13px}@media(max-width:850px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <div class="badge">CHEONOK SUPREME MASTER GATE</div>
+    <h1>마스터 OS 운영 게이트 콘솔</h1>
+    <p>최종목표는 1000억 시스템, 월 10억은 중간 공격 지표입니다. 이 화면은 텔레그램·n8n·리드 API·Cron 상태를 한 번에 점검합니다.</p>
+    <div class="btns">
+      <button class="btn" onclick="diag(false)">환경변수 점검</button>
+      <button class="btn blue" onclick="diag(true)">Telegram/n8n 발송 테스트</button>
+      <button class="btn dark" onclick="cron()">Cron Master 수동 실행</button>
+      <a class="btn dark" href="/" style="text-decoration:none">홈으로</a>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card"><div class="k">Final Goal</div><div class="v">1000억</div></div>
+    <div class="card"><div class="k">Monthly Attack</div><div class="v">월 10억</div></div>
+    <div class="card"><div class="k">Legacy Report</div><div class="v pass">BLOCK</div></div>
+    <div class="card"><div class="k">Telegram Secret</div><div class="v" id="tg">WAIT</div></div>
+    <div class="card"><div class="k">n8n Webhook</div><div class="v" id="n8n">WAIT</div></div>
+    <div class="card"><div class="k">Gate Status</div><div class="v" id="gate">READY</div></div>
+  </section>
+
+  <section class="card" style="margin-top:16px">
+    <h3>결과 로그</h3>
+    <p class="small">401이면 Vercel Protection 해제 대상입니다. HOLD_TELEGRAM_SECRETS_MISSING이면 Vercel 환경변수 누락입니다.</p>
+    <pre id="out">대기 중...</pre>
+  </section>
+</main>
+<script>
+function show(obj){
+  document.getElementById('out').textContent=JSON.stringify(obj,null,2);
+  const env=obj?.payload?.env_presence||{};
+  if('CHEONOK_TELEGRAM_BOT_TOKEN' in env) document.getElementById('tg').textContent=env.CHEONOK_TELEGRAM_BOT_TOKEN&&env.CHEONOK_TELEGRAM_CHAT_ID?'PASS':'HOLD';
+  if('N8N_WEBHOOK_URL' in env) document.getElementById('n8n').textContent=env.N8N_WEBHOOK_URL?'PASS':'HOLD';
+  document.getElementById('tg').className='v '+(document.getElementById('tg').textContent==='PASS'?'pass':'hold');
+  document.getElementById('n8n').className='v '+(document.getElementById('n8n').textContent==='PASS'?'pass':'hold');
+}
+async function diag(send){
+  gate.textContent='TESTING';
+  try{const r=await fetch('/api/master_diag'+(send?'?send=1':'')); const j=await r.json(); show(j); gate.textContent=r.ok?'PASS':'HOLD';}
+  catch(e){show({ok:false,status:'HOLD_FETCH_FAILED',error:String(e)}); gate.textContent='HOLD';}
+}
+async function cron(){
+  gate.textContent='CRON';
+  try{const r=await fetch('/api/cron_master'); const j=await r.json(); show(j); gate.textContent=r.ok?'PASS':'HOLD';}
+  catch(e){show({ok:false,status:'HOLD_CRON_FAILED',error:String(e)}); gate.textContent='HOLD';}
+}
+diag(false);
+</script>
+</body>
+</html>
