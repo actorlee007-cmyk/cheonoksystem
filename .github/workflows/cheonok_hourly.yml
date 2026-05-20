@@ -1,0 +1,25 @@
+name: CHEONOK Hourly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node scripts/cheonok_hourly_report.js
+      - run: |
+          git config user.name cheonok-bot
+          git config user.email cheonok-bot@example.com
+          git add reports/hourly || true
+          git commit -m "hourly report" || true
+          git push || true
