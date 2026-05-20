@@ -1,6 +1,12 @@
 name: CHEONOK Hourly
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/cheonok_hourly_report.js'
+      - '.github/workflows/cheonok_hourly.yml'
+      - 'CHEONOK_FORCE_RUN.md'
   workflow_dispatch:
   schedule:
     - cron: '0 * * * *'
@@ -16,10 +22,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: node scripts/cheonok_hourly_report.js
-      - run: |
+      - name: Run CHEONOK hourly report
+        run: node scripts/cheonok_hourly_report.js
+      - name: Commit generated report
+        run: |
           git config user.name cheonok-bot
           git config user.email cheonok-bot@example.com
           git add reports/hourly || true
-          git commit -m "hourly report" || true
-          git push || true
+          git commit -m "hourly report" || echo "No report changes"
+          git push || echo "Push skipped"
