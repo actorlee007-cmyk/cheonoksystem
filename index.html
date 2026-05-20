@@ -1,127 +1,61 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CHEONOK SYSTEM — AI 매출 시스템 진단</title>
-  <meta name="description" content="사업·채널·아이디어 링크 하나로 매출 병목, 돈 되는 구조, 오늘 할 행동을 진단합니다." />
-  <style>
-    :root{--bg:#f7f1e8;--paper:#fffdf8;--ink:#111827;--muted:#667085;--line:#e5d7c2;--gold:#c28b1b;--gold2:#f0c760;--green:#12a66a;--blue:#1d4ed8;--red:#b91c1c;--shadow:0 24px 70px rgba(24,27,36,.12);--r:26px}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at top left,rgba(240,199,96,.22),transparent 34%),radial-gradient(circle at top right,rgba(18,166,106,.12),transparent 34%),var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;letter-spacing:-.03em}a{text-decoration:none;color:inherit}button,input,textarea,select{font:inherit}.wrap{max-width:1160px;margin:0 auto;padding:24px 18px 90px}.nav{position:sticky;top:0;z-index:50;background:rgba(247,241,232,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.navin{max-width:1160px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:950;letter-spacing:.08em}.links{display:flex;gap:8px;flex-wrap:wrap}.links a{font-size:12px;font-weight:900;padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.7)}.links a.primary{background:#111827;color:white;border-color:#111827}.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:stretch;margin-top:24px}.panel,.section,.card{background:rgba(255,253,248,.9);border:1px solid var(--line);box-shadow:var(--shadow)}.panel{border-radius:34px;padding:38px}.dark{background:linear-gradient(135deg,#101827,#1f314b);color:white}.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:950;background:rgba(240,199,96,.16);color:#f7d47b;border:1px solid rgba(240,199,96,.32);margin-bottom:18px}.dot{width:7px;height:7px;background:#22c55e;border-radius:99px;animation:pulse 1.6s infinite}@keyframes pulse{50%{opacity:.35}}h1{font-size:clamp(38px,5vw,66px);line-height:1.04;margin:0 0 18px;letter-spacing:-.07em}.gold{background:linear-gradient(135deg,var(--gold),var(--gold2),#fff2bd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.hero p,.section>p{line-height:1.75;color:var(--muted);font-size:16px}.dark p{color:rgba(255,255,255,.78)}.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:15px;background:#111827;color:white;padding:14px 18px;font-weight:950;cursor:pointer}.btn.goldbtn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111}.btn.green{background:var(--green);color:white}.btn.out{background:transparent;border:1px solid rgba(255,255,255,.28);color:white}.section{margin-top:22px;border-radius:var(--r);padding:28px}.section h2{font-size:30px;margin:0 0 8px;letter-spacing:-.045em}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{border-radius:22px;padding:20px}.tag{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:950;background:#111827;color:white;margin-bottom:12px}.tag.green{background:var(--green)}.tag.gold{background:var(--gold)}.tag.blue{background:var(--blue)}.tag.red{background:var(--red)}.card h3{margin:0 0 8px;font-size:20px}.card p,.card li{color:var(--muted);line-height:1.62}.price{font-size:28px;font-weight:950;margin:8px 0}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.input,.select,textarea{width:100%;border:1px solid var(--line);background:white;border-radius:15px;padding:13px 14px;outline:none}textarea{min-height:130px;resize:vertical}.output{white-space:pre-wrap;background:#101827;color:#e5e7eb;border-radius:18px;padding:16px;line-height:1.62;min-height:190px}.cta-bar{background:#f0fdf4;border:1px solid #86efac;border-radius:18px;padding:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0}.cta-bar b{background:#16a34a;color:white;border-radius:999px;padding:6px 11px;font-size:11px}.bank{background:#f8f4ff;border:1px solid #c4b5fd;border-radius:16px;padding:16px;color:#4c1d95;margin-top:14px}.warn{font-size:12px;color:#94a3b8;border-top:1px solid var(--line);margin-top:16px;padding-top:14px}.fixed{position:fixed;right:18px;bottom:18px;z-index:90;background:#111827;color:white;border:1px solid rgba(240,199,96,.35);box-shadow:0 24px 70px rgba(0,0,0,.28);border-radius:22px;padding:15px;max-width:310px}.fixed b{color:#f7d47b}.fixed p{font-size:13px;color:rgba(255,255,255,.75);line-height:1.5}.footer{text-align:center;color:var(--muted);font-size:13px;padding:44px 18px}@media(max-width:920px){.hero,.grid,.grid4,.formgrid{grid-template-columns:1fr}.links{display:none}.panel{padding:25px}.fixed{left:14px;right:14px;max-width:none}h1{font-size:40px}}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CHEONOK SYSTEM — AI Business Clarity & Revenue Diagnosis</title>
+<meta name="description" content="Send one business, channel, or idea link. CHEONOK finds the bottleneck, trust gap, offer path, and next action." />
+<style>
+:root{--bg:#f7f1e8;--paper:#fffdf8;--ink:#111827;--muted:#667085;--soft:#f2eadc;--line:#e5d7c2;--gold:#c28b1b;--gold2:#f1c75c;--green:#12a66a;--blue:#2454d8;--red:#b91c1c;--shadow:0 24px 70px rgba(24,27,36,.12);--r:28px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 8% 0%,rgba(241,199,92,.24),transparent 34%),radial-gradient(circle at 86% 6%,rgba(18,166,106,.11),transparent 35%),var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Noto Sans KR',sans-serif;letter-spacing:-.03em}a{text-decoration:none;color:inherit}button,input,textarea,select{font:inherit}.nav{position:sticky;top:0;z-index:50;background:rgba(247,241,232,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.navin{max-width:1180px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:950;letter-spacing:.08em}.links{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.links a,.lang button{font-size:12px;font-weight:900;padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.72)}.links a.primary{background:#111827;color:white;border-color:#111827}.lang{display:flex;gap:4px}.lang button{cursor:pointer}.wrap{max-width:1180px;margin:0 auto;padding:24px 18px 96px}.hero{display:grid;grid-template-columns:1.08fr .92fr;gap:18px;margin-top:22px;align-items:stretch}.panel,.section,.card{background:rgba(255,253,248,.92);border:1px solid var(--line);box-shadow:var(--shadow)}.panel{border-radius:36px;padding:38px}.dark{background:linear-gradient(135deg,#101827,#1b2b42);color:white}.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:950;background:rgba(241,199,92,.16);color:#f7d47b;border:1px solid rgba(241,199,92,.32);margin-bottom:18px}.lightbadge{color:#895d06;background:rgba(194,139,27,.12);border-color:rgba(194,139,27,.22)}.dot{width:7px;height:7px;background:#22c55e;border-radius:999px;animation:pulse 1.6s infinite}@keyframes pulse{50%{opacity:.35}}h1{font-size:clamp(38px,5.4vw,70px);line-height:1.02;margin:0 0 18px;letter-spacing:-.075em}.gold{background:linear-gradient(135deg,var(--gold),var(--gold2),#fff2bd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.hero p,.section>p{line-height:1.75;color:var(--muted);font-size:16px}.dark p{color:rgba(255,255,255,.78)}.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:16px;background:#111827;color:white;padding:14px 18px;font-weight:950;cursor:pointer}.btn.goldbtn{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111}.btn.green{background:var(--green);color:white}.btn.blue{background:var(--blue);color:white}.btn.out{background:transparent;border:1px solid rgba(255,255,255,.28);color:white}.section{margin-top:22px;border-radius:var(--r);padding:30px}.section h2{font-size:30px;margin:0 0 8px;letter-spacing:-.045em}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.card{border-radius:24px;padding:20px}.mini{background:rgba(255,255,255,.68);border:1px solid var(--line);border-radius:18px;padding:14px}.tag{display:inline-flex;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:950;background:#111827;color:white;margin-bottom:12px}.tag.green{background:var(--green)}.tag.gold{background:var(--gold)}.tag.blue{background:var(--blue)}.tag.red{background:var(--red)}.card h3{margin:0 0 8px;font-size:20px}.card p,.card li{color:var(--muted);line-height:1.62}.price{font-size:28px;font-weight:950;margin:8px 0}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.input,.select,textarea{width:100%;border:1px solid var(--line);background:white;border-radius:16px;padding:13px 14px;outline:none}textarea{min-height:130px;resize:vertical}.output{white-space:pre-wrap;background:#101827;color:#e5e7eb;border-radius:18px;padding:16px;line-height:1.62;min-height:190px}.story{display:grid;gap:10px}.story .bubble{border-radius:20px;padding:16px;background:#fff;border:1px solid var(--line)}.bubble b{display:block;margin-bottom:5px}.countrybar{display:flex;gap:7px;flex-wrap:wrap;margin-top:18px}.countrybar span{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:850}.iggrid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.phone{border-radius:30px;background:#111827;padding:14px;color:white;box-shadow:0 20px 70px rgba(0,0,0,.25)}.post{border-radius:22px;background:#fff;color:#111;padding:14px;margin-bottom:12px}.post .bar{height:9px;background:#e5e7eb;border-radius:999px;margin:9px 0}.bank{background:#f8f4ff;border:1px solid #c4b5fd;border-radius:16px;padding:16px;color:#4c1d95;margin-top:14px}.warn{font-size:12px;color:#94a3b8;border-top:1px solid var(--line);margin-top:16px;padding-top:14px}.fixed{position:fixed;right:18px;bottom:18px;z-index:90;background:#111827;color:white;border:1px solid rgba(241,199,92,.35);box-shadow:0 24px 70px rgba(0,0,0,.28);border-radius:22px;padding:15px;max-width:320px}.fixed b{color:#f7d47b}.fixed p{font-size:13px;color:rgba(255,255,255,.75);line-height:1.5}.footer{text-align:center;color:var(--muted);font-size:13px;padding:44px 18px}@media(max-width:920px){.hero,.grid,.grid4,.grid2,.formgrid,.iggrid{grid-template-columns:1fr}.links{display:none}.panel{padding:25px}.fixed{left:14px;right:14px;max-width:none}h1{font-size:42px}.section{padding:23px}}
+</style>
 </head>
 <body>
-  <header class="nav">
-    <div class="navin">
-      <a class="brand" href="#top">CHEONOK SYSTEM</a>
-      <nav class="links">
-        <a class="primary" href="/cta-5m.html">5M Sprint</a>
-        <a href="#diagnosis">무료진단</a>
-        <a href="#pay">결제</a>
-        <a href="#b2b">B2B</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="wrap" id="top">
-    <section class="hero">
-      <div class="panel dark">
-        <div class="badge"><i class="dot"></i>MONTHLY 5M REVENUE FIRST</div>
-        <h1>링크 하나를<br><span class="gold">매출 구조</span>로 진단합니다.</h1>
-        <p>사업·채널·아이디어 링크 하나만 보내세요. CHEONOK이 막힌 지점, 결제까지의 구조, 오늘 할 행동을 정리합니다.</p>
-        <div class="btns">
-          <a class="btn goldbtn" href="https://docs.google.com/forms/d/e/1FAIpQLSfcZ27sYNP-TOFhtzQmCe2dd4d453Es1ih_7c42xDHlWWP-Qw/viewform" target="_blank" rel="noopener">무료진단 신청</a>
-          <a class="btn green" href="https://www.paypal.com/ncp/payment/KJPM4FJBJXPE6" target="_blank" rel="noopener">$69 CEO 실행진단</a>
-          <a class="btn out" href="/cta-5m.html">5M Sprint 보기</a>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="badge" style="color:#8b5b05;background:rgba(184,132,22,.13)">BILLIONAIRE CAPITAL GATE</div>
-        <h2 style="margin:0 0 10px;font-size:30px">이번 달 목표</h2>
-        <p style="color:var(--muted);line-height:1.7">저가 상품은 입구입니다. 본체는 고가 진단·B2B·구독·데이터 자산입니다.</p>
-        <ul style="line-height:1.9;color:#475467;font-weight:700">
-          <li>300만 원 B2B 진단 x 2</li>
-          <li>100만 원 실행설계 x 5</li>
-          <li>30만 원 진단 x 17</li>
-          <li>$69 / $299는 입구·업셀 경로</li>
-        </ul>
-      </div>
-    </section>
-
-    <section class="section" id="diagnosis">
-      <h2>1. 무료진단</h2>
-      <p>링크 하나 또는 고민 한 줄이면 됩니다. 48시간 내 1차 회신.</p>
-      <div class="formgrid">
-        <div class="card">
-          <span class="tag green">INPUT</span>
-          <h3>문제·링크·아이디어 입력</h3>
-          <textarea id="need" placeholder="예: 홈페이지 문의가 없음 / 유튜브 채널은 있는데 매출 연결이 안 됨 / 상품 설명이 어렵다"></textarea>
-          <div class="formgrid" style="margin-top:10px">
-            <input class="input" id="contact" placeholder="연락처 또는 이메일">
-            <select class="select" id="country"><option>KR</option><option>US</option><option>AU</option><option>CA</option><option>GB</option><option>DE</option><option>JP</option></select>
-          </div>
-          <button class="btn green" style="width:100%;margin-top:10px" onclick="submitLead('free_diagnosis','무료진단',0)">무료진단 접수</button>
-        </div>
-        <div class="card">
-          <span class="tag blue">PREVIEW</span>
-          <h3>진단 결과</h3>
-          <div class="output" id="preview">입력 후 무료진단을 누르면 핵심 병목, 돈 되는 구조, 다음 행동 3개가 나옵니다.</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="pay">
-      <h2>2. 결제</h2>
-      <p>무료진단 이후 더 깊은 분석이 필요하면 바로 결제하세요.</p>
-      <div class="cta-bar"><b>무료</b><span>사업·채널·아이디어 무료진단 — 48시간 내 회신</span><a class="btn green" href="https://docs.google.com/forms/d/e/1FAIpQLSfcZ27sYNP-TOFhtzQmCe2dd4d453Es1ih_7c42xDHlWWP-Qw/viewform" target="_blank" rel="noopener">무료 신청</a></div>
-      <div class="grid4" id="productGrid"></div>
-      <div class="bank"><b>원화 계좌이체</b><br>카카오뱅크 3333-15-4116074 이현진<br><span style="font-size:13px">입금 후 무료진단 폼에 입금자명 + 상품명을 남겨주세요.</span></div>
-      <p class="warn">보장형 매출 약속, 투자·법률·의료 자문은 제공하지 않습니다. 이 페이지는 사업 구조 진단과 실행 우선순위 정리를 위한 안내입니다.</p>
-    </section>
-
-    <section class="section" id="b2b">
-      <h2>3. 고액 B2B</h2>
-      <p>월 500만 원 이상 목표는 B2B/고가 진단 중심으로 접근합니다.</p>
-      <div class="grid">
-        <div class="card"><span class="tag gold">₩300,000</span><h3>AI 매출 시스템 진단</h3><p>유입·상담·전환·보고 병목 분석.</p><button class="btn goldbtn" onclick="submitLead('high_ticket','AI 매출 시스템 진단',300000)">30만 진단 요청</button></div>
-        <div class="card"><span class="tag gold">₩1,000,000</span><h3>실행설계</h3><p>랜딩·리드·결제·납품 동선 설계.</p><button class="btn" onclick="submitLead('execution_design','실행설계',1000000)">100만 설계 상담</button></div>
-        <div class="card"><span class="tag red">₩3,000,000+</span><h3>B2B Revenue OS</h3><p>반복 문의·견적·콘텐츠·납품 구조 진단.</p><button class="btn" onclick="submitLead('b2b','B2B Revenue OS',3000000)">B2B 상담</button></div>
-      </div>
-    </section>
-  </main>
-
-  <div class="fixed">
-    <b>CHEONOK</b>
-    <p>무료진단 또는 $69 CEO 실행진단으로 시작하세요.</p>
-    <a class="btn goldbtn" href="https://docs.google.com/forms/d/e/1FAIpQLSfcZ27sYNP-TOFhtzQmCe2dd4d453Es1ih_7c42xDHlWWP-Qw/viewform" target="_blank" rel="noopener">무료진단</a>
-    <a class="btn green" href="https://www.paypal.com/ncp/payment/KJPM4FJBJXPE6" target="_blank" rel="noopener" style="margin-top:8px">$69 결제</a>
+<header class="nav"><div class="navin"><a class="brand" href="#top">CHEONOK SYSTEM</a><nav class="links"><a class="primary" href="#diagnosis">Free Diagnosis</a><a href="#pay">Pay</a><a href="#global">Global</a><a href="#b2b">B2B</a></nav><div class="lang"><button onclick="setCopy('ko')">KO</button><button onclick="setCopy('en')">EN</button><button onclick="setCopy('ja')">JP</button></div></div></header>
+<main class="wrap" id="top">
+<section class="hero">
+  <div class="panel dark">
+    <div class="badge"><i class="dot"></i><span data-k="badge">AI BUSINESS CLARITY · GLOBAL READY</span></div>
+    <h1 data-k="heroTitle">막힌 사업·채널을<br><span class="gold">결제 가능한 구조</span>로 정리합니다.</h1>
+    <p data-k="heroText">링크 하나만 보내세요. CHEONOK이 고객이 왜 망설이는지, 어디서 신뢰가 끊기는지, 어떤 제안이 결제로 이어질지 정리합니다.</p>
+    <div class="btns"><a class="btn goldbtn" href="https://docs.google.com/forms/d/e/1FAIpQLSfcZ27sYNP-TOFhtzQmCe2dd4d453Es1ih_7c42xDHlWWP-Qw/viewform" target="_blank" rel="noopener" data-k="freeBtn">무료진단 신청</a><a class="btn green" href="https://www.paypal.com/ncp/payment/KJPM4FJBJXPE6" target="_blank" rel="noopener">$69 CEO Diagnosis</a><a class="btn out" href="#pay" data-k="seeProducts">상품 보기</a></div>
+    <div class="countrybar"><span>KR</span><span>US</span><span>JP</span><span>GB</span><span>DE</span><span>CA</span><span>AU</span><span>SG</span><span>AE</span><span>CH</span></div>
   </div>
-
-  <footer class="footer">© 2026 CHEONOK SYSTEM · AI Revenue Automation OS</footer>
-
-  <script>
-    const PRODUCTS=[
-      ['미니 리포트','$7','약 9,900원','https://www.paypal.com/ncp/payment/P6E4ZM2PHKKES','핵심 문제 1개 + 개선 방향'],
-      ['심화 리포트','$21','약 29,000원','https://www.paypal.com/ncp/payment/5F26FX28QQS6U','전체 구조 분석 + 실행 플랜'],
-      ['CEO 실행진단','$69','약 99,000원','https://www.paypal.com/ncp/payment/KJPM4FJBJXPE6','7일 액션 로드맵'],
-      ['Operator OS','$299','약 430,000원','https://www.paypal.com/ncp/payment/394P6QWWX3Y8G','AI 운영 구조 진단']
-    ];
-    function renderProducts(){
-      productGrid.innerHTML=PRODUCTS.map((p,i)=>`<div class="card"><span class="tag ${i<2?'green':i<3?'blue':'gold'}">${i<2?'ENTRY':i<3?'CEO':'OS'}</span><h3>${p[0]}</h3><div class="price">${p[1]}</div><p>${p[2]}<br>${p[4]}</p><a class="btn ${i===2?'goldbtn':'green'}" href="${p[3]}" target="_blank" rel="noopener" onclick="submitLead('checkout','${p[0]}',0)">결제하기</a></div>`).join('');
-    }
-    async function apiLead(payload){
-      try{const r=await fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});return await r.json()}catch(e){return{ok:false,status:'LOCAL_PREVIEW_ONLY'}}
-    }
-    async function submitLead(type,product,price){
-      const need=(document.getElementById('need')?.value||'').trim();
-      const contact=(document.getElementById('contact')?.value||'').trim();
-      const country=document.getElementById('country')?.value||'KR';
-      await apiLead({type,product,price,contact,country,question:need||product,source:'homepage'});
-      const preview=document.getElementById('preview');
-      if(preview){preview.textContent=['CHEONOK 접수 완료','','핵심 병목: 노출·신뢰·결제 동선 중 하나를 확인해야 합니다.','다음 행동 3개:','1. 링크/상황을 기준으로 병목을 정리합니다.','2. 무료진단 후 유료 리포트/실행진단 가능성을 판정합니다.','3. 고가 B2B 또는 반복상품 가능성을 확인합니다.'].join('\n')}
-    }
-    renderProducts();
-  </script>
-  <script src="./cheonok_lead_bridge.js"></script>
+  <div class="panel">
+    <div class="badge lightbadge">PSYCHOLOGY-FIRST FUNNEL</div>
+    <h2 style="font-size:32px;margin:0 0 10px" data-k="sideTitle">처음 온 사람이 안심하고 결제까지 가는 구조</h2>
+    <div class="story">
+      <div class="bubble"><b>1. Understand</b><span data-k="b1">방문자가 “내 문제를 이해한다”는 느낌을 받아야 합니다.</span></div>
+      <div class="bubble"><b>2. Low friction</b><span data-k="b2">무료진단으로 부담을 낮추고, 작은 결제로 신뢰를 확인합니다.</span></div>
+      <div class="bubble"><b>3. Upgrade</b><span data-k="b3">$69, $299, B2B 진단으로 자연스럽게 올라갑니다.</span></div>
+    </div>
+  </div>
+</section>
+<section class="section" id="global">
+  <h2 data-k="globalTitle">10개국 고단가 트래픽 대응</h2>
+  <p data-k="globalText">광고단가가 높은 시장은 불안 제거, 명확한 결과물, 안전한 결제, 짧은 다음 행동이 중요합니다.</p>
+  <div class="iggrid">
+    <div class="phone"><div class="post"><b>CHEONOK Feed</b><div class="bar"></div><p>Send one link. Get clarity, bottleneck, and next action.</p></div><div class="post"><b>Before → After</b><div class="bar"></div><p>Confused page → clear offer → payment path.</p></div><div class="post"><b>Safe Promise</b><div class="bar"></div><p>No hype. No guarantee. Clear diagnosis only.</p></div></div>
+    <div class="card"><span class="tag blue">60% INSTAGRAM / 40% HUMAN</span><h3 data-k="designTitle">쉽고 예쁜데, 팔리는 인터페이스</h3><p data-k="designText">짧은 카드, 큰 버튼, 감정 안정 문구, 가격 사다리, 글로벌 결제 버튼을 먼저 보이게 구성했습니다.</p><ul><li>1-screen CTA</li><li>PayPal-first checkout</li><li>Free preview before payment</li><li>Safe, non-guaranteed language</li></ul></div>
+  </div>
+</section>
+<section class="section" id="diagnosis">
+  <h2 data-k="diagTitle">1. 무료진단</h2><p data-k="diagText">사업, 홈페이지, 유튜브, 인스타, 쇼핑몰, 아이디어 링크 하나면 됩니다.</p>
+  <div class="formgrid"><div class="card"><span class="tag green">INPUT</span><h3 data-k="inputTitle">링크·고민 입력</h3><textarea id="need" placeholder="Website / YouTube / Instagram / shop / idea / pain point"></textarea><div class="formgrid" style="margin-top:10px"><input class="input" id="contact" placeholder="Email / Instagram / Telegram"><select class="select" id="country"><option>KR</option><option>US</option><option>JP</option><option>GB</option><option>DE</option><option>CA</option><option>AU</option><option>SG</option><option>AE</option><option>CH</option></select></div><button class="btn green" style="width:100%;margin-top:10px" onclick="submitLead('free_diagnosis','무료진단',0)" data-k="submitBtn">무료진단 접수</button></div><div class="card"><span class="tag blue">PREVIEW</span><h3 data-k="previewTitle">진단 결과</h3><div class="output" id="preview" data-k="previewText">입력 후 무료진단을 누르면 핵심 병목, 신뢰 끊김 지점, 다음 행동 3개가 나옵니다.</div></div></div>
+</section>
+<section class="section" id="pay"><h2 data-k="payTitle">2. 결제 상품</h2><p data-k="payText">작게 시작하고, 필요하면 CEO/B2B 진단으로 확장합니다.</p><div class="grid4" id="productGrid"></div><div class="bank"><b>KRW Bank Transfer</b><br>카카오뱅크 3333-15-4116074 이현진<br><span style="font-size:13px">입금 후 무료진단 폼에 입금자명 + 상품명을 남겨주세요.</span></div><p class="warn">No guaranteed outcomes. No legal, medical, investment, or financial advice. This is a business structure and decision clarity diagnosis.</p></section>
+<section class="section" id="b2b"><h2 data-k="b2bTitle">3. B2B / High Ticket</h2><p data-k="b2bText">월 500만 원 이상 목표는 저가 상품이 아니라 B2B 진단, 실행설계, 반복 리포트에서 나옵니다.</p><div class="grid"><div class="card"><span class="tag gold">₩300,000</span><h3>AI Revenue Diagnosis</h3><p>Landing, lead, trust, payment, delivery bottleneck diagnosis.</p><button class="btn goldbtn" onclick="submitLead('high_ticket','AI Revenue Diagnosis',300000)">Request</button></div><div class="card"><span class="tag gold">₩1,000,000</span><h3>Execution Design</h3><p>Landing, lead capture, checkout, report delivery structure.</p><button class="btn" onclick="submitLead('execution_design','Execution Design',1000000)">Request</button></div><div class="card"><span class="tag red">₩3,000,000+</span><h3>B2B Revenue OS</h3><p>Repeated inquiry, quote, content, and delivery system diagnosis.</p><button class="btn" onclick="submitLead('b2b','B2B Revenue OS',3000000)">B2B Inquiry</button></div></div></section>
+</main>
+<div class="fixed"><b>CHEONOK</b><p data-k="fixedText">링크 하나만 보내면 결제 가능한 구조로 정리합니다.</p><a class="btn goldbtn" href="https://docs.google.com/forms/d/e/1FAIpQLSfcZ27sYNP-TOFhtzQmCe2dd4d453Es1ih_7c42xDHlWWP-Qw/viewform" target="_blank" rel="noopener" data-k="fixedBtn">무료진단</a><a class="btn green" href="https://www.paypal.com/ncp/payment/KJPM4FJBJXPE6" target="_blank" rel="noopener" style="margin-top:8px">$69</a></div>
+<footer class="footer">© 2026 CHEONOK SYSTEM · AI Business Clarity & Revenue Diagnosis</footer>
+<script>
+const COPY={ko:{badge:'AI 사업정리 · 글로벌 결제 준비',heroTitle:'막힌 사업·채널을<br><span class="gold">결제 가능한 구조</span>로 정리합니다.',heroText:'링크 하나만 보내세요. CHEONOK이 고객이 왜 망설이는지, 어디서 신뢰가 끊기는지, 어떤 제안이 결제로 이어질지 정리합니다.',freeBtn:'무료진단 신청',seeProducts:'상품 보기',sideTitle:'처음 온 사람이 안심하고 결제까지 가는 구조',b1:'방문자가 “내 문제를 이해한다”는 느낌을 받아야 합니다.',b2:'무료진단으로 부담을 낮추고, 작은 결제로 신뢰를 확인합니다.',b3:'$69, $299, B2B 진단으로 자연스럽게 올라갑니다.',globalTitle:'10개국 고단가 트래픽 대응',globalText:'광고단가가 높은 시장은 불안 제거, 명확한 결과물, 안전한 결제, 짧은 다음 행동이 중요합니다.',designTitle:'쉽고 예쁜데, 팔리는 인터페이스',designText:'짧은 카드, 큰 버튼, 감정 안정 문구, 가격 사다리, 글로벌 결제 버튼을 먼저 보이게 구성했습니다.',diagTitle:'1. 무료진단',diagText:'사업, 홈페이지, 유튜브, 인스타, 쇼핑몰, 아이디어 링크 하나면 됩니다.',inputTitle:'링크·고민 입력',submitBtn:'무료진단 접수',previewTitle:'진단 결과',previewText:'입력 후 무료진단을 누르면 핵심 병목, 신뢰 끊김 지점, 다음 행동 3개가 나옵니다.',payTitle:'2. 결제 상품',payText:'작게 시작하고, 필요하면 CEO/B2B 진단으로 확장합니다.',b2bTitle:'3. B2B / 고가진단',b2bText:'월 500만 원 이상 목표는 저가 상품이 아니라 B2B 진단, 실행설계, 반복 리포트에서 나옵니다.',fixedText:'링크 하나만 보내면 결제 가능한 구조로 정리합니다.',fixedBtn:'무료진단'},en:{badge:'AI BUSINESS CLARITY · GLOBAL READY',heroTitle:'Turn a stuck business or channel<br>into a <span class="gold">clear payment path</span>.',heroText:'Send one link. CHEONOK finds why customers hesitate, where trust breaks, and what offer can lead to payment.',freeBtn:'Get Free Diagnosis',seeProducts:'See Products',sideTitle:'A page that helps first-time visitors feel safe and act',b1:'Visitors must feel: “This understands my problem.”',b2:'A free preview lowers fear. A small payment confirms trust.',b3:'Then upgrade naturally into $69, $299, and B2B diagnosis.',globalTitle:'Built for 10 high-value ad markets',globalText:'Expensive traffic needs less anxiety, clearer deliverables, safe checkout, and a short next step.',designTitle:'Instagram-like, human, and conversion-first',designText:'Short cards, big buttons, calm language, price ladder, and global checkout are placed first.',diagTitle:'1. Free Diagnosis',diagText:'Send one website, YouTube, Instagram, shop, or idea link.',inputTitle:'Enter link or pain point',submitBtn:'Submit Free Diagnosis',previewTitle:'Diagnosis Preview',previewText:'After submission, you get the bottleneck, trust gap, and next 3 actions.',payTitle:'2. Paid Products',payText:'Start small. Upgrade to CEO/B2B diagnosis when needed.',b2bTitle:'3. B2B / High Ticket',b2bText:'Serious revenue comes from B2B diagnosis, execution design, and repeatable reports.',fixedText:'Send one link. Get a clear payment path.',fixedBtn:'Free Diagnosis'},ja:{badge:'AI事業整理 · グローバル決済対応',heroTitle:'止まった事業やチャンネルを<br><span class="gold">決済につながる構造</span>に整理します。',heroText:'リンクを1つ送ってください。顧客が迷う理由、信頼が切れる場所、決済につながる提案を整理します。',freeBtn:'無料診断',seeProducts:'商品を見る',sideTitle:'初めての訪問者が安心して行動できる構造',b1:'訪問者が「自分の問題を理解している」と感じる必要があります。',b2:'無料診断で不安を下げ、小さな決済で信頼を確認します。',b3:'その後、$69、$299、B2B診断へ自然に進みます。',globalTitle:'高単価10市場向け',globalText:'高い広告単価の市場では、不安の軽減、明確な成果物、安全な決済、短い次の行動が重要です。',designTitle:'Instagram風で、人に優しく、売れるUI',designText:'短いカード、大きなボタン、安心できる文言、価格階段、グローバル決済を前面に配置しました。',diagTitle:'1. 無料診断',diagText:'事業、ホームページ、YouTube、Instagram、ショップ、アイデアのリンク1つで始められます。',inputTitle:'リンク・悩みを入力',submitBtn:'無料診断を送信',previewTitle:'診断プレビュー',previewText:'入力後、ボトルネック、信頼の切れ目、次の3アクションが表示されます。',payTitle:'2. 有料商品',payText:'小さく始め、必要ならCEO/B2B診断へ進みます。',b2bTitle:'3. B2B / 高単価診断',b2bText:'本格的な売上はB2B診断、実行設計、反復レポートから生まれます。',fixedText:'リンク1つで決済につながる構造に整理します。',fixedBtn:'無料診断'}};
+function setCopy(lang){const pack=COPY[lang]||COPY.ko;document.documentElement.lang=lang;Object.entries(pack).forEach(([k,v])=>{document.querySelectorAll(`[data-k="${k}"]`).forEach(el=>{el.innerHTML=v})})}
+const PRODUCTS=[['Mini Report','$7','Entry clarity','https://www.paypal.com/ncp/payment/P6E4ZM2PHKKES','One bottleneck + next direction'],['Deep Report','$21','Deeper structure','https://www.paypal.com/ncp/payment/5F26FX28QQS6U','Full structure + action plan'],['CEO Diagnosis','$69','Execution roadmap','https://www.paypal.com/ncp/payment/KJPM4FJBJXPE6','7-day action plan'],['Operator OS','$299','System diagnosis','https://www.paypal.com/ncp/payment/394P6QWWX3Y8G','AI operating structure']];
+function renderProducts(){productGrid.innerHTML=PRODUCTS.map((p,i)=>`<div class="card"><span class="tag ${i<2?'green':i<3?'blue':'gold'}">${i<2?'ENTRY':i<3?'CEO':'OS'}</span><h3>${p[0]}</h3><div class="price">${p[1]}</div><p>${p[2]}<br>${p[4]}</p><a class="btn ${i===2?'goldbtn':'green'}" href="${p[3]}" target="_blank" rel="noopener" onclick="submitLead('checkout','${p[0]}',0)">Pay</a></div>`).join('')}
+async function apiLead(payload){try{const r=await fetch('/api/lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});return await r.json()}catch(e){return{ok:false,status:'LOCAL_PREVIEW_ONLY'}}}
+async function submitLead(type,product,price){const need=(document.getElementById('need')?.value||'').trim();const contact=(document.getElementById('contact')?.value||'').trim();const country=document.getElementById('country')?.value||'KR';await apiLead({type,product,price,contact,country,question:need||product,source:'homepage_global'});const preview=document.getElementById('preview');if(preview){preview.textContent=['CHEONOK received','','Core check: exposure, trust, offer, checkout, delivery.','Next actions:','1. Identify where visitors hesitate.','2. Convert the link/problem into a paid offer path.','3. Decide whether this fits mini report, CEO diagnosis, or B2B.'].join('\n')}}
+renderProducts();
+</script>
+<script src="./cheonok_lead_bridge.js"></script>
 </body>
 </html>
