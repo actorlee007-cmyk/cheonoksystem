@@ -17,6 +17,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/ebook", "destination": "/index.html" }
+    { "source": "/ebook", "destination": "/index.html" },
+    { "source": "/offers", "destination": "/offers.html" }
   ]
 }
