@@ -1,16 +1,15 @@
-# CHEONOK TELEGRAM REPORT BRIDGE
-# Purpose: send CHEONOK runtime/CEO reports to Telegram with minimum CEO input.
+# CHEONOK TELEGRAM REPORT BRIDGE v2
+# Purpose: send executive-grade CHEONOK hourly reports to Telegram.
 # Safe behavior:
-# - Does not store secrets in GitHub.
-# - Prompts once for TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, stores locally in C:\CHEONOK\.env.telegram.
-# - Sends latest C:\CHEONOK\_RUNTIME_OUTPUTS\*/CEO_REPORT.md.
-# - If no report exists, sends a compact fallback status.
-# - Installs a Windows scheduled task for recurring delivery.
+# - Secrets stay local in C:\CHEONOK\.env.telegram.
+# - Sends latest C:\CHEONOK\_RUNTIME_OUTPUTS\*/CEO_REPORT.md with clean CEO format.
+# - Schedules at every exact hour, not every 30 minutes.
+# - Removes old 30-minute task to avoid duplicate/low-quality reports.
 
 param(
   [switch]$InstallTask,
   [switch]$Scheduled,
-  [int]$IntervalMinutes = 30
+  [int]$IntervalMinutes = 60
 )
 
 $ErrorActionPreference = 'Continue'
@@ -18,10 +17,14 @@ $ErrorActionPreference = 'Continue'
 
 $Root = 'C:\CHEONOK'
 $OutputDir = Join-Path $Root '_RUNTIME_OUTPUTS'
-$LogDir = Join-Path $Root '_REPORT_LOGS'
+$ReportLogDir = Join-Path $Root '_REPORT_LOGS'
+$RuntimeLogDir = Join-Path $Root '_RUNTIME_LOGS'
 $EnvTelegram = Join-Path $Root '.env.telegram'
-$TaskName = 'CHEONOK_TELEGRAM_REPORT_30M'
+$TaskName = 'CHEONOK_TELEGRAM_REPORT_HOURLY'
+$OldTaskName = 'CHEONOK_TELEGRAM_REPORT_30M'
+$RuntimeTaskName = 'CHEONOK_YOUTUBE_RUNTIME_3H'
 $ScriptPath = Join-Path $Root 'CHEONOK_TELEGRAM_REPORT_BRIDGE.ps1'
+$SiteUrl = 'https://cheonoksystem.com/cta-5m.html'
 
 function Step($m) { Write-Host "[CHEONOK] $m" -ForegroundColor Cyan }
 function Pass($m) { Write-Host "[PASS] $m" -ForegroundColor Green }
@@ -30,7 +33,6 @@ function Write-NoBom($path, $text) {
   $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
   [System.IO.File]::WriteAllText($path, $text, $utf8NoBom)
 }
-
 function Read-EnvFile($path) {
   $map = @{}
   if (Test-Path $path) {
@@ -38,49 +40,121 @@ function Read-EnvFile($path) {
     $raw = $raw.TrimStart([char]0xFEFF)
     foreach ($line in ($raw -split "`r?`n")) {
       $clean = $line.Trim().TrimStart([char]0xFEFF)
-      if ($clean -match '^([^#=]+)=(.*)$') {
-        $map[$Matches[1].Trim()] = $Matches[2].Trim()
-      }
+      if ($clean -match '^([^#=]+)=(.*)$') { $map[$Matches[1].Trim()] = $Matches[2].Trim() }
     }
   }
   return $map
 }
-
 function Get-LatestReport() {
   if (-not (Test-Path $OutputDir)) { return $null }
   $reports = Get-ChildItem -Path $OutputDir -Recurse -Filter 'CEO_REPORT.md' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending
   if ($reports.Count -eq 0) { return $null }
   return $reports[0]
 }
+function Get-LatestFile($filter) {
+  if (-not (Test-Path $OutputDir)) { return $null }
+  $files = Get-ChildItem -Path $OutputDir -Recurse -Filter $filter -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending
+  if ($files.Count -eq 0) { return $null }
+  return $files[0]
+}
+function Get-TaskState($name) {
+  try {
+    $task = Get-ScheduledTask -TaskName $name -ErrorAction SilentlyContinue
+    if ($task) { return $task.State.ToString() }
+    return 'NOT_FOUND'
+  } catch { return 'UNKNOWN' }
+}
+function Extract-Line($raw, $pattern, $fallback) {
+  foreach ($line in ($raw -split "`r?`n")) {
+    $t = $line.Trim()
+    if ($t -match $pattern) { return $t }
+  }
+  return $fallback
+}
+function Build-ExecutiveMessage($reportPath) {
+  $stamp = Get-Date -Format 'yyyy-MM-dd HH:00'
+  $posts = Get-LatestFile 'SEND_READY_POSTS.md'
+  $queue = Get-LatestFile 'content_queue.csv'
+  $json = Get-LatestFile 'youtube_intelligence.json'
+  $runtimeTask = Get-TaskState $RuntimeTaskName
+  $telegramTask = Get-TaskState $TaskName
 
-function Compact-Message($reportPath) {
-  $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+  $runtimeStatus = 'UNKNOWN'
+  $apiStatus = 'UNKNOWN'
+  $assetStatus = 'UNKNOWN'
+  $blocker = 'None'
+  $outputPath = 'NO_OUTPUT'
+
   if ($reportPath -and (Test-Path $reportPath.FullName)) {
     $raw = Get-Content -Raw -Path $reportPath.FullName -Encoding UTF8
-    $raw = $raw -replace '\r',''
-    $lines = $raw -split '\n'
-    $important = @()
-    foreach ($line in $lines) {
-      $t = $line.Trim()
-      if ($t -match '^(#|##|TIME_KST|[-*] Runtime|[-*] YouTube API|[-*] Revenue Assets|[-*] Lead|[-*] Payment|[-*] Output|[-*] LIVE_TRADE|[-*] CAPITAL_SCALE|[-*] KIS_ORDER_GATE|[-*] PAPER_ONLY|RUNTIME_STATUS=|YOUTUBE_API_STATUS=|REPORT=|CONTENT_QUEUE=|SEND_READY_POSTS=|BLOCKERS:|FINAL_VETO:)') {
-        $important += $t
-      }
-    }
-    if ($important.Count -eq 0) { $important = $lines | Select-Object -First 40 }
-    $body = ($important | Select-Object -First 55) -join "`n"
-    if ($body.Length -gt 3500) { $body = $body.Substring(0, 3500) + "`n...TRUNCATED" }
-    return "[CHEONOK REPORT] $stamp`nPATH: $($reportPath.FullName)`n`n$body"
+    $outputPath = $reportPath.DirectoryName
+    $runtimeLine = Extract-Line $raw 'Runtime:|RUNTIME_STATUS=' 'Runtime: UNKNOWN'
+    $apiLine = Extract-Line $raw 'YouTube API:|YOUTUBE_API_STATUS=' 'YouTube API: UNKNOWN'
+    $blockLine = Extract-Line $raw 'API_KEY_SERVICE_BLOCKED|PERMISSION_DENIED|BLOCKED|Block:' 'Block: None'
+    $runtimeStatus = $runtimeLine -replace '^[-*]\s*',''
+    $apiStatus = $apiLine -replace '^[-*]\s*',''
+    $blocker = $blockLine -replace '^[-*]\s*',''
   }
-  return "[CHEONOK REPORT] $stamp`nSTATUS: NO_LOCAL_CEO_REPORT_FOUND`nACTION: Runtime output not found locally. Revenue loop remains focused on cta-5m.html, SEND_READY posts, free diagnosis lead, and 300,000 KRW diagnosis offer.`nFINAL_VETO: LIVE_TRADE=BLOCKED / CAPITAL_SCALE=BLOCKED / KIS_ORDER_GATE=BLOCKED / PAPER_ONLY=TRUE"
-}
 
+  if ($posts -and $queue) { $assetStatus = 'GENERATED' } else { $assetStatus = 'MISSING_OR_STALE' }
+
+  $postsPath = if ($posts) { $posts.FullName } else { 'NOT_FOUND' }
+  $queuePath = if ($queue) { $queue.FullName } else { 'NOT_FOUND' }
+  $jsonPath = if ($json) { $json.FullName } else { 'NOT_FOUND' }
+
+  $msg = @"
+[CHEONOK 정시 보고] $stamp KST
+
+1. 결론
+- 매출 최우선: 무료진단 1건 → 30만원 실행진단 전환
+- 산출물: $assetStatus
+- 외부 게시/광고/대량 DM: 승인 전 대기
+
+2. 매출 체인
+- CTA: $SiteUrl
+- 상품: AI 매출 병목 실행진단 300,000원
+- 목표: 리드 20건 / 진단 5건 / 설계 2건 / B2B 1건
+
+3. 런타임
+- Runtime: $runtimeStatus
+- YouTube API: $apiStatus
+- Runtime Task: $runtimeTask
+- Telegram Task: $telegramTask
+
+4. 차단/우회
+- Blocker: $blocker
+- 우회: API 실패 시 오프라인 레퍼런스 기반 SEND_READY 자산 생성 유지
+
+5. 증거
+- Output: $outputPath
+- Posts: $postsPath
+- Queue: $queuePath
+- JSON: $jsonPath
+
+6. 다음 정시까지 액션
+- SEND_READY 게시문 배포 대기
+- 무료진단 신청 1건 확보가 최우선 증거
+- 결제 증거 없으면 PASS 금지
+
+7. 승인 필요
+- 광고비 집행
+- 외부 대량 DM/메일
+- 실제 인보이스/청구
+- API/Secret/계정 입력
+- 실전 주식 주문
+
+Final Veto
+LIVE_TRADE=BLOCKED
+CAPITAL_SCALE=BLOCKED
+KIS_ORDER_GATE=BLOCKED
+PAPER_ONLY=TRUE
+"@
+  if ($msg.Length -gt 3900) { $msg = $msg.Substring(0, 3900) + "`n...TRUNCATED" }
+  return $msg
+}
 function Send-Telegram($token, $chatId, $message) {
   $url = "https://api.telegram.org/bot$token/sendMessage"
-  $payload = @{
-    chat_id = $chatId
-    text = $message
-    disable_web_page_preview = $true
-  }
+  $payload = @{ chat_id = $chatId; text = $message; disable_web_page_preview = $true }
   try {
     $response = Invoke-RestMethod -Uri $url -Method Post -Body $payload -TimeoutSec 20
     if ($response.ok -eq $true) { return $true }
@@ -90,8 +164,13 @@ function Send-Telegram($token, $chatId, $message) {
     return $false
   }
 }
+function Get-NextTopOfHour() {
+  $now = Get-Date
+  $next = $now.AddHours(1)
+  return [datetime]::new($next.Year, $next.Month, $next.Day, $next.Hour, 0, 0)
+}
 
-New-Item -ItemType Directory -Force -Path $Root, $OutputDir, $LogDir | Out-Null
+New-Item -ItemType Directory -Force -Path $Root, $OutputDir, $ReportLogDir | Out-Null
 
 $envMap = Read-EnvFile $EnvTelegram
 $token = $env:TELEGRAM_BOT_TOKEN
@@ -102,31 +181,30 @@ if (-not $chatId -and $envMap.ContainsKey('TELEGRAM_CHAT_ID')) { $chatId = $envM
 if ((-not $token -or -not $chatId) -and -not $Scheduled) {
   Write-Host ''
   Write-Host 'Telegram report channel needs two one-time values.' -ForegroundColor Yellow
-  Write-Host 'Use @BotFather to create a bot token. Send one message to the bot, then use your Telegram user/chat id.' -ForegroundColor Yellow
   if (-not $token) { $token = Read-Host 'TELEGRAM_BOT_TOKEN' }
   if (-not $chatId) { $chatId = Read-Host 'TELEGRAM_CHAT_ID' }
 }
 
 if ($token -and $chatId) {
-  $envText = "TELEGRAM_BOT_TOKEN=$token`nTELEGRAM_CHAT_ID=$chatId`n"
-  Write-NoBom $EnvTelegram $envText
+  Write-NoBom $EnvTelegram "TELEGRAM_BOT_TOKEN=$token`nTELEGRAM_CHAT_ID=$chatId`n"
   $latest = Get-LatestReport
-  $message = Compact-Message $latest
+  $message = Build-ExecutiveMessage $latest
   $ok = Send-Telegram $token $chatId $message
-  $logFile = Join-Path $LogDir ('telegram_report_' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '.log')
+  $logFile = Join-Path $ReportLogDir ('telegram_hourly_' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '.log')
   Write-NoBom $logFile $message
-  if ($ok) { Pass "Telegram report sent. Log: $logFile" } else { Block "Telegram report not sent. Log saved: $logFile" }
+  if ($ok) { Pass "Telegram executive report sent. Log: $logFile" } else { Block "Telegram report not sent. Log saved: $logFile" }
 } else {
   Block 'TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID missing. Report bridge installed but not connected.'
 }
 
 if ($InstallTask -or -not $Scheduled) {
   try { Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue | Out-Null } catch {}
-  $Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-ExecutionPolicy Bypass -File C:\CHEONOK\CHEONOK_TELEGRAM_REPORT_BRIDGE.ps1 -Scheduled > C:\CHEONOK\_REPORT_LOGS\telegram_task.log 2>&1'
-  $Trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(2) -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes) -RepetitionDuration (New-TimeSpan -Days 3650)
+  try { Unregister-ScheduledTask -TaskName $OldTaskName -Confirm:$false -ErrorAction SilentlyContinue | Out-Null } catch {}
+  $Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-ExecutionPolicy Bypass -File C:\CHEONOK\CHEONOK_TELEGRAM_REPORT_BRIDGE.ps1 -Scheduled > C:\CHEONOK\_REPORT_LOGS\telegram_hourly_task.log 2>&1'
+  $Trigger = New-ScheduledTaskTrigger -Once -At (Get-NextTopOfHour) -RepetitionInterval (New-TimeSpan -Hours 1) -RepetitionDuration (New-TimeSpan -Days 3650)
   $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
   Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Force | Out-Null
-  Pass "Scheduled task installed: $TaskName / every $IntervalMinutes minutes"
+  Pass "Scheduled task installed: $TaskName / every exact hour"
 }
 
 Write-Host 'FINAL_VETO: LIVE_TRADE=BLOCKED / CAPITAL_SCALE=BLOCKED / KIS_ORDER_GATE=BLOCKED / PAPER_ONLY=TRUE'
