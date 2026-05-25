@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node scripts/cheonok_build_telegram_report.js"
+    "build": "node scripts/cheonok_build_telegram_report.js",
+    "audit": "python scripts/jos_readiness_audit.py",
+    "audit:self-test": "python scripts/jos_readiness_audit.py --self-test",
+    "os:mvp": "python scripts/jos_os_runtime_mvp.py",
+    "os:mvp:self-test": "python scripts/jos_os_runtime_mvp.py --self-test"
   }
 }
