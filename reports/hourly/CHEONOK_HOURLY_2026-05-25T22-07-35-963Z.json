@@ -1,0 +1,39 @@
+{
+  "generatedAt": "2026-05-25T22:07:35.963Z",
+  "mode": "CHEONOK_HOURLY_CLOUD_CONTROL",
+  "safety": {
+    "PAPER_ONLY": true,
+    "LIVE_TRADE": "BLOCKED",
+    "CAPITAL_SCALE": "BLOCKED",
+    "KIS_ORDER_GATE": "BLOCKED"
+  },
+  "chain": {
+    "exposure": "BUILDING",
+    "click": "BLOCK",
+    "lead": "BLOCK",
+    "payment": "BUILDING",
+    "delivery": "BUILDING",
+    "repeatPurchase": "BLOCK"
+  },
+  "billionaireCapitalGate": {
+    "highestPriority": "AI Revenue System Diagnosis",
+    "fastest5MRoute": [
+      "300000 KRW x 17",
+      "1000000 KRW x 5",
+      "3000000 KRW x 2"
+    ],
+    "nextCapitalAction": "Publish one public CTA and capture the first lead."
+  },
+  "adaptiveRouter": {
+    "selectedLenses": [
+      "billionaire",
+      "operator",
+      "programmer",
+      "sales",
+      "psychology",
+      "risk"
+    ],
+    "rule": "Checklist is audit only; adaptive lens weighting is primary."
+  },
+  "nextEvidenceStandard": "public CTA URL OR one lead OR one verified payment proof"
+}
