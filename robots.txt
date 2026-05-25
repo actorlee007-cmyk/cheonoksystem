@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /gate
+Disallow: /gate.html
 
 Sitemap: https://cheonoksystem.com/sitemap.xml
