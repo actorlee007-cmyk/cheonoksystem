@@ -1,10 +1,12 @@
 """JOS MASTER - PAPER_CAPITAL_INTELLIGENCE single-source runtime.
 
-Real-time market feed (yfinance) + news feed (RSS) + scoring + ranking +
-sector strength analysis + market state classification + PAPER portfolio +
-forward simulation (historical bootstrap) + adaptive learning stats +
-ledger persistence + intraday/close report loop, integrated into one
-runnable file.
+Real-time market feed (yfinance) + news feed (RSS) + scoring + ranking
+(volume score + foreign/US sector linkage + news theme bonus) + leader
+analysis (why #1 is #1, and similar watch-list candidates) + sector
+strength analysis + market state classification + PAPER position
+management (stop-loss / trailing-stop / rotation) + forward simulation
+(historical bootstrap) + adaptive learning stats + ledger persistence +
+intraday/close report loop, integrated into one runnable file.
 
 Run (continuous, local):
     cd C:\\JOS_OS
@@ -27,6 +29,10 @@ Ledger (persisted under ./ledger/, committed back to the repo by CI):
 - learning_stats.json      : rolling equity curve / win rate / drawdown
 - tomorrow_watchlist.json  : next-session TOP candidates (consulted first
                             when opening new positions)
+- leader_analysis.json     : why the #1-ranked ticker is #1 (score drivers:
+                            volume / foreign(US) sector linkage / news
+                            theme), plus a watch list of tickers sharing
+                            the same drivers
 
 Reporting:
 - Each report is also sent to Telegram via CHEONOK_TELEGRAM_BOT_TOKEN /
@@ -108,9 +114,37 @@ ROTATION_SCORE_GAP = 40      # rotate a non-profitable position into a candidate
                               # outscores it by at least this much
 MAX_OPEN_POSITIONS = 3        # max concurrent paper positions
 
+# Foreign (US) -> domestic (KRX) sector linkage: KRX opens after the US
+# session closes, so a strong/weak US sector is treated as a leading
+# indicator for the matching Korean tickers in WATCHLIST.
+FOREIGN_LINK_BONUS_STRONG = 20    # foreign sector avg change_pct >= +1.0%
+FOREIGN_LINK_BONUS_MILD = 10      # foreign sector avg change_pct >= +0.3%
+FOREIGN_LINK_PENALTY_MILD = -10   # foreign sector avg change_pct <= -0.3%
+FOREIGN_LINK_PENALTY_STRONG = -20  # foreign sector avg change_pct <= -1.0%
+
+# News headline keyword -> sector mapping, used to explain why a ticker
+# is ranked where it is and to spot sector-wide news themes.
+SECTOR_KEYWORDS = {
+    "AI_SEMI": ["반도체", "AI", "인공지능", "엔비디아", "삼성전자", "하이닉스"],
+    "TECH_PLATFORM": ["빅테크", "플랫폼", "애플", "구글", "메타", "마이크로소프트"],
+    "EV_BATTERY": ["전기차", "배터리", "테슬라", "2차전지"],
+    "BIO": ["바이오", "제약", "신약", "백신"],
+    "DEFENSE": ["방산", "국방", "무기"],
+    "FINANCE": ["금융", "은행", "증권"]
+}
+NEWS_SECTOR_BONUS = 10
+
+# Leader analysis: how many "similar" candidates to surface alongside the
+# #1-ranked ticker each cycle.
+SIMILAR_CANDIDATES_SIZE = 5
+
 
 def sector_of(ticker):
     return WATCHLIST.get(ticker, "UNKNOWN")
+
+
+def is_domestic_ticker(ticker):
+    return ticker.endswith(".KS")
 
 # =====================================
 # STATE
@@ -139,6 +173,7 @@ MARKET_LOG = LEDGER_DIR / "market_log.jsonl"
 LEARNING_FILE = LEDGER_DIR / "learning_stats.json"
 WATCHLIST_FILE = LEDGER_DIR / "tomorrow_watchlist.json"
 POSITIONS_FILE = LEDGER_DIR / "positions.json"
+LEADER_ANALYSIS_FILE = LEDGER_DIR / "leader_analysis.json"
 
 
 def ensure_ledger_dir():
@@ -281,20 +316,101 @@ def score_market(row):
 
     return score
 
+
+def foreign_sector_strength(market):
+    """Average change_pct of non-domestic (US) tickers per sector - the
+    'foreign market pulse' used as a leading indicator for KRX tickers."""
+
+    sectors = {}
+
+    for row in market:
+
+        if is_domestic_ticker(row["ticker"]):
+            continue
+
+        sectors.setdefault(row["sector"], []).append(row["change_pct"])
+
+    return {
+        sector: sum(changes) / len(changes)
+        for sector, changes in sectors.items()
+    }
+
+
+def foreign_linkage_bonus(row, foreign_strength):
+    """Score bonus/penalty applied to a domestic ticker based on how its
+    sector traded overnight in the foreign (US) market."""
+
+    if not is_domestic_ticker(row["ticker"]):
+        return 0
+
+    change = foreign_strength.get(row["sector"])
+
+    if change is None:
+        return 0
+
+    if change >= 1.0:
+        return FOREIGN_LINK_BONUS_STRONG
+
+    if change >= 0.3:
+        return FOREIGN_LINK_BONUS_MILD
+
+    if change <= -1.0:
+        return FOREIGN_LINK_PENALTY_STRONG
+
+    if change <= -0.3:
+        return FOREIGN_LINK_PENALTY_MILD
+
+    return 0
+
+
+def news_sector_bonus(sector, news):
+    """Score bonus if any headline this cycle matches the sector's
+    keyword list - i.e. the sector has an active news theme."""
+
+    for headline in news:
+        for keyword in SECTOR_KEYWORDS.get(sector, []):
+            if keyword in headline:
+                return NEWS_SECTOR_BONUS
+
+    return 0
+
 # =====================================
 # RANK ENGINE
 # =====================================
 
-def rank_engine(market):
+def rank_engine(market, foreign_strength=None, news=None):
+
+    foreign_strength = foreign_strength or {}
+    news = news or []
 
     ranking = []
 
     for row in market:
 
+        volume_score = score_market(row)
+        f_bonus = foreign_linkage_bonus(row, foreign_strength)
+        n_bonus = news_sector_bonus(row["sector"], news)
+
+        drivers = []
+
+        if volume_score > 0:
+            drivers.append("VOLUME(+%d)" % volume_score)
+
+        if f_bonus:
+            drivers.append("FOREIGN_LINK(%+d)" % f_bonus)
+
+        if n_bonus:
+            drivers.append("NEWS(+%d)" % n_bonus)
+
         ranking.append({
             "ticker": row["ticker"],
             "sector": row["sector"],
-            "score": score_market(row),
+            "score": volume_score + f_bonus + n_bonus,
+            "volume_score": volume_score,
+            "foreign_link_bonus": f_bonus,
+            "foreign_sector_change_pct": foreign_strength.get(row["sector"], 0.0),
+            "news_bonus": n_bonus,
+            "drivers": drivers,
             "price": row["price"],
             "volume": row["volume"],
             "change_pct": row.get("change_pct", 0.0)
@@ -364,6 +480,70 @@ def sector_strength_engine(ranking):
     )
 
     return strength
+
+# =====================================
+# LEADER ANALYSIS (why is #1 #1, and who looks similar)
+# =====================================
+
+def leader_analysis(ranking):
+    """Explain why the top-ranked ticker is #1 (its score drivers), then
+    scan the rest of the ranking for tickers sharing those same drivers
+    (foreign sector linkage, sector news theme, or just same sector) -
+    these are the 'next leader' candidates to watch for a rotation."""
+
+    if not ranking:
+        return None
+
+    leader = ranking[0]
+
+    leader_drivers = {"SECTOR:" + leader["sector"]}
+
+    if leader["foreign_link_bonus"] > 0:
+        leader_drivers.add("FOREIGN_LINK")
+
+    if leader["news_bonus"] > 0:
+        leader_drivers.add("NEWS")
+
+    similar = []
+
+    for row in ranking[1:]:
+
+        row_drivers = {"SECTOR:" + row["sector"]}
+
+        if row["foreign_link_bonus"] > 0:
+            row_drivers.add("FOREIGN_LINK")
+
+        if row["news_bonus"] > 0:
+            row_drivers.add("NEWS")
+
+        shared = leader_drivers & row_drivers
+
+        if shared:
+            similar.append({
+                "ticker": row["ticker"],
+                "sector": row["sector"],
+                "score": row["score"],
+                "shared_drivers": sorted(shared)
+            })
+
+    similar = similar[:SIMILAR_CANDIDATES_SIZE]
+
+    analysis = {
+        "generated_ts": datetime.now(timezone.utc).isoformat(),
+        "leader": {
+            "ticker": leader["ticker"],
+            "sector": leader["sector"],
+            "score": leader["score"],
+            "drivers": leader["drivers"],
+            "foreign_sector_change_pct": leader["foreign_sector_change_pct"],
+            "change_pct": leader["change_pct"]
+        },
+        "similar_candidates": similar
+    }
+
+    save_json(LEADER_ANALYSIS_FILE, analysis)
+
+    return analysis
 
 # =====================================
 # POSITION MANAGEMENT (stop-loss / trailing-stop / rotation)
@@ -792,11 +972,32 @@ def format_report_text(report_data):
         lines.append("")
         lines.append("[TOP%s RANKING]" % len(top5))
         for r in top5:
+            drivers = ",".join(r.get("drivers", [])) or "-"
             lines.append(
-                "  %s (%s) score=%s price=%s change=%.2f%%" % (
-                    r["ticker"], r["sector"], r["score"], r["price"], r.get("change_pct", 0.0)
+                "  %s (%s) score=%s price=%s change=%.2f%% [%s]" % (
+                    r["ticker"], r["sector"], r["score"], r["price"], r.get("change_pct", 0.0), drivers
                 )
             )
+
+    leader = report_data.get("leader_analysis")
+
+    if leader:
+        lines.append("")
+        lines.append("[LEADER ANALYSIS]")
+        lines.append(
+            "  #1 %s (%s) score=%s drivers=%s foreign_sector_change=%.2f%%" % (
+                leader["leader"]["ticker"], leader["leader"]["sector"], leader["leader"]["score"],
+                ",".join(leader["leader"]["drivers"]) or "-", leader["leader"]["foreign_sector_change_pct"]
+            )
+        )
+        if leader["similar_candidates"]:
+            lines.append("  watch list (similar setup):")
+            for c in leader["similar_candidates"]:
+                lines.append(
+                    "    %s (%s) score=%s shared=%s" % (
+                        c["ticker"], c["sector"], c["score"], ",".join(c["shared_drivers"])
+                    )
+                )
 
     exits = report_data.get("exits") or []
 
@@ -838,9 +1039,10 @@ def format_close_report(close_data):
     lines.append("")
     lines.append("[TOP5 RANKING]")
     for r in close_data["top5"]:
+        drivers = ",".join(r.get("drivers", [])) or "-"
         lines.append(
-            "  %s (%s) score=%s change=%.2f%%" % (
-                r["ticker"], r["sector"], r["score"], r["change_pct"]
+            "  %s (%s) score=%s change=%.2f%% [%s]" % (
+                r["ticker"], r["sector"], r["score"], r["change_pct"], drivers
             )
         )
 
@@ -852,6 +1054,26 @@ def format_close_report(close_data):
                 s["sector"], s["avg_change_pct"], s["count"]
             )
         )
+
+    leader = close_data.get("leader_analysis")
+
+    if leader:
+        lines.append("")
+        lines.append("[LEADER ANALYSIS]")
+        lines.append(
+            "  #1 %s (%s) score=%s drivers=%s foreign_sector_change=%.2f%%" % (
+                leader["leader"]["ticker"], leader["leader"]["sector"], leader["leader"]["score"],
+                ",".join(leader["leader"]["drivers"]) or "-", leader["leader"]["foreign_sector_change_pct"]
+            )
+        )
+        if leader["similar_candidates"]:
+            lines.append("  watch list (similar setup):")
+            for c in leader["similar_candidates"]:
+                lines.append(
+                    "    %s (%s) score=%s shared=%s" % (
+                        c["ticker"], c["sector"], c["score"], ",".join(c["shared_drivers"])
+                    )
+                )
 
     lines.append("")
     lines.append("[TODAY RESULTS]")
@@ -909,7 +1131,7 @@ def format_close_report(close_data):
 # REPORT (intraday)
 # =====================================
 
-def report(exit_results=None):
+def report(exit_results=None, leader=None):
 
     ranking = STATE["rankings"]
 
@@ -929,6 +1151,9 @@ def report(exit_results=None):
 
         "exits":
             exit_results or [],
+
+        "leader_analysis":
+            leader,
 
         "market_state":
             market_state_engine(ranking),
@@ -973,11 +1198,15 @@ def collect_cycle_data():
 
     news = news_feed()
 
+    foreign_strength = foreign_sector_strength(market)
+
     ranking = rank_engine(
-        market
+        market, foreign_strength, news
     )
 
     STATE["rankings"] = ranking
+
+    leader = leader_analysis(ranking)
 
     for row in market:
 
@@ -1001,12 +1230,12 @@ def collect_cycle_data():
             "ts": datetime.now(timezone.utc).isoformat()
         })
 
-    return market, news, ranking
+    return market, news, ranking, leader
 
 
 def run_cycle():
 
-    market, news, ranking = collect_cycle_data()
+    market, news, ranking, leader = collect_cycle_data()
 
     exit_results = paper_engine(
         ranking
@@ -1016,12 +1245,12 @@ def run_cycle():
 
     portfolio_engine(ranking)
 
-    report(exit_results)
+    report(exit_results, leader)
 
 
 def run_close():
 
-    market, news, ranking = collect_cycle_data()
+    market, news, ranking, leader = collect_cycle_data()
 
     market_state = market_state_engine(ranking)
     sector_strength = sector_strength_engine(ranking)
@@ -1040,6 +1269,7 @@ def run_close():
         "market_state": market_state,
         "top5": ranking[:5],
         "sector_strength": sector_strength,
+        "leader_analysis": leader,
         "exit_results": exit_results,
         "learning_stats": learning_stats,
         "tomorrow_watchlist": tomorrow_watchlist,
