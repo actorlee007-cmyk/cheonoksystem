@@ -1,45 +1,45 @@
 {
-  "generated_ts": "2026-06-10T09:50:39.055614+00:00",
+  "generated_ts": "2026-06-10T09:56:31.648013+00:00",
   "top": [
-    {
-      "ticker": "NVDA",
-      "sector": "AI_SEMI",
-      "score": 100,
-      "sector_avg_change_pct": NaN,
-      "p_up": 0.518,
-      "composite_score": NaN
-    },
     {
       "ticker": "AMD",
       "sector": "AI_SEMI",
       "score": 100,
-      "sector_avg_change_pct": NaN,
-      "p_up": 0.688,
-      "composite_score": NaN
-    },
-    {
-      "ticker": "005930.KS",
-      "sector": "AI_SEMI",
-      "score": 100,
-      "sector_avg_change_pct": NaN,
-      "p_up": 0.628,
-      "composite_score": NaN
+      "sector_avg_change_pct": -1.6835316478953593,
+      "p_up": 0.758,
+      "composite_score": 66.95293670420928
     },
     {
       "ticker": "000660.KS",
       "sector": "AI_SEMI",
       "score": 100,
-      "sector_avg_change_pct": NaN,
-      "p_up": 0.672,
-      "composite_score": NaN
+      "sector_avg_change_pct": -1.6835316478953593,
+      "p_up": 0.666,
+      "composite_score": 63.272936704209286
     },
     {
       "ticker": "AAPL",
       "sector": "TECH_PLATFORM",
       "score": 100,
-      "sector_avg_change_pct": NaN,
-      "p_up": 0.59,
-      "composite_score": NaN
+      "sector_avg_change_pct": -1.4278019352566729,
+      "p_up": 0.638,
+      "composite_score": 62.664396129486654
+    },
+    {
+      "ticker": "005930.KS",
+      "sector": "AI_SEMI",
+      "score": 100,
+      "sector_avg_change_pct": -1.6835316478953593,
+      "p_up": 0.64,
+      "composite_score": 62.23293670420928
+    },
+    {
+      "ticker": "GOOGL",
+      "sector": "TECH_PLATFORM",
+      "score": 100,
+      "sector_avg_change_pct": -1.4278019352566729,
+      "p_up": 0.569,
+      "composite_score": 59.90439612948665
     }
   ]
 }
