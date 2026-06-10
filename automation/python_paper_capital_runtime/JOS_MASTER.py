@@ -3,8 +3,17 @@
 Real-time market feed (yfinance) + news feed (RSS) + scoring + ranking +
 PAPER portfolio + live report loop, integrated into one runnable file.
 
-Run:
-    python JOS_MASTER.py
+Run (continuous, local):
+    cd C:\\JOS_OS
+    python .\\JOS_MASTER.py
+
+Run (single pass, cloud/CI):
+    python JOS_MASTER.py --once
+
+Reporting:
+- Each report is also sent to Telegram via CHEONOK_TELEGRAM_BOT_TOKEN /
+  CHEONOK_TELEGRAM_CHAT_ID (same secrets as CHEONOK Supreme Master OS).
+  If the secrets are missing, sending is skipped (HOLD_TELEGRAM_SECRETS_MISSING).
 
 Safety:
 - PAPER_ONLY TRUE
@@ -14,9 +23,13 @@ Safety:
 - No order execution. No broker connection. PAPER_BUY signals only.
 """
 
+import argparse
+import os
 import time
 import json
 import random
+import urllib.parse
+import urllib.request
 import feedparser
 import yfinance as yf
 
@@ -193,6 +206,67 @@ def portfolio_engine():
     STATE["portfolio"] = portfolio
 
 # =====================================
+# TELEGRAM
+# =====================================
+
+def send_telegram(text):
+
+    token = os.environ.get("CHEONOK_TELEGRAM_BOT_TOKEN", "").strip()
+    chat_id = os.environ.get("CHEONOK_TELEGRAM_CHAT_ID", "").strip()
+
+    if not token or not chat_id:
+        print("HOLD_TELEGRAM_SECRETS_MISSING")
+        print(text)
+        return False
+
+    for i in range(0, len(text), 3500):
+
+        chunk = text[i:i + 3500]
+
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+
+        data = urllib.parse.urlencode({
+            "chat_id": chat_id,
+            "text": chunk,
+            "disable_web_page_preview": "true"
+        }).encode("utf-8")
+
+        req = urllib.request.Request(url, data=data, method="POST")
+
+        with urllib.request.urlopen(req, timeout=30) as res:
+            res.read()
+
+    return True
+
+
+def format_report_text(report_data):
+
+    lines = [
+        "JOS PAPER CAPITAL REPORT",
+        "PAPER_ONLY TRUE / LIVE_TRADE BLOCKED",
+        "ts: " + report_data["ts"],
+        "events: " + str(report_data["events"]),
+        "signals: " + str(report_data["signals"]),
+        "paper_trades: " + str(report_data["paper_trades"])
+    ]
+
+    top = report_data["top_rank"]
+
+    if top:
+        lines.append(
+            "top_rank: %s score=%s price=%s volume=%s" % (
+                top["ticker"], top["score"], top["price"], top["volume"]
+            )
+        )
+
+    if report_data["portfolio"]:
+        lines.append(
+            "portfolio: " + json.dumps(report_data["portfolio"], ensure_ascii=False)
+        )
+
+    return "\n".join(lines)
+
+# =====================================
 # REPORT
 # =====================================
 
@@ -241,48 +315,65 @@ def report():
         )
     )
 
+    send_telegram(
+        format_report_text(report_data)
+    )
+
 # =====================================
 # MAIN LOOP
 # =====================================
 
+def run_cycle():
+
+    market = market_feed()
+
+    news = news_feed()
+
+    ranking = rank_engine(
+        market
+    )
+
+    STATE["rankings"] = ranking
+
+    for row in market:
+
+        STATE["events"].append(row)
+
+        if score_market(row) >= 60:
+            STATE["signals"].append(
+                row
+            )
+
+    for n in news:
+
+        STATE["events"].append(
+            {"news": n}
+        )
+
+    paper_engine(
+        ranking
+    )
+
+    portfolio_engine()
+
+    report()
+
+
 def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--once", action="store_true")
+    args = parser.parse_args()
 
     print("=== JOS MASTER START ===")
 
+    if args.once:
+        run_cycle()
+        return
+
     while True:
 
-        market = market_feed()
-
-        news = news_feed()
-
-        ranking = rank_engine(
-            market
-        )
-
-        STATE["rankings"] = ranking
-
-        for row in market:
-
-            STATE["events"].append(row)
-
-            if score_market(row) >= 60:
-                STATE["signals"].append(
-                    row
-                )
-
-        for n in news:
-
-            STATE["events"].append(
-                {"news": n}
-            )
-
-        paper_engine(
-            ranking
-        )
-
-        portfolio_engine()
-
-        report()
+        run_cycle()
 
         time.sleep(60)
 
