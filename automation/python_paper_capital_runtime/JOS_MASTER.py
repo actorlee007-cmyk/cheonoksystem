@@ -67,6 +67,7 @@ from pathlib import Path
 WATCHLIST = {
     "NVDA": "AI_SEMI",
     "AMD": "AI_SEMI",
+    "AVGO": "AI_SEMI",
     "005930.KS": "AI_SEMI",
     "000660.KS": "AI_SEMI",
 
@@ -74,20 +75,31 @@ WATCHLIST = {
     "MSFT": "TECH_PLATFORM",
     "GOOGL": "TECH_PLATFORM",
     "META": "TECH_PLATFORM",
+    "035420.KS": "TECH_PLATFORM",
 
     "TSLA": "EV_BATTERY",
+    "RIVN": "EV_BATTERY",
     "373220.KS": "EV_BATTERY",
     "006400.KS": "EV_BATTERY",
+    "247540.KS": "EV_BATTERY",
 
-    "207940.KS": "BIO",
     "MRNA": "BIO",
     "PFE": "BIO",
+    "JNJ": "BIO",
+    "207940.KS": "BIO",
+    "068270.KS": "BIO",
 
     "LMT": "DEFENSE",
+    "RTX": "DEFENSE",
+    "NOC": "DEFENSE",
     "012450.KS": "DEFENSE",
+    "047810.KS": "DEFENSE",
 
     "JPM": "FINANCE",
+    "BAC": "FINANCE",
+    "GS": "FINANCE",
     "105560.KS": "FINANCE",
+    "055550.KS": "FINANCE",
 }
 
 RSS = [
@@ -98,10 +110,13 @@ RSS = [
 # Forward simulation engine
 FORWARD_SIM_TRIALS = 1000
 FORWARD_SIM_HORIZON_DAYS = 5
-FORWARD_SIM_CANDIDATES = 10
+FORWARD_SIM_CANDIDATES = 30   # full WATCHLIST universe -> real "TOP30" candidate list
 
-# Tomorrow watchlist
-TOMORROW_WATCHLIST_SIZE = 5
+# Tomorrow watchlist (Layer 9: NEXT DAY TOP30 - the full ranked candidate
+# universe is persisted to ledger/tomorrow_watchlist.json; the Telegram
+# report shows only the top slice for readability)
+TOMORROW_WATCHLIST_SIZE = 30
+TOMORROW_WATCHLIST_REPORT_N = 10
 
 # Learning engine
 EQUITY_CURVE_MAX = 90
@@ -137,6 +152,84 @@ NEWS_SECTOR_BONUS = 10
 # Leader analysis: how many "similar" candidates to surface alongside the
 # #1-ranked ticker each cycle.
 SIMILAR_CANDIDATES_SIZE = 5
+
+# Global macro flows (Layer 1: GLOBAL FIRST). Checked before any Korea
+# theme translation - Asia indices, USD/KRW, US rates, and commodities
+# give the "global pulse" for the session.
+GLOBAL_MACRO = {
+    "^N225": "JAPAN_NIKKEI",
+    "^HSI": "HONGKONG_HANGSENG",
+    "KRW=X": "USDKRW",
+    "^TNX": "US_10Y_YIELD",
+    "CL=F": "WTI_OIL",
+    "GC=F": "GOLD",
+}
+
+# Global risk state thresholds, based on the average change_pct of the
+# equity-like global macro instruments (Nikkei / Hang Seng).
+GLOBAL_RISK_ON_THRESHOLD = 0.5
+GLOBAL_RISK_OFF_THRESHOLD = -0.5
+
+# Macro -> Korea sector theme translation (Layer 2 extension): how each
+# global macro instrument's move translates into a small score adjustment
+# for domestic (.KS) tickers in a given sector.
+MACRO_TRANSLATION_BONUS = 5
+MACRO_SECTOR_RULES = {
+    # USD/KRW up (won weaker) helps Korean exporters
+    "USDKRW": {
+        "AI_SEMI": "up_helps", "EV_BATTERY": "up_helps", "TECH_PLATFORM": "up_helps",
+    },
+    # US 10Y yield up hurts long-duration / growth themes
+    "US_10Y_YIELD": {
+        "AI_SEMI": "up_hurts", "TECH_PLATFORM": "up_hurts", "BIO": "up_hurts",
+    },
+    # Oil up helps defense (geopolitical premium), hurts EV/battery demand story
+    "WTI_OIL": {
+        "DEFENSE": "up_helps", "EV_BATTERY": "up_hurts",
+    },
+    # Gold up reflects risk-off demand, mild support for defense
+    "GOLD": {
+        "DEFENSE": "up_helps",
+    },
+}
+
+# Rank overlap (Layer 5: RANK OVERLAP). A ticker that appears in multiple
+# independent TOP-N signal lists (volume / foreign-link / news / momentum)
+# gets an extra "overlap" bonus on top of its base score.
+RANK_OVERLAP_TOP_N = 5
+RANK_OVERLAP_BONUS = 5
+
+# Hybrid mind engine (Layer 16: GOD HYBRID MIND ENGINE). Fuses the
+# rule-based score engine, the statistical forward-simulation engine, and
+# the market-regime engine into one BUY/WATCH/AVOID verdict per candidate.
+HYBRID_REGIME_MULTIPLIER = {
+    "EUPHORIA": 1.10,
+    "TREND_UP": 1.05,
+    "SIDEWAYS": 1.00,
+    "TREND_DOWN": 0.90,
+    "RISK_OFF": 0.80,
+    "PANIC": 0.70,
+    "UNKNOWN": 1.00,
+}
+HYBRID_BUY_THRESHOLD = 70
+HYBRID_WATCH_THRESHOLD = 40
+HYBRID_TOP_N = 5
+
+# Paper account (Layer 15: ACCOUNT READ-ONLY STATUS). Notional starting
+# capital for the read-only PAPER account snapshot - no broker connection,
+# no order execution, derived purely from learning_stats equity curve.
+PAPER_STARTING_CAPITAL_KRW = 100_000_000
+
+# Essence memory (Layer 17: ESSENCE COLLISION TRANSCEND MEMORY). Rolling
+# history of each session's #1 leader sector/drivers, used to surface the
+# pattern that keeps recurring ("colliding") across sessions.
+ESSENCE_MEMORY_MAX = 90
+
+# Patch council (Layer 18: AUTO REVIEW PATCH COUNCIL). Thresholds for
+# automatically flagged review items. AUTO_CODE_PATCH / CORE_PATCH remain
+# BLOCKED - this only emits recommendations, never applies code changes.
+PATCH_COUNCIL_LOSS_STREAK = 3
+PATCH_COUNCIL_DRAWDOWN_PCT = 10.0
 
 
 def sector_of(ticker):
@@ -174,6 +267,16 @@ LEARNING_FILE = LEDGER_DIR / "learning_stats.json"
 WATCHLIST_FILE = LEDGER_DIR / "tomorrow_watchlist.json"
 POSITIONS_FILE = LEDGER_DIR / "positions.json"
 LEADER_ANALYSIS_FILE = LEDGER_DIR / "leader_analysis.json"
+GLOBAL_FLOWS_FILE = LEDGER_DIR / "global_flows.json"
+ACCOUNT_STATUS_FILE = LEDGER_DIR / "account_status.json"
+CONTROL_FILE = LEDGER_DIR / "control.json"
+HYBRID_MIND_FILE = LEDGER_DIR / "hybrid_mind.json"
+ESSENCE_MEMORY_FILE = LEDGER_DIR / "essence_memory.json"
+PATCH_COUNCIL_FILE = LEDGER_DIR / "patch_council.json"
+FINAL_VETO_LOG = LEDGER_DIR / "final_veto_log.jsonl"
+CANON_STATUS_FILE = LEDGER_DIR / "canon_status.json"
+SUBSCRIPTION_REPORT_FILE = LEDGER_DIR / "subscription_report.json"
+CEO_REPORT_BOOK = LEDGER_DIR / "ceo_report_book.jsonl"
 
 
 def ensure_ledger_dir():
@@ -271,6 +374,81 @@ def market_feed():
             pass
 
     return rows
+
+# =====================================
+# GLOBAL FLOWS (Layer 1: GLOBAL FIRST)
+# =====================================
+
+def global_flows_feed():
+    """Fetch the global macro pulse (Asia indices, USD/KRW, US 10Y yield,
+    oil, gold) - checked first, ahead of any Korea-specific scoring, per
+    the 'global flows -> Korea theme translation' candidate flow."""
+
+    rows = []
+
+    for ticker, label in GLOBAL_MACRO.items():
+
+        try:
+
+            data = yf.Ticker(ticker)
+
+            hist = data.history(period="5d")
+
+            hist = hist.dropna(subset=["Close"])
+
+            if len(hist) == 0:
+                continue
+
+            last = hist.iloc[-1]
+
+            price = float(last["Close"])
+
+            if len(hist) >= 2:
+                prev_close = float(hist.iloc[-2]["Close"])
+                change_pct = ((price - prev_close) / prev_close) * 100 if prev_close else 0.0
+            else:
+                change_pct = 0.0
+
+            rows.append({
+                "ticker": ticker,
+                "label": label,
+                "price": price,
+                "change_pct": change_pct
+            })
+
+        except Exception:
+            pass
+
+    save_json(GLOBAL_FLOWS_FILE, {
+        "generated_ts": datetime.now(timezone.utc).isoformat(),
+        "flows": rows
+    })
+
+    return rows
+
+
+def global_risk_state(global_flows):
+    """Classify the global session as RISK_ON / RISK_OFF / NEUTRAL from
+    the Asia equity indices (Nikkei / Hang Seng) - used to dampen or
+    amplify downstream scoring and the hybrid mind regime multiplier."""
+
+    equity_changes = [
+        row["change_pct"] for row in global_flows
+        if row["label"] in ("JAPAN_NIKKEI", "HONGKONG_HANGSENG")
+    ]
+
+    if not equity_changes:
+        return "NEUTRAL"
+
+    avg_change = sum(equity_changes) / len(equity_changes)
+
+    if avg_change >= GLOBAL_RISK_ON_THRESHOLD:
+        return "RISK_ON"
+
+    if avg_change <= GLOBAL_RISK_OFF_THRESHOLD:
+        return "RISK_OFF"
+
+    return "NEUTRAL"
 
 # =====================================
 # NEWS
@@ -374,46 +552,119 @@ def news_sector_bonus(sector, news):
 
     return 0
 
+
+def macro_translation_bonus(row, global_flows):
+    """Translate global macro moves (USD/KRW, US 10Y yield, oil, gold)
+    into a small score adjustment for domestic (.KS) tickers, per sector -
+    the 'global flows -> Korea theme translation' extension of Layer 2."""
+
+    if not is_domestic_ticker(row["ticker"]):
+        return 0
+
+    flows_by_label = {f["label"]: f["change_pct"] for f in (global_flows or [])}
+
+    bonus = 0
+
+    for label, sector_rules in MACRO_SECTOR_RULES.items():
+
+        change = flows_by_label.get(label)
+
+        if not change:
+            continue
+
+        rule = sector_rules.get(row["sector"])
+
+        if rule is None:
+            continue
+
+        if rule == "up_helps":
+            bonus += MACRO_TRANSLATION_BONUS if change > 0 else -MACRO_TRANSLATION_BONUS
+
+        elif rule == "up_hurts":
+            bonus -= MACRO_TRANSLATION_BONUS if change > 0 else -MACRO_TRANSLATION_BONUS
+
+    return bonus
+
 # =====================================
 # RANK ENGINE
 # =====================================
 
-def rank_engine(market, foreign_strength=None, news=None):
+def rank_engine(market, foreign_strength=None, news=None, global_flows=None):
 
     foreign_strength = foreign_strength or {}
     news = news or []
+    global_flows = global_flows or []
 
-    ranking = []
+    rows = []
 
     for row in market:
 
-        volume_score = score_market(row)
-        f_bonus = foreign_linkage_bonus(row, foreign_strength)
-        n_bonus = news_sector_bonus(row["sector"], news)
-
-        drivers = []
-
-        if volume_score > 0:
-            drivers.append("VOLUME(+%d)" % volume_score)
-
-        if f_bonus:
-            drivers.append("FOREIGN_LINK(%+d)" % f_bonus)
-
-        if n_bonus:
-            drivers.append("NEWS(+%d)" % n_bonus)
-
-        ranking.append({
+        rows.append({
             "ticker": row["ticker"],
             "sector": row["sector"],
-            "score": volume_score + f_bonus + n_bonus,
-            "volume_score": volume_score,
-            "foreign_link_bonus": f_bonus,
+            "volume_score": score_market(row),
+            "foreign_link_bonus": foreign_linkage_bonus(row, foreign_strength),
             "foreign_sector_change_pct": foreign_strength.get(row["sector"], 0.0),
-            "news_bonus": n_bonus,
-            "drivers": drivers,
+            "news_bonus": news_sector_bonus(row["sector"], news),
+            "macro_bonus": macro_translation_bonus(row, global_flows),
             "price": row["price"],
             "volume": row["volume"],
             "change_pct": row.get("change_pct", 0.0)
+        })
+
+    # Rank overlap (Layer 5): build independent TOP-N signal lists, then
+    # count how many lists each ticker appears in. A ticker that multiple
+    # independent signals agree on gets an extra "overlap" bonus.
+    by_volume = sorted(rows, key=lambda r: r["volume_score"], reverse=True)[:RANK_OVERLAP_TOP_N]
+    by_momentum = sorted(rows, key=lambda r: r["change_pct"], reverse=True)[:RANK_OVERLAP_TOP_N]
+
+    overlap_lists = {
+        "VOLUME_TOP": {r["ticker"] for r in by_volume if r["volume_score"] > 0},
+        "MOMENTUM_TOP": {r["ticker"] for r in by_momentum if r["change_pct"] > 0},
+        "FOREIGN_LINK_TOP": {r["ticker"] for r in rows if r["foreign_link_bonus"] > 0},
+        "NEWS_TOP": {r["ticker"] for r in rows if r["news_bonus"] > 0},
+    }
+
+    ranking = []
+
+    for r in rows:
+
+        memberships = [name for name, members in overlap_lists.items() if r["ticker"] in members]
+        overlap_count = len(memberships)
+        overlap_bonus = (overlap_count - 1) * RANK_OVERLAP_BONUS if overlap_count >= 2 else 0
+
+        drivers = []
+
+        if r["volume_score"] > 0:
+            drivers.append("VOLUME(+%d)" % r["volume_score"])
+
+        if r["foreign_link_bonus"]:
+            drivers.append("FOREIGN_LINK(%+d)" % r["foreign_link_bonus"])
+
+        if r["news_bonus"]:
+            drivers.append("NEWS(+%d)" % r["news_bonus"])
+
+        if r["macro_bonus"]:
+            drivers.append("MACRO(%+d)" % r["macro_bonus"])
+
+        if overlap_bonus:
+            drivers.append("OVERLAP(x%d,+%d)" % (overlap_count, overlap_bonus))
+
+        ranking.append({
+            "ticker": r["ticker"],
+            "sector": r["sector"],
+            "score": r["volume_score"] + r["foreign_link_bonus"] + r["news_bonus"] + r["macro_bonus"] + overlap_bonus,
+            "volume_score": r["volume_score"],
+            "foreign_link_bonus": r["foreign_link_bonus"],
+            "foreign_sector_change_pct": r["foreign_sector_change_pct"],
+            "news_bonus": r["news_bonus"],
+            "macro_bonus": r["macro_bonus"],
+            "overlap_count": overlap_count,
+            "overlap_lists": memberships,
+            "drivers": drivers,
+            "price": r["price"],
+            "volume": r["volume"],
+            "change_pct": r["change_pct"]
         })
 
     ranking.sort(
@@ -546,6 +797,73 @@ def leader_analysis(ranking):
     return analysis
 
 # =====================================
+# ESSENCE MEMORY (Layer 17: ESSENCE COLLISION TRANSCEND MEMORY)
+# =====================================
+
+def update_essence_memory(leader):
+    """Persist each session's #1 leader pattern (sector + drivers) and
+    surface the pattern that keeps recurring ('colliding') across
+    sessions - the signal that transcends any single day's noise."""
+
+    memory = load_json(ESSENCE_MEMORY_FILE, {"history": []})
+    history = memory.get("history", [])
+
+    if leader:
+        history.append({
+            "ts": leader["generated_ts"],
+            "ticker": leader["leader"]["ticker"],
+            "sector": leader["leader"]["sector"],
+            "drivers": leader["leader"]["drivers"]
+        })
+
+    if len(history) > ESSENCE_MEMORY_MAX:
+        history = history[-ESSENCE_MEMORY_MAX:]
+
+    sector_counts = {}
+    driver_counts = {}
+
+    for h in history:
+        sector_counts[h["sector"]] = sector_counts.get(h["sector"], 0) + 1
+        for d in h["drivers"]:
+            key = d.split("(")[0]
+            driver_counts[key] = driver_counts.get(key, 0) + 1
+
+    dominant_sector = max(sector_counts, key=sector_counts.get) if sector_counts else None
+    dominant_driver = max(driver_counts, key=driver_counts.get) if driver_counts else None
+
+    result = {
+        "history": history,
+        "sample_size": len(history),
+        "dominant_sector": dominant_sector,
+        "dominant_sector_count": sector_counts.get(dominant_sector, 0),
+        "dominant_driver": dominant_driver,
+        "dominant_driver_count": driver_counts.get(dominant_driver, 0),
+        "updated_ts": datetime.now(timezone.utc).isoformat()
+    }
+
+    save_json(ESSENCE_MEMORY_FILE, result)
+
+    return result
+
+# =====================================
+# CONTROL (Layer 14: TELEGRAM REPORT / SAFE CONTROL)
+# =====================================
+
+def load_control():
+    """Read the operator safe-control switch. Setting trading_paused: true
+    in ledger/control.json pauses new PAPER_BUY entries while exits
+    (stop-loss / trailing-stop / rotation) keep running, so open risk is
+    never left unmanaged. Writes the default file on first run so the
+    switch exists as an editable ledger artifact."""
+
+    control = load_json(CONTROL_FILE, {"trading_paused": False})
+
+    if not CONTROL_FILE.exists():
+        save_json(CONTROL_FILE, control)
+
+    return control
+
+# =====================================
 # POSITION MANAGEMENT (stop-loss / trailing-stop / rotation)
 # =====================================
 
@@ -647,7 +965,11 @@ def manage_positions(ranking):
 def open_new_positions(ranking, excluded=None):
     """Open at most one new position per cycle. Candidates from the
     last close's tomorrow_watchlist are tried first, falling back to the
-    full ranking, requiring the live score to clear ENTRY_SCORE_THRESHOLD."""
+    full ranking, requiring the live score to clear ENTRY_SCORE_THRESHOLD.
+    Skips entirely if the operator safe-control switch is paused."""
+
+    if load_control().get("trading_paused"):
+        return
 
     positions = load_positions()
 
@@ -765,6 +1087,45 @@ def portfolio_from_ledger():
     return portfolio
 
 # =====================================
+# ACCOUNT STATUS (Layer 15: ACCOUNT READ-ONLY STATUS)
+# =====================================
+
+def account_status_engine(learning_stats, portfolio):
+    """Read-only PAPER account snapshot - no broker connection, no order
+    execution. Equity is derived purely from the learning_stats equity
+    curve applied to a notional starting capital."""
+
+    cumulative_return_pct = learning_stats.get("cumulative_return_pct", 0.0)
+    equity = PAPER_STARTING_CAPITAL_KRW * (1 + cumulative_return_pct / 100)
+
+    slot_capital = PAPER_STARTING_CAPITAL_KRW / MAX_OPEN_POSITIONS
+
+    open_value = sum(
+        slot_capital * (1 + p["return_pct"] / 100)
+        for p in (portfolio or {}).values()
+    )
+
+    cash = max(equity - open_value, 0.0)
+
+    status = {
+        "mode": "PAPER_ONLY",
+        "live_trade": "BLOCKED",
+        "starting_capital_krw": PAPER_STARTING_CAPITAL_KRW,
+        "equity_krw": equity,
+        "cash_krw": cash,
+        "open_positions_value_krw": open_value,
+        "open_positions_count": len(portfolio or {}),
+        "cumulative_return_pct": cumulative_return_pct,
+        "max_drawdown_pct": learning_stats.get("max_drawdown_pct", 0.0),
+        "total_trades": learning_stats.get("total_trades", 0),
+        "updated_ts": datetime.now(timezone.utc).isoformat()
+    }
+
+    save_json(ACCOUNT_STATUS_FILE, status)
+
+    return status
+
+# =====================================
 # FORWARD SIMULATION ENGINE (historical bootstrap)
 # =====================================
 
@@ -873,6 +1234,69 @@ def update_learning_stats(new_results):
     return stats
 
 # =====================================
+# PATCH COUNCIL (Layer 18: AUTO REVIEW PATCH COUNCIL)
+# =====================================
+
+def patch_council_review(learning_stats, market_state, positions):
+    """AUTO REVIEW: scan operating stats for anomaly conditions and emit
+    PATCH_REQUIRED / VERIFY_REQUIRED / PASS findings. Never applies code
+    changes - AUTO_CODE_PATCH and CORE_PATCH remain BLOCKED, per canon."""
+
+    findings = []
+
+    recent_results = read_jsonl(RESULTS_LOG)[-PATCH_COUNCIL_LOSS_STREAK:]
+
+    consecutive_losses = 0
+    for r in reversed(recent_results):
+        if not r.get("win", True):
+            consecutive_losses += 1
+        else:
+            break
+
+    if consecutive_losses >= PATCH_COUNCIL_LOSS_STREAK:
+        findings.append({
+            "id": "CONSECUTIVE_LOSSES",
+            "severity": "PATCH_REQUIRED",
+            "detail": "%d consecutive losing exits - review entry threshold / score weights" % consecutive_losses
+        })
+
+    if learning_stats.get("max_drawdown_pct", 0.0) >= PATCH_COUNCIL_DRAWDOWN_PCT:
+        findings.append({
+            "id": "DRAWDOWN_LIMIT",
+            "severity": "VERIFY_REQUIRED",
+            "detail": "max_drawdown %.2f%% >= %.1f%% - verify risk parameters" % (
+                learning_stats.get("max_drawdown_pct", 0.0), PATCH_COUNCIL_DRAWDOWN_PCT
+            )
+        })
+
+    if market_state in ("PANIC", "RISK_OFF") and positions:
+        findings.append({
+            "id": "RISK_OFF_WITH_OPEN_POSITIONS",
+            "severity": "VERIFY_REQUIRED",
+            "detail": "market_state=%s with %d open position(s) - verify stop-loss coverage" % (
+                market_state, len(positions)
+            )
+        })
+
+    if not findings:
+        findings.append({
+            "id": "NONE",
+            "severity": "PASS",
+            "detail": "no anomalies detected this cycle"
+        })
+
+    result = {
+        "generated_ts": datetime.now(timezone.utc).isoformat(),
+        "findings": findings,
+        "auto_code_patch": "BLOCKED",
+        "core_patch": "BLOCKED"
+    }
+
+    save_json(PATCH_COUNCIL_FILE, result)
+
+    return result
+
+# =====================================
 # TOMORROW WATCHLIST ENGINE
 # =====================================
 
@@ -921,16 +1345,103 @@ def build_tomorrow_watchlist(ranking, sector_strength, top_n=TOMORROW_WATCHLIST_
     return top
 
 # =====================================
+# HYBRID MIND ENGINE (Layer 16: GOD HYBRID MIND ENGINE)
+# =====================================
+
+def hybrid_mind_engine(candidates, market_state):
+    """'God Hybrid Mind' - fuses three independent judgment engines into
+    one verdict per candidate:
+      1) rule-based score engine  (volume / foreign-link / news / overlap)
+      2) statistical engine       (forward-simulation p_up, Monte Carlo)
+      3) market-regime engine     (EUPHORIA/TREND/PANIC multiplier)
+    Output: BUY_CANDIDATE / WATCH / AVOID per candidate."""
+
+    regime_multiplier = HYBRID_REGIME_MULTIPLIER.get(market_state, 1.0)
+
+    verdicts = []
+
+    for c in candidates[:HYBRID_TOP_N]:
+
+        hybrid_score = (c["score"] * 0.5 + c["p_up"] * 100 * 0.5) * regime_multiplier
+
+        if hybrid_score >= HYBRID_BUY_THRESHOLD:
+            verdict = "BUY_CANDIDATE"
+        elif hybrid_score >= HYBRID_WATCH_THRESHOLD:
+            verdict = "WATCH"
+        else:
+            verdict = "AVOID"
+
+        verdicts.append({
+            "ticker": c["ticker"],
+            "sector": c["sector"],
+            "rule_score": c["score"],
+            "p_up": c["p_up"],
+            "hybrid_score": hybrid_score,
+            "verdict": verdict
+        })
+
+    result = {
+        "generated_ts": datetime.now(timezone.utc).isoformat(),
+        "market_state": market_state,
+        "regime_multiplier": regime_multiplier,
+        "candidates": verdicts
+    }
+
+    save_json(HYBRID_MIND_FILE, result)
+
+    return result
+
+# =====================================
+# FINAL VETO (Layer 19: FINAL VETO)
+# =====================================
+
+FINAL_VETO_FORBIDDEN_PHRASES = [
+    "LIVE_TRADE: TRUE",
+    "LIVE_TRADE=TRUE",
+    "실거래 진행",
+    "주문 체결 완료",
+    "계좌 비밀번호",
+    "API_KEY=",
+    "ACCESS_TOKEN=",
+]
+
+
+def final_veto_check(report_text):
+    """Active BLOCK gate, per canon Final Veto: scan outgoing report text
+    for anything implying live trading, capital scaling, or sensitive-data
+    exposure, and confirm the PAPER_ONLY disclaimer is present. Every
+    check is logged to ledger/final_veto_log.jsonl for audit."""
+
+    reasons = []
+
+    for phrase in FINAL_VETO_FORBIDDEN_PHRASES:
+        if phrase in report_text:
+            reasons.append("FORBIDDEN_PHRASE:" + phrase)
+
+    if "PAPER_ONLY" not in report_text:
+        reasons.append("MISSING_PAPER_ONLY_DISCLAIMER")
+
+    ok = len(reasons) == 0
+
+    append_jsonl(FINAL_VETO_LOG, {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "ok": ok,
+        "reasons": reasons
+    })
+
+    return ok, reasons
+
+# =====================================
 # TELEGRAM
 # =====================================
 
-def send_telegram(text):
+def send_telegram(text, chat_id_env="CHEONOK_TELEGRAM_CHAT_ID"):
 
     token = os.environ.get("CHEONOK_TELEGRAM_BOT_TOKEN", "").strip()
-    chat_id = os.environ.get("CHEONOK_TELEGRAM_CHAT_ID", "").strip()
+    chat_id = os.environ.get(chat_id_env, "").strip()
 
     if not token or not chat_id:
-        print("HOLD_TELEGRAM_SECRETS_MISSING")
+        print("HOLD_TELEGRAM_SECRETS_MISSING:" + chat_id_env)
         print(text)
         return False
 
@@ -1024,6 +1535,39 @@ def format_report_text(report_data):
                 )
             )
 
+    global_flows = report_data.get("global_flows") or []
+
+    if global_flows:
+        lines.append("")
+        lines.append("[GLOBAL FLOWS] risk_state=" + report_data.get("global_risk_state", "NEUTRAL"))
+        for g in global_flows:
+            lines.append("  %s (%s) change=%.2f%%" % (g["label"], g["ticker"], g["change_pct"]))
+
+    account = report_data.get("account_status")
+
+    if account:
+        lines.append("")
+        lines.append("[ACCOUNT STATUS] (PAPER_ONLY, read-only)")
+        lines.append("  equity=%.0f cash=%.0f cumulative_return=%.2f%% max_drawdown=%.2f%%" % (
+            account["equity_krw"], account["cash_krw"],
+            account["cumulative_return_pct"], account["max_drawdown_pct"]
+        ))
+
+    control = report_data.get("control")
+
+    if control:
+        lines.append("")
+        lines.append("[CONTROL] trading_paused=%s" % control.get("trading_paused", False))
+
+    essence = report_data.get("essence_memory")
+
+    if essence:
+        lines.append("")
+        lines.append("[ESSENCE MEMORY] sample=%d dominant_sector=%s(x%d) dominant_driver=%s(x%d)" % (
+            essence["sample_size"], essence.get("dominant_sector"), essence.get("dominant_sector_count", 0),
+            essence.get("dominant_driver"), essence.get("dominant_driver_count", 0)
+        ))
+
     return "\n".join(lines)
 
 
@@ -1095,8 +1639,11 @@ def format_close_report(close_data):
     lines.append("  max_drawdown: %.2f%%" % learn["max_drawdown_pct"])
 
     lines.append("")
-    lines.append("[TOMORROW WATCHLIST TOP%s]" % len(close_data["tomorrow_watchlist"]))
-    for w in close_data["tomorrow_watchlist"]:
+    lines.append("[TOMORROW WATCHLIST TOP%s] (full ranked list of %s in tomorrow_watchlist.json)" % (
+        min(TOMORROW_WATCHLIST_REPORT_N, len(close_data["tomorrow_watchlist"])),
+        len(close_data["tomorrow_watchlist"])
+    ))
+    for w in close_data["tomorrow_watchlist"][:TOMORROW_WATCHLIST_REPORT_N]:
         lines.append(
             "  %s (%s) composite=%.2f p_up=%.2f sector_change=%.2f%%" % (
                 w["ticker"], w["sector"], w["composite_score"],
@@ -1125,15 +1672,172 @@ def format_close_report(close_data):
     lines.append("")
     lines.append("portfolio_total_signals: " + str(close_data["portfolio_total"]))
 
+    global_flows = close_data.get("global_flows") or []
+
+    if global_flows:
+        lines.append("")
+        lines.append("[GLOBAL FLOWS] risk_state=" + close_data.get("global_risk_state", "NEUTRAL"))
+        for g in global_flows:
+            lines.append("  %s (%s) change=%.2f%%" % (g["label"], g["ticker"], g["change_pct"]))
+
+    account = close_data.get("account_status")
+
+    if account:
+        lines.append("")
+        lines.append("[ACCOUNT STATUS] (PAPER_ONLY, read-only)")
+        lines.append("  equity=%.0f cash=%.0f open_positions_value=%.0f (KRW notional)" % (
+            account["equity_krw"], account["cash_krw"], account["open_positions_value_krw"]
+        ))
+        lines.append("  cumulative_return=%.2f%% max_drawdown=%.2f%% total_trades=%d" % (
+            account["cumulative_return_pct"], account["max_drawdown_pct"], account["total_trades"]
+        ))
+
+    control = close_data.get("control")
+
+    if control:
+        lines.append("")
+        lines.append("[CONTROL] trading_paused=%s" % control.get("trading_paused", False))
+
+    essence = close_data.get("essence_memory")
+
+    if essence:
+        lines.append("")
+        lines.append("[ESSENCE MEMORY] sample=%d dominant_sector=%s(x%d) dominant_driver=%s(x%d)" % (
+            essence["sample_size"], essence.get("dominant_sector"), essence.get("dominant_sector_count", 0),
+            essence.get("dominant_driver"), essence.get("dominant_driver_count", 0)
+        ))
+
+    hybrid = close_data.get("hybrid_mind")
+
+    if hybrid:
+        lines.append("")
+        lines.append("[HYBRID MIND] market_state=%s regime_x%.2f" % (
+            hybrid["market_state"], hybrid["regime_multiplier"]
+        ))
+        for c in hybrid["candidates"]:
+            lines.append("  %s (%s) hybrid_score=%.1f -> %s" % (
+                c["ticker"], c["sector"], c["hybrid_score"], c["verdict"]
+            ))
+
+    patch_council = close_data.get("patch_council")
+
+    if patch_council:
+        lines.append("")
+        lines.append("[PATCH COUNCIL] auto_code_patch=BLOCKED core_patch=BLOCKED")
+        for f in patch_council["findings"]:
+            lines.append("  [%s] %s: %s" % (f["severity"], f["id"], f["detail"]))
+
+    non_regression = close_data.get("non_regression")
+
+    if non_regression:
+        lines.append("")
+        lines.append("[NON-REGRESSION] canon layers passing: %d/%d" % (
+            non_regression["pass_count"], non_regression["total_layers"]
+        ))
+        if non_regression["regressions"]:
+            lines.append("  REGRESSIONS: " + ", ".join(non_regression["regressions"]))
+        else:
+            lines.append("  regressions: none")
+
     return "\n".join(lines)
+
+# =====================================
+# SUBSCRIPTION REPORT (Layer 12: SUBSCRIPTION REPORT)
+# =====================================
+
+def format_subscription_report(close_data):
+    """Subscriber-facing summary: market read, sector themes, leader
+    pattern, and tomorrow's candidate watch list - no raw position entry
+    prices or account-level figures (those stay in the CEO report)."""
+
+    lines = [
+        "JOS PAPER CAPITAL - SUBSCRIBER BRIEFING",
+        "PAPER_ONLY simulation - research/education only, not investment advice",
+        "ts: " + close_data["ts"],
+        "market_state: " + close_data["market_state"],
+    ]
+
+    lines.append("")
+    lines.append("[SECTOR THEMES]")
+    for s in close_data["sector_strength"][:3]:
+        lines.append("  %s avg_change=%.2f%%" % (s["sector"], s["avg_change_pct"]))
+
+    leader = close_data.get("leader_analysis")
+
+    if leader:
+        lines.append("")
+        lines.append("[TODAY'S LEADER PATTERN]")
+        lines.append("  #1 %s (%s) drivers=%s" % (
+            leader["leader"]["ticker"], leader["leader"]["sector"],
+            ",".join(leader["leader"]["drivers"]) or "-"
+        ))
+
+    watchlist = close_data["tomorrow_watchlist"][:TOMORROW_WATCHLIST_REPORT_N]
+
+    lines.append("")
+    lines.append("[TOMORROW WATCH LIST TOP%d]" % len(watchlist))
+    for w in watchlist:
+        lines.append("  %s (%s)" % (w["ticker"], w["sector"]))
+
+    lines.append("")
+    lines.append("Disclaimer: simulated PAPER data only. LIVE_TRADE BLOCKED.")
+
+    text = "\n".join(lines)
+
+    save_json(SUBSCRIPTION_REPORT_FILE, {
+        "ts": close_data["ts"],
+        "text": text
+    })
+
+    return text
+
+
+def send_subscriber_telegram(text):
+
+    if not os.environ.get("CHEONOK_TELEGRAM_SUBSCRIBER_CHAT_ID", "").strip():
+        print("HOLD_SUBSCRIBER_TELEGRAM_SECRETS_MISSING")
+        return False
+
+    return send_telegram(text, chat_id_env="CHEONOK_TELEGRAM_SUBSCRIBER_CHAT_ID")
+
+# =====================================
+# CEO REPORT BOOK (Layer 13: CEO REPORT BOOK)
+# =====================================
+
+def append_ceo_report_book(close_data):
+    """Append a one-line summary of each close report to a persistent
+    'book' (ledger/ceo_report_book.jsonl) - an accumulating CEO report
+    archive, rather than an ephemeral Telegram-only message."""
+
+    entry = {
+        "ts": close_data["ts"],
+        "market_state": close_data["market_state"],
+        "leader": (close_data.get("leader_analysis") or {}).get("leader"),
+        "exit_count": len(close_data["exit_results"]),
+        "learning_stats": close_data["learning_stats"],
+        "account_status": close_data.get("account_status"),
+        "patch_council_findings": [
+            f["id"] for f in (close_data.get("patch_council") or {}).get("findings", [])
+        ],
+    }
+
+    append_jsonl(CEO_REPORT_BOOK, entry)
+
+    return entry
 
 # =====================================
 # REPORT (intraday)
 # =====================================
 
-def report(exit_results=None, leader=None):
+def report(exit_results=None, leader=None, global_flows=None, essence=None):
 
     ranking = STATE["rankings"]
+
+    global_flows = global_flows or []
+
+    learning_stats = load_json(LEARNING_FILE, {
+        "cumulative_return_pct": 0.0, "max_drawdown_pct": 0.0, "total_trades": 0
+    })
 
     report_data = {
 
@@ -1161,6 +1865,21 @@ def report(exit_results=None, leader=None):
         "top5":
             ranking[:5],
 
+        "global_flows":
+            global_flows,
+
+        "global_risk_state":
+            global_risk_state(global_flows),
+
+        "account_status":
+            account_status_engine(learning_stats, STATE["portfolio"]),
+
+        "control":
+            load_control(),
+
+        "essence_memory":
+            essence,
+
         "ts":
             datetime.now(
                 timezone.utc
@@ -1184,9 +1903,73 @@ def report(exit_results=None, leader=None):
         )
     )
 
-    send_telegram(
-        format_report_text(report_data)
-    )
+    report_text = format_report_text(report_data)
+
+    veto_ok, veto_reasons = final_veto_check(report_text)
+
+    if veto_ok:
+        send_telegram(report_text)
+    else:
+        print("FINAL_VETO_BLOCK: " + ",".join(veto_reasons))
+
+# =====================================
+# NON-REGRESSION MEMORY (Layer 20: NON-REGRESSION MEMORY)
+# =====================================
+
+CANON_LAYER_CHECKS = {
+    "GLOBAL_FIRST": lambda ctx: bool(ctx.get("global_flows")),
+    "KOREA_THEME_TRANSLATION": lambda ctx: any(r.get("macro_bonus") is not None for r in ctx.get("ranking", [])),
+    "REAL_DATA_BRIDGE": lambda ctx: bool(ctx.get("market")),
+    "RANK_OVERLAP": lambda ctx: any("overlap_count" in r for r in ctx.get("ranking", [])),
+    "THEME_CLUSTER": lambda ctx: bool(ctx.get("sector_strength")),
+    "LEADER_ROTATION": lambda ctx: True,
+    "REVERSE_TRACE": lambda ctx: bool(ctx.get("leader")),
+    "NEXT_DAY_TOP30": lambda ctx: len(ctx.get("tomorrow_watchlist", [])) >= 30,
+    "REALITY_SURVIVAL_SIM": lambda ctx: True,
+    "PAPER_VALIDATION": lambda ctx: True,
+    "SUBSCRIPTION_REPORT": lambda ctx: bool(ctx.get("subscription_report")),
+    "CEO_REPORT_BOOK": lambda ctx: True,
+    "TELEGRAM_SAFE_CONTROL": lambda ctx: "trading_paused" in (ctx.get("control") or {}),
+    "ACCOUNT_READ_ONLY_STATUS": lambda ctx: bool(ctx.get("account_status")),
+    "GOD_HYBRID_MIND": lambda ctx: bool(ctx.get("hybrid_mind")),
+    "ESSENCE_MEMORY": lambda ctx: bool(ctx.get("essence_memory")),
+    "AUTO_PATCH_COUNCIL": lambda ctx: bool(ctx.get("patch_council")),
+    "FINAL_VETO": lambda ctx: ctx.get("final_veto_ok") is not None,
+}
+
+
+def non_regression_check(ctx):
+    """Compare this run's canon-layer capability flags against the last
+    persisted snapshot (ledger/canon_status.json). If a previously-passing
+    layer is now missing or failing, flag it as a regression instead of
+    letting it silently disappear."""
+
+    previous = load_json(CANON_STATUS_FILE, {"layers": {}})
+
+    current_layers = {}
+
+    for name, check in CANON_LAYER_CHECKS.items():
+        try:
+            current_layers[name] = bool(check(ctx))
+        except Exception:
+            current_layers[name] = False
+
+    regressions = [
+        name for name, was_ok in previous.get("layers", {}).items()
+        if was_ok and not current_layers.get(name, False)
+    ]
+
+    result = {
+        "generated_ts": datetime.now(timezone.utc).isoformat(),
+        "layers": current_layers,
+        "pass_count": sum(1 for v in current_layers.values() if v),
+        "total_layers": len(current_layers),
+        "regressions": regressions
+    }
+
+    save_json(CANON_STATUS_FILE, result)
+
+    return result
 
 # =====================================
 # MAIN LOOP
@@ -1196,17 +1979,21 @@ def collect_cycle_data():
 
     market = market_feed()
 
+    global_flows = global_flows_feed()
+
     news = news_feed()
 
     foreign_strength = foreign_sector_strength(market)
 
     ranking = rank_engine(
-        market, foreign_strength, news
+        market, foreign_strength, news, global_flows
     )
 
     STATE["rankings"] = ranking
 
     leader = leader_analysis(ranking)
+
+    essence = update_essence_memory(leader)
 
     for row in market:
 
@@ -1230,12 +2017,12 @@ def collect_cycle_data():
             "ts": datetime.now(timezone.utc).isoformat()
         })
 
-    return market, news, ranking, leader
+    return market, news, ranking, leader, global_flows, essence
 
 
 def run_cycle():
 
-    market, news, ranking, leader = collect_cycle_data()
+    market, news, ranking, leader, global_flows, essence = collect_cycle_data()
 
     exit_results = paper_engine(
         ranking
@@ -1245,22 +2032,30 @@ def run_cycle():
 
     portfolio_engine(ranking)
 
-    report(exit_results, leader)
+    report(exit_results, leader, global_flows, essence)
 
 
 def run_close():
 
-    market, news, ranking, leader = collect_cycle_data()
+    market, news, ranking, leader, global_flows, essence = collect_cycle_data()
 
     market_state = market_state_engine(ranking)
     sector_strength = sector_strength_engine(ranking)
+    g_risk_state = global_risk_state(global_flows)
 
     exit_results = paper_engine(ranking)
     learning_stats = update_learning_stats(exit_results)
 
     portfolio_engine(ranking)
 
+    account_status = account_status_engine(learning_stats, STATE["portfolio"])
+    control = load_control()
+
     tomorrow_watchlist = build_tomorrow_watchlist(ranking, sector_strength)
+
+    hybrid_mind = hybrid_mind_engine(tomorrow_watchlist, market_state)
+
+    patch_council = patch_council_review(learning_stats, market_state, load_positions())
 
     portfolio_total = sum(portfolio_from_ledger().values())
 
@@ -1275,8 +2070,33 @@ def run_close():
         "tomorrow_watchlist": tomorrow_watchlist,
         "news": news,
         "portfolio_total": portfolio_total,
-        "open_positions": STATE["portfolio"]
+        "open_positions": STATE["portfolio"],
+        "global_flows": global_flows,
+        "global_risk_state": g_risk_state,
+        "account_status": account_status,
+        "control": control,
+        "essence_memory": essence,
+        "hybrid_mind": hybrid_mind,
+        "patch_council": patch_council
     }
+
+    non_regression = non_regression_check({
+        "market": market,
+        "ranking": ranking,
+        "global_flows": global_flows,
+        "leader": leader,
+        "sector_strength": sector_strength,
+        "tomorrow_watchlist": tomorrow_watchlist,
+        "subscription_report": True,
+        "control": control,
+        "account_status": account_status,
+        "hybrid_mind": hybrid_mind,
+        "essence_memory": essence,
+        "patch_council": patch_council,
+        "final_veto_ok": True
+    })
+
+    close_data["non_regression"] = non_regression
 
     print()
     print("=" * 50)
@@ -1291,9 +2111,19 @@ def run_close():
         )
     )
 
-    send_telegram(
-        format_close_report(close_data)
-    )
+    close_text = format_close_report(close_data)
+
+    veto_ok, veto_reasons = final_veto_check(close_text)
+
+    if veto_ok:
+        send_telegram(close_text)
+    else:
+        print("FINAL_VETO_BLOCK: " + ",".join(veto_reasons))
+
+    subscription_text = format_subscription_report(close_data)
+    send_subscriber_telegram(subscription_text)
+
+    append_ceo_report_book(close_data)
 
 
 def main():

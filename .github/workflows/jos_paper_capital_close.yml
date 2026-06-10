@@ -35,6 +35,9 @@ jobs:
         env:
           CHEONOK_TELEGRAM_BOT_TOKEN: ${{ secrets.CHEONOK_TELEGRAM_BOT_TOKEN }}
           CHEONOK_TELEGRAM_CHAT_ID: ${{ secrets.CHEONOK_TELEGRAM_CHAT_ID }}
+          # Optional (Layer 12: SUBSCRIPTION REPORT). If unset, the subscriber
+          # briefing is skipped with HOLD_SUBSCRIBER_TELEGRAM_SECRETS_MISSING.
+          CHEONOK_TELEGRAM_SUBSCRIBER_CHAT_ID: ${{ secrets.CHEONOK_TELEGRAM_SUBSCRIBER_CHAT_ID }}
         run: python automation/python_paper_capital_runtime/JOS_MASTER.py --close
 
       - name: Commit ledger updates
