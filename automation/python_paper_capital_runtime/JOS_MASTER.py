@@ -198,6 +198,8 @@ def market_feed():
 
             hist = data.history(period="5d")
 
+            hist = hist.dropna(subset=["Close"])
+
             if len(hist) == 0:
                 continue
 
@@ -422,6 +424,8 @@ def forward_simulation(ticker, trials=FORWARD_SIM_TRIALS, horizon_days=FORWARD_S
 
         hist = yf.Ticker(ticker).history(period="3mo")
 
+        hist = hist.dropna(subset=["Close"])
+
         closes = hist["Close"].tolist()
 
         if len(closes) < 2:
@@ -490,11 +494,12 @@ def evaluate_today_signals():
         ticker = sig.get("ticker")
         entry_price = sig.get("price")
 
-        if not ticker or not entry_price:
+        if not ticker or not entry_price or entry_price != entry_price:
             continue
 
         try:
             hist = yf.Ticker(ticker).history(period="1d")
+            hist = hist.dropna(subset=["Close"])
             if len(hist) == 0:
                 continue
             current_price = float(hist.iloc[-1]["Close"])
