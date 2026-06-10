@@ -17,12 +17,16 @@ Run (end-of-day close / CEO report, cloud/CI):
     python JOS_MASTER.py --close
 
 Ledger (persisted under ./ledger/, committed back to the repo by CI):
-- signals_log.jsonl       : every PAPER_BUY signal (Signal DB)
-- results_log.jsonl       : realized return per evaluated signal (Result DB)
+- signals_log.jsonl       : every PAPER_BUY / PAPER_SELL signal (Signal DB)
+- results_log.jsonl       : realized return per closed position, with exit
+                            reason (STOP_LOSS / TRAILING_STOP / ROTATION)
+- positions.json          : currently open paper positions (entry price,
+                            peak price since entry, sector)
 - market_log.jsonl        : raw market snapshots (Market DB)
 - news_log.jsonl          : raw news headlines (News DB)
 - learning_stats.json      : rolling equity curve / win rate / drawdown
-- tomorrow_watchlist.json  : next-session TOP candidates
+- tomorrow_watchlist.json  : next-session TOP candidates (consulted first
+                            when opening new positions)
 
 Reporting:
 - Each report is also sent to Telegram via CHEONOK_TELEGRAM_BOT_TOKEN /
@@ -96,8 +100,13 @@ TOMORROW_WATCHLIST_SIZE = 5
 # Learning engine
 EQUITY_CURVE_MAX = 90
 
-# Result evaluation: cap network calls per run
-MAX_EVAL_PER_RUN = 20
+# Position management (stop-loss / trailing-stop / rotation)
+ENTRY_SCORE_THRESHOLD = 60   # minimum score to open a new position
+STOP_LOSS_PCT = 2.0          # hard exit if price falls this % below entry
+TRAILING_STOP_PCT = 3.0      # once in profit, exit if price retreats this % from its peak
+ROTATION_SCORE_GAP = 40      # rotate a non-profitable position into a candidate that
+                              # outscores it by at least this much
+MAX_OPEN_POSITIONS = 3        # max concurrent paper positions
 
 
 def sector_of(ticker):
@@ -129,6 +138,7 @@ NEWS_LOG = LEDGER_DIR / "news_log.jsonl"
 MARKET_LOG = LEDGER_DIR / "market_log.jsonl"
 LEARNING_FILE = LEDGER_DIR / "learning_stats.json"
 WATCHLIST_FILE = LEDGER_DIR / "tomorrow_watchlist.json"
+POSITIONS_FILE = LEDGER_DIR / "positions.json"
 
 
 def ensure_ledger_dir():
@@ -356,45 +366,202 @@ def sector_strength_engine(ranking):
     return strength
 
 # =====================================
-# PAPER ENGINE
+# POSITION MANAGEMENT (stop-loss / trailing-stop / rotation)
 # =====================================
+
+def load_positions():
+    return load_json(POSITIONS_FILE, {"positions": []}).get("positions", [])
+
+
+def save_positions(positions):
+    save_json(POSITIONS_FILE, {"positions": positions})
+
+
+def close_position(position, current_price, reason):
+
+    entry_price = position["entry_price"]
+    return_pct = ((current_price - entry_price) / entry_price) * 100
+
+    exit_signal = {
+        "ticker": position["ticker"],
+        "sector": position["sector"],
+        "price": current_price,
+        "action": "PAPER_SELL",
+        "reason": reason,
+        "ts": datetime.now(timezone.utc).isoformat()
+    }
+
+    STATE["paper_trades"].append(exit_signal)
+    append_jsonl(SIGNALS_LOG, exit_signal)
+
+    result = {
+        "signal_ts": position["entry_ts"],
+        "ticker": position["ticker"],
+        "sector": position["sector"],
+        "entry_price": entry_price,
+        "exit_price": current_price,
+        "return_pct": return_pct,
+        "win": return_pct > 0,
+        "reason": reason,
+        "ts": exit_signal["ts"]
+    }
+
+    append_jsonl(RESULTS_LOG, result)
+
+    return result
+
+
+def manage_positions(ranking):
+    """Check every open position for a stop-loss, trailing-stop (profit
+    locked in once the trend reverses), or rotation exit. Profits have no
+    fixed cap - a position rides until the trailing stop triggers."""
+
+    ranking_by_ticker = {row["ticker"]: row for row in ranking}
+
+    positions = load_positions()
+    top = ranking[0] if ranking else None
+
+    remaining = []
+    exit_results = []
+
+    for position in positions:
+
+        row = ranking_by_ticker.get(position["ticker"])
+
+        if row is None:
+            remaining.append(position)
+            continue
+
+        current_price = row["price"]
+        entry_price = position["entry_price"]
+
+        peak_price = max(position.get("peak_price", entry_price), current_price)
+        position["peak_price"] = peak_price
+
+        return_pct = ((current_price - entry_price) / entry_price) * 100
+
+        reason = None
+
+        if return_pct <= -STOP_LOSS_PCT:
+            reason = "STOP_LOSS"
+
+        elif peak_price > entry_price:
+            drawdown_from_peak = ((peak_price - current_price) / peak_price) * 100
+            if drawdown_from_peak >= TRAILING_STOP_PCT:
+                reason = "TRAILING_STOP"
+
+        if reason is None and top and top["ticker"] != position["ticker"] and return_pct <= 0:
+            if top["score"] - row["score"] >= ROTATION_SCORE_GAP:
+                reason = "ROTATION"
+
+        if reason:
+            exit_results.append(close_position(position, current_price, reason))
+        else:
+            remaining.append(position)
+
+    save_positions(remaining)
+
+    return exit_results
+
+
+def open_new_positions(ranking, excluded=None):
+    """Open at most one new position per cycle. Candidates from the
+    last close's tomorrow_watchlist are tried first, falling back to the
+    full ranking, requiring the live score to clear ENTRY_SCORE_THRESHOLD."""
+
+    positions = load_positions()
+
+    if len(positions) >= MAX_OPEN_POSITIONS:
+        return
+
+    held_tickers = {p["ticker"] for p in positions} | (excluded or set())
+
+    ranking_by_ticker = {row["ticker"]: row for row in ranking}
+
+    watchlist_tickers = [w["ticker"] for w in load_json(WATCHLIST_FILE, {}).get("top", [])]
+
+    ordered = []
+    seen = set()
+
+    for ticker in watchlist_tickers:
+        row = ranking_by_ticker.get(ticker)
+        if row:
+            ordered.append(row)
+            seen.add(ticker)
+
+    for row in ranking:
+        if row["ticker"] not in seen:
+            ordered.append(row)
+
+    for row in ordered:
+
+        if row["ticker"] in held_tickers:
+            continue
+
+        if row["score"] < ENTRY_SCORE_THRESHOLD:
+            continue
+
+        entry_signal = {
+            "ticker": row["ticker"],
+            "sector": row["sector"],
+            "score": row["score"],
+            "price": row["price"],
+            "action": "PAPER_BUY",
+            "ts": datetime.now(timezone.utc).isoformat()
+        }
+
+        STATE["paper_trades"].append(entry_signal)
+        append_jsonl(SIGNALS_LOG, entry_signal)
+
+        positions.append({
+            "ticker": row["ticker"],
+            "sector": row["sector"],
+            "entry_price": row["price"],
+            "entry_ts": entry_signal["ts"],
+            "peak_price": row["price"],
+            "score_at_entry": row["score"]
+        })
+
+        save_positions(positions)
+        return
+
 
 def paper_engine(ranking):
 
-    if len(ranking) == 0:
-        return
+    if not ranking:
+        return []
 
-    top = ranking[0]
+    exit_results = manage_positions(ranking)
 
-    if top["score"] >= 60:
+    just_exited = {r["ticker"] for r in exit_results}
 
-        trade = {
-            "ticker": top["ticker"],
-            "sector": top["sector"],
-            "score": top["score"],
-            "price": top["price"],
-            "action": "PAPER_BUY",
-            "ts": datetime.now(
-                timezone.utc
-            ).isoformat()
-        }
+    open_new_positions(ranking, excluded=just_exited)
 
-        STATE["paper_trades"].append(trade)
-        append_jsonl(SIGNALS_LOG, trade)
+    return exit_results
 
 # =====================================
 # PORTFOLIO
 # =====================================
 
-def portfolio_engine():
+def portfolio_engine(ranking=None):
+
+    ranking_by_ticker = {row["ticker"]: row for row in (ranking or [])}
 
     portfolio = {}
 
-    for trade in STATE["paper_trades"]:
+    for position in load_positions():
 
-        t = trade["ticker"]
+        ticker = position["ticker"]
+        entry_price = position["entry_price"]
+        current_price = ranking_by_ticker.get(ticker, {}).get("price", entry_price)
 
-        portfolio[t] = portfolio.get(t, 0) + 1
+        portfolio[ticker] = {
+            "sector": position["sector"],
+            "entry_price": entry_price,
+            "current_price": current_price,
+            "peak_price": position["peak_price"],
+            "return_pct": ((current_price - entry_price) / entry_price) * 100
+        }
 
     STATE["portfolio"] = portfolio
 
@@ -404,6 +571,9 @@ def portfolio_from_ledger():
     portfolio = {}
 
     for row in read_jsonl(SIGNALS_LOG):
+
+        if row.get("action") != "PAPER_BUY":
+            continue
 
         t = row.get("ticker")
 
@@ -469,61 +639,6 @@ def forward_simulation(ticker, trials=FORWARD_SIM_TRIALS, horizon_days=FORWARD_S
 # =====================================
 # LEARNING ENGINE (Result DB evaluation + rolling stats)
 # =====================================
-
-def evaluate_today_signals():
-
-    signals = read_jsonl(SIGNALS_LOG)
-
-    if not signals:
-        return []
-
-    evaluated_ts = {row.get("signal_ts") for row in read_jsonl(RESULTS_LOG)}
-
-    results = []
-
-    for sig in signals:
-
-        if len(results) >= MAX_EVAL_PER_RUN:
-            break
-
-        ts = sig.get("ts")
-
-        if ts in evaluated_ts:
-            continue
-
-        ticker = sig.get("ticker")
-        entry_price = sig.get("price")
-
-        if not ticker or not entry_price or entry_price != entry_price:
-            continue
-
-        try:
-            hist = yf.Ticker(ticker).history(period="1d")
-            hist = hist.dropna(subset=["Close"])
-            if len(hist) == 0:
-                continue
-            current_price = float(hist.iloc[-1]["Close"])
-        except Exception:
-            continue
-
-        return_pct = ((current_price - entry_price) / entry_price) * 100
-
-        result = {
-            "signal_ts": ts,
-            "ticker": ticker,
-            "sector": sig.get("sector"),
-            "entry_price": entry_price,
-            "exit_price": current_price,
-            "return_pct": return_pct,
-            "win": return_pct > 0,
-            "ts": datetime.now(timezone.utc).isoformat()
-        }
-
-        append_jsonl(RESULTS_LOG, result)
-        results.append(result)
-
-    return results
-
 
 def update_learning_stats(new_results):
 
@@ -683,11 +798,30 @@ def format_report_text(report_data):
                 )
             )
 
-    if report_data["portfolio"]:
+    exits = report_data.get("exits") or []
+
+    if exits:
         lines.append("")
-        lines.append(
-            "portfolio: " + json.dumps(report_data["portfolio"], ensure_ascii=False)
-        )
+        lines.append("[EXITS THIS CYCLE]")
+        for r in exits:
+            lines.append(
+                "  %s [%s] entry=%.2f exit=%.2f return=%.2f%% %s" % (
+                    r["ticker"], r["reason"], r["entry_price"], r["exit_price"],
+                    r["return_pct"], "WIN" if r["win"] else "LOSS"
+                )
+            )
+
+    portfolio = report_data["portfolio"]
+
+    if portfolio:
+        lines.append("")
+        lines.append("[OPEN POSITIONS]")
+        for ticker, p in portfolio.items():
+            lines.append(
+                "  %s (%s) entry=%.2f current=%.2f return=%.2f%%" % (
+                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"]
+                )
+            )
 
     return "\n".join(lines)
 
@@ -721,11 +855,11 @@ def format_close_report(close_data):
 
     lines.append("")
     lines.append("[TODAY RESULTS]")
-    lines.append("  evaluated_signals: " + str(len(close_data["evaluated_results"])))
-    for r in close_data["evaluated_results"]:
+    lines.append("  closed_positions: " + str(len(close_data["exit_results"])))
+    for r in close_data["exit_results"]:
         lines.append(
-            "  %s entry=%.2f exit=%.2f return=%.2f%% %s" % (
-                r["ticker"], r["entry_price"], r["exit_price"],
+            "  %s [%s] entry=%.2f exit=%.2f return=%.2f%% %s" % (
+                r["ticker"], r["reason"], r["entry_price"], r["exit_price"],
                 r["return_pct"], "WIN" if r["win"] else "LOSS"
             )
         )
@@ -755,6 +889,18 @@ def format_close_report(close_data):
             lines.append("  - " + n)
 
     lines.append("")
+    lines.append("[OPEN POSITIONS]")
+    if close_data["open_positions"]:
+        for ticker, p in close_data["open_positions"].items():
+            lines.append(
+                "  %s (%s) entry=%.2f current=%.2f return=%.2f%%" % (
+                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"]
+                )
+            )
+    else:
+        lines.append("  (none)")
+
+    lines.append("")
     lines.append("portfolio_total_signals: " + str(close_data["portfolio_total"]))
 
     return "\n".join(lines)
@@ -763,7 +909,7 @@ def format_close_report(close_data):
 # REPORT (intraday)
 # =====================================
 
-def report():
+def report(exit_results=None):
 
     ranking = STATE["rankings"]
 
@@ -780,6 +926,9 @@ def report():
 
         "portfolio":
             STATE["portfolio"],
+
+        "exits":
+            exit_results or [],
 
         "market_state":
             market_state_engine(ranking),
@@ -859,13 +1008,15 @@ def run_cycle():
 
     market, news, ranking = collect_cycle_data()
 
-    paper_engine(
+    exit_results = paper_engine(
         ranking
     )
 
-    portfolio_engine()
+    update_learning_stats(exit_results)
 
-    report()
+    portfolio_engine(ranking)
+
+    report(exit_results)
 
 
 def run_close():
@@ -875,11 +1026,10 @@ def run_close():
     market_state = market_state_engine(ranking)
     sector_strength = sector_strength_engine(ranking)
 
-    evaluated_results = evaluate_today_signals()
-    learning_stats = update_learning_stats(evaluated_results)
+    exit_results = paper_engine(ranking)
+    learning_stats = update_learning_stats(exit_results)
 
-    paper_engine(ranking)
-    portfolio_engine()
+    portfolio_engine(ranking)
 
     tomorrow_watchlist = build_tomorrow_watchlist(ranking, sector_strength)
 
@@ -890,11 +1040,12 @@ def run_close():
         "market_state": market_state,
         "top5": ranking[:5],
         "sector_strength": sector_strength,
-        "evaluated_results": evaluated_results,
+        "exit_results": exit_results,
         "learning_stats": learning_stats,
         "tomorrow_watchlist": tomorrow_watchlist,
         "news": news,
-        "portfolio_total": portfolio_total
+        "portfolio_total": portfolio_total,
+        "open_positions": STATE["portfolio"]
     }
 
     print()
