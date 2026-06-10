@@ -1,25 +1,25 @@
-name: JOS Paper Capital Loop
+name: JOS Paper Capital Close Report
 
 on:
   push:
     branches: [main]
     paths:
       - 'automation/python_paper_capital_runtime/JOS_MASTER.py'
-      - '.github/workflows/jos_paper_capital_loop.yml'
+      - '.github/workflows/jos_paper_capital_close.yml'
   workflow_dispatch:
   schedule:
-    # 09:00-15:00 KST (UTC+9), Mon-Fri = Korean market (KRX) trading hours
-    - cron: '0 0-6 * * 1-5'
+    # 15:30 KST (UTC+9), Mon-Fri = after KRX close (end-of-day CEO report)
+    - cron: '30 6 * * 1-5'
 
 permissions:
   contents: write
 
 concurrency:
-  group: jos-paper-capital-loop
+  group: jos-paper-capital-close
   cancel-in-progress: false
 
 jobs:
-  paper-capital:
+  paper-capital-close:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,11 +31,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install yfinance feedparser
 
-      - name: Run JOS Master (single pass, PAPER_ONLY)
+      - name: Run JOS Master (close / CEO report, PAPER_ONLY)
         env:
           CHEONOK_TELEGRAM_BOT_TOKEN: ${{ secrets.CHEONOK_TELEGRAM_BOT_TOKEN }}
           CHEONOK_TELEGRAM_CHAT_ID: ${{ secrets.CHEONOK_TELEGRAM_CHAT_ID }}
-        run: python automation/python_paper_capital_runtime/JOS_MASTER.py --once
+        run: python automation/python_paper_capital_runtime/JOS_MASTER.py --close
 
       - name: Commit ledger updates
         if: always()
@@ -43,5 +43,5 @@ jobs:
           git config user.name "cheonok-bot"
           git config user.email "cheonok-bot@example.com"
           git add automation/python_paper_capital_runtime/ledger || true
-          git commit -m "jos paper capital: ledger update (intraday)" || echo "No ledger changes"
+          git commit -m "jos paper capital: ledger update (close)" || echo "No ledger changes"
           git push || echo "Push skipped"
