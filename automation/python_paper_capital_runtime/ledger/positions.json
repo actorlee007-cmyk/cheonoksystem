@@ -15,6 +15,14 @@
       "entry_ts": "2026-06-10T22:58:35.750356+00:00",
       "peak_price": 291.5799865722656,
       "score_at_entry": 100
+    },
+    {
+      "ticker": "GOOGL",
+      "sector": "TECH_PLATFORM",
+      "entry_price": 356.3800048828125,
+      "entry_ts": "2026-06-10T23:45:12.325072+00:00",
+      "peak_price": 356.3800048828125,
+      "score_at_entry": 100
     }
   ]
 }

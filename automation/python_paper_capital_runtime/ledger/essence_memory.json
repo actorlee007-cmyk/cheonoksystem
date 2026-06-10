@@ -1,0 +1,20 @@
+{
+  "history": [
+    {
+      "ts": "2026-06-10T23:45:12.323267+00:00",
+      "ticker": "NVDA",
+      "sector": "AI_SEMI",
+      "drivers": [
+        "VOLUME(+100)",
+        "NEWS(+10)",
+        "OVERLAP(x2,+5)"
+      ]
+    }
+  ],
+  "sample_size": 1,
+  "dominant_sector": "AI_SEMI",
+  "dominant_sector_count": 1,
+  "dominant_driver": "VOLUME",
+  "dominant_driver_count": 1,
+  "updated_ts": "2026-06-10T23:45:12.323584+00:00"
+}
