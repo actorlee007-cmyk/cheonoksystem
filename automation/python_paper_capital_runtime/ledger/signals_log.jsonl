@@ -1,3 +1,4 @@
 {"ticker": "AMD", "sector": "AI_SEMI", "score": 100, "price": 490.3299865722656, "action": "PAPER_BUY", "ts": "2026-06-10T09:55:45.749606+00:00"}
 {"ticker": "NVDA", "sector": "AI_SEMI", "score": 100, "price": 208.63999938964844, "action": "PAPER_BUY", "ts": "2026-06-10T09:56:30.680734+00:00"}
 {"ticker": "AMD", "sector": "AI_SEMI", "score": 100, "price": 452.3999938964844, "action": "PAPER_BUY", "ts": "2026-06-10T22:51:15.275151+00:00"}
+{"ticker": "AAPL", "sector": "TECH_PLATFORM", "score": 100, "price": 291.5799865722656, "action": "PAPER_BUY", "ts": "2026-06-10T22:58:35.750356+00:00"}
