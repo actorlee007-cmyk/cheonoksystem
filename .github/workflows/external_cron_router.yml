@@ -1,0 +1,57 @@
+name: External Cron Router
+
+# Single entry point for an external cron service (e.g. cron-job.org).
+# GitHub's own `schedule:` triggers are best-effort and can be delayed by
+# hours under load. An external service calling this workflow's
+# workflow_dispatch endpoint every ~15 minutes gives reliable timing.
+#
+# This job then decides (based on current KST time) which downstream
+# workflows actually need to run right now, and dispatches them via
+# `gh workflow run` using a PAT stored in secrets.JOS_DISPATCH_PAT
+# (GITHUB_TOKEN cannot be used here: GitHub blocks workflow_dispatch
+# calls made with the default token to prevent recursive triggers).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: external-cron-router
+  cancel-in-progress: false
+
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ secrets.JOS_DISPATCH_PAT }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Always trigger CHEONOK Supreme Master OS Loop
+        run: gh workflow run cheonok_supreme_autopilot_cloud.yml --ref main
+
+      - name: Trigger JOS Paper Capital Loop (weekday 09-15 KST, top of hour)
+        run: |
+          dow=$(TZ=Asia/Seoul date +%u)
+          hour=$(TZ=Asia/Seoul date +%H)
+          minute=$(TZ=Asia/Seoul date +%-M)
+          if [ "$dow" -le 5 ] && [ "$hour" -ge 9 ] && [ "$hour" -le 15 ] && [ "$minute" -lt 15 ]; then
+            gh workflow run jos_paper_capital_loop.yml --ref main
+          else
+            echo "Skip JOS loop (dow=$dow hour=$hour minute=$minute)"
+          fi
+
+      - name: Trigger JOS Paper Capital Close (weekday 15:30 KST)
+        run: |
+          dow=$(TZ=Asia/Seoul date +%u)
+          hour=$(TZ=Asia/Seoul date +%H)
+          minute=$(TZ=Asia/Seoul date +%-M)
+          if [ "$dow" -le 5 ] && [ "$hour" -eq 15 ] && [ "$minute" -ge 30 ] && [ "$minute" -lt 45 ]; then
+            gh workflow run jos_paper_capital_close.yml --ref main
+          else
+            echo "Skip JOS close (dow=$dow hour=$hour minute=$minute)"
+          fi
