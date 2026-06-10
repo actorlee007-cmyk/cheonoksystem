@@ -8,7 +8,8 @@ on:
       - '.github/workflows/jos_paper_capital_loop.yml'
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *'
+    # 09:00-15:00 KST (UTC+9), Mon-Fri = Korean market (KRX) trading hours
+    - cron: '0 0-6 * * 1-5'
 
 permissions:
   contents: read
