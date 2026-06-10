@@ -46,6 +46,17 @@ JOS/CHEONOK MASTER SYSTEM v1 is not a chatbot, website, trading bot, or content 
 4. Environment Agent: Drive/Desktop/Downloads/workspace normalization.
 5. Validation Agent: 2000-pass filter, 12-view review, 3-axis guard, Final Veto.
 
+### Five Agents implementation (Claude Code dynamic workflow)
+The Five Agents are implemented as Claude Code subagents under
+`.claude/agents/jos-*-agent.md`. Run `/jos-council-review <target>` (skill at
+`.claude/skills/jos-council-review/SKILL.md`) to dispatch the Strategy,
+Revenue, Technology, and Environment agents in parallel against any system in
+this repo, then have the Validation Agent synthesize their findings into a
+0-100 canon scorecard and a PASS/HOLD/VERIFY_REQUIRED/PATCH_REQUIRED/BLOCK
+verdict (Final Veto). One command -> parallel multi-agent review -> single
+synthesized verdict, repeatable across every system to drive each toward the
+canon's 100-point standard.
+
 ## Database Tabs
 - MASTER_STATUS
 - GLOBAL_SNAPSHOT
