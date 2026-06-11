@@ -1,14 +1,6 @@
 {
   "positions": [
     {
-      "ticker": "AMD",
-      "sector": "AI_SEMI",
-      "entry_price": 452.3999938964844,
-      "entry_ts": "2026-06-10T22:51:15.275151+00:00",
-      "peak_price": 475.510009765625,
-      "score_at_entry": 100
-    },
-    {
       "ticker": "AAPL",
       "sector": "TECH_PLATFORM",
       "entry_price": 291.5799865722656,
@@ -23,6 +15,14 @@
       "entry_ts": "2026-06-10T23:45:12.325072+00:00",
       "peak_price": 364.260009765625,
       "score_at_entry": 100
+    },
+    {
+      "ticker": "000660.KS",
+      "sector": "AI_SEMI",
+      "entry_price": 2101000.0,
+      "entry_ts": "2026-06-11T09:49:22.652162+00:00",
+      "peak_price": 2101000.0,
+      "score_at_entry": 85
     }
   ]
 }
