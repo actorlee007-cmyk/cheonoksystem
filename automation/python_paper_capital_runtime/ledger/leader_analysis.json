@@ -1,16 +1,15 @@
 {
-  "generated_ts": "2026-06-11T03:53:34.234632+00:00",
+  "generated_ts": "2026-06-11T04:14:56.276862+00:00",
   "leader": {
-    "ticker": "AMD",
-    "sector": "AI_SEMI",
-    "score": 115,
+    "ticker": "TSLA",
+    "sector": "EV_BATTERY",
+    "score": 110,
     "drivers": [
       "VOLUME(+100)",
-      "NEWS(+10)",
-      "OVERLAP(x2,+5)"
+      "NEWS(+10)"
     ],
-    "foreign_sector_change_pct": -4.569158796406633,
-    "change_pct": -4.860048241788088
+    "foreign_sector_change_pct": -4.795911987601681,
+    "change_pct": -3.000371479396923
   },
   "similar_candidates": [
     {
@@ -18,42 +17,35 @@
       "sector": "EV_BATTERY",
       "score": 110,
       "shared_drivers": [
-        "NEWS"
-      ]
-    },
-    {
-      "ticker": "NVDA",
-      "sector": "AI_SEMI",
-      "score": 105,
-      "shared_drivers": [
         "NEWS",
-        "SECTOR:AI_SEMI"
+        "SECTOR:EV_BATTERY"
       ]
     },
     {
-      "ticker": "AVGO",
-      "sector": "AI_SEMI",
-      "score": 105,
-      "shared_drivers": [
-        "NEWS",
-        "SECTOR:AI_SEMI"
-      ]
-    },
-    {
-      "ticker": "TSLA",
+      "ticker": "373220.KS",
       "sector": "EV_BATTERY",
-      "score": 100,
+      "score": 10,
       "shared_drivers": [
-        "NEWS"
+        "NEWS",
+        "SECTOR:EV_BATTERY"
       ]
     },
     {
-      "ticker": "000660.KS",
-      "sector": "AI_SEMI",
-      "score": 90,
+      "ticker": "006400.KS",
+      "sector": "EV_BATTERY",
+      "score": 10,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:AI_SEMI"
+        "SECTOR:EV_BATTERY"
+      ]
+    },
+    {
+      "ticker": "247540.KS",
+      "sector": "EV_BATTERY",
+      "score": -10,
+      "shared_drivers": [
+        "NEWS",
+        "SECTOR:EV_BATTERY"
       ]
     }
   ]
