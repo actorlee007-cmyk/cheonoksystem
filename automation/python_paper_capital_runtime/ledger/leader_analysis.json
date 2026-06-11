@@ -1,5 +1,5 @@
 {
-  "generated_ts": "2026-06-11T03:14:56.466780+00:00",
+  "generated_ts": "2026-06-11T03:53:34.234632+00:00",
   "leader": {
     "ticker": "AMD",
     "sector": "AI_SEMI",
@@ -14,14 +14,6 @@
   },
   "similar_candidates": [
     {
-      "ticker": "BAC",
-      "sector": "FINANCE",
-      "score": 115,
-      "shared_drivers": [
-        "NEWS"
-      ]
-    },
-    {
       "ticker": "RIVN",
       "sector": "EV_BATTERY",
       "score": 110,
@@ -30,27 +22,38 @@
       ]
     },
     {
-      "ticker": "RTX",
-      "sector": "DEFENSE",
-      "score": 110,
+      "ticker": "NVDA",
+      "sector": "AI_SEMI",
+      "score": 105,
+      "shared_drivers": [
+        "NEWS",
+        "SECTOR:AI_SEMI"
+      ]
+    },
+    {
+      "ticker": "AVGO",
+      "sector": "AI_SEMI",
+      "score": 105,
+      "shared_drivers": [
+        "NEWS",
+        "SECTOR:AI_SEMI"
+      ]
+    },
+    {
+      "ticker": "TSLA",
+      "sector": "EV_BATTERY",
+      "score": 100,
       "shared_drivers": [
         "NEWS"
       ]
     },
     {
-      "ticker": "JPM",
-      "sector": "FINANCE",
-      "score": 110,
+      "ticker": "000660.KS",
+      "sector": "AI_SEMI",
+      "score": 90,
       "shared_drivers": [
-        "NEWS"
-      ]
-    },
-    {
-      "ticker": "GS",
-      "sector": "FINANCE",
-      "score": 110,
-      "shared_drivers": [
-        "NEWS"
+        "NEWS",
+        "SECTOR:AI_SEMI"
       ]
     }
   ]
