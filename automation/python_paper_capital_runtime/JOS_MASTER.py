@@ -1,9 +1,10 @@
 """JOS MASTER - PAPER_CAPITAL_INTELLIGENCE single-source runtime.
 
-Real-time market feed (yfinance) + news feed (RSS) + scoring + ranking
-(volume score + foreign/US sector linkage + news theme bonus + trend
-breakout / bottom-fishing filter) + leader analysis (why #1 is #1, and
-similar watch-list candidates) + sector
+Real-time market feed (yfinance, optionally upgraded to KIS for domestic
+.KS tickers - see "KIS REAL DATA BRIDGE" below) + news feed (RSS) +
+scoring + ranking (volume score + foreign/US sector linkage + news theme
+bonus + trend breakout / bottom-fishing filter) + leader analysis (why #1
+is #1, and similar watch-list candidates) + sector
 strength analysis + market state classification + PAPER position
 management (stop-loss / trailing-stop / rotation) + forward simulation
 (historical bootstrap) + adaptive learning stats + ledger persistence +
@@ -40,12 +41,32 @@ Reporting:
   CHEONOK_TELEGRAM_CHAT_ID (same secrets as CHEONOK Supreme Master OS).
   If the secrets are missing, sending is skipped (HOLD_TELEGRAM_SECRETS_MISSING).
 
+KIS REAL DATA BRIDGE (Layer 4: REAL DATA BRIDGE, optional):
+- For domestic (.KS) tickers, market_feed() can additionally call the
+  Korea Investment & Securities (KIS, 한국투자증권) Open API for a
+  real-time 현재가 (current price) quote, READ-ONLY:
+  GET /uapi/domestic-stock/v1/quotations/inquire-price (tr_id
+  FHKST01010100). yfinance history is still fetched for every ticker and
+  used for trend/breakout scoring; KIS only overrides price/volume/
+  change_pct when it answers successfully.
+- Enabled via CHEONOK_KIS_APP_KEY / CHEONOK_KIS_APP_SECRET (optional
+  CHEONOK_KIS_BASE_URL, default https://openapi.koreainvestment.com:9443).
+  If missing, prints HOLD_KIS_SECRETS_MISSING once per cycle and falls
+  back to yfinance only (unchanged prior behavior).
+- The OAuth2 access token (POST /oauth2/tokenP) is cached in-memory only
+  for this process - never written to disk or to any ledger file, since
+  ledger/ is committed to git by CI.
+- Each market row records "price_source": "KIS" or "YFINANCE" as
+  evidence of which feed answered for that ticker this cycle.
+
 Safety:
 - PAPER_ONLY TRUE
 - LIVE_TRADE BLOCKED
 - CAPITAL_SCALE BLOCKED
 - KIS_ORDER_GATE BLOCKED
-- No order execution. No broker connection. PAPER_BUY signals only.
+- No order execution. No broker connection. KIS is used ONLY for the
+  read-only quote endpoint above - no order/account endpoints are ever
+  called. PAPER_BUY signals only.
 """
 
 import argparse
@@ -347,12 +368,118 @@ def save_json(path, data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 # =====================================
+# KIS REAL DATA BRIDGE (Layer 4: REAL DATA BRIDGE, optional, .KS only)
+# =====================================
+
+KIS_BASE_URL = os.environ.get(
+    "CHEONOK_KIS_BASE_URL", "https://openapi.koreainvestment.com:9443"
+).strip()
+
+# In-memory only - NEVER persisted to disk/ledger (ledger/ is committed to
+# git by CI, and a leaked KIS bearer token is valid for up to 24h).
+_KIS_TOKEN_CACHE = {"access_token": None, "expires_at": 0.0}
+
+
+def kis_credentials():
+    app_key = os.environ.get("CHEONOK_KIS_APP_KEY", "").strip()
+    app_secret = os.environ.get("CHEONOK_KIS_APP_SECRET", "").strip()
+
+    if not app_key or not app_secret:
+        return None, None
+
+    return app_key, app_secret
+
+
+def kis_get_token(app_key, app_secret):
+    """Fetch a KIS OAuth2 access token (POST /oauth2/tokenP) and cache it
+    in-memory for this process only. Never written to disk."""
+
+    now = time.time()
+
+    if _KIS_TOKEN_CACHE["access_token"] and now < _KIS_TOKEN_CACHE["expires_at"]:
+        return _KIS_TOKEN_CACHE["access_token"]
+
+    body = json.dumps({
+        "grant_type": "client_credentials",
+        "appkey": app_key,
+        "appsecret": app_secret
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        KIS_BASE_URL + "/oauth2/tokenP",
+        data=body,
+        method="POST",
+        headers={"content-type": "application/json; charset=UTF-8"}
+    )
+
+    with urllib.request.urlopen(req, timeout=10) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+
+    token = payload.get("access_token")
+
+    if not token:
+        return None
+
+    expires_in = float(payload.get("expires_in", 0) or 0)
+
+    _KIS_TOKEN_CACHE["access_token"] = token
+    _KIS_TOKEN_CACHE["expires_at"] = now + max(expires_in - 60, 0)
+
+    return token
+
+
+def kis_quote(ticker, app_key, app_secret):
+    """Read-only domestic-stock current-price quote (국내주식 현재가 시세
+    조회, tr_id FHKST01010100). KIS_ORDER_GATE remains BLOCKED - only this
+    quotations endpoint is ever called, never an order/account endpoint."""
+
+    token = kis_get_token(app_key, app_secret)
+
+    if not token:
+        return None
+
+    code = ticker.split(".")[0]
+
+    url = (
+        KIS_BASE_URL
+        + "/uapi/domestic-stock/v1/quotations/inquire-price"
+        + "?FID_COND_MRKT_DIV_CODE=J&FID_INPUT_ISCD=" + code
+    )
+
+    req = urllib.request.Request(url, headers={
+        "content-type": "application/json; charset=UTF-8",
+        "authorization": "Bearer " + token,
+        "appkey": app_key,
+        "appsecret": app_secret,
+        "tr_id": "FHKST01010100"
+    })
+
+    with urllib.request.urlopen(req, timeout=10) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+
+    output = payload.get("output") or {}
+
+    price = output.get("stck_prpr")
+
+    if price is None:
+        return None
+
+    return {
+        "price": float(price),
+        "volume": float(output.get("acml_vol") or 0.0),
+        "change_pct": float(output.get("prdy_ctrt") or 0.0)
+    }
+
+# =====================================
 # MARKET
 # =====================================
 
 def market_feed():
 
     rows = []
+
+    kis_app_key, kis_app_secret = kis_credentials()
+    kis_hold_logged = False
 
     for ticker, sector in WATCHLIST.items():
 
@@ -380,6 +507,27 @@ def market_feed():
 
             trend_bonus, trend_drivers = trend_breakout_signal(hist)
 
+            price_source = "YFINANCE"
+
+            if is_domestic_ticker(ticker):
+
+                if kis_app_key and kis_app_secret:
+
+                    try:
+                        kis_data = kis_quote(ticker, kis_app_key, kis_app_secret)
+                    except Exception:
+                        kis_data = None
+
+                    if kis_data:
+                        price = kis_data["price"]
+                        volume = kis_data["volume"]
+                        change_pct = kis_data["change_pct"]
+                        price_source = "KIS"
+
+                elif not kis_hold_logged:
+                    print("HOLD_KIS_SECRETS_MISSING")
+                    kis_hold_logged = True
+
             rows.append({
                 "ticker": ticker,
                 "sector": sector,
@@ -387,7 +535,8 @@ def market_feed():
                 "volume": volume,
                 "change_pct": change_pct,
                 "trend_bonus": trend_bonus,
-                "trend_drivers": trend_drivers
+                "trend_drivers": trend_drivers,
+                "price_source": price_source
             })
 
         except Exception:
@@ -1995,6 +2144,7 @@ CANON_LAYER_CHECKS = {
     "GLOBAL_FIRST": lambda ctx: bool(ctx.get("global_flows")),
     "KOREA_THEME_TRANSLATION": lambda ctx: any(r.get("macro_bonus") is not None for r in ctx.get("ranking", [])),
     "REAL_DATA_BRIDGE": lambda ctx: bool(ctx.get("market")),
+    "KIS_REALTIME_BRIDGE": lambda ctx: any(r.get("price_source") == "KIS" for r in ctx.get("market", [])),
     "RANK_OVERLAP": lambda ctx: any("overlap_count" in r for r in ctx.get("ranking", [])),
     "THEME_CLUSTER": lambda ctx: bool(ctx.get("sector_strength")),
     "LEADER_ROTATION": lambda ctx: True,

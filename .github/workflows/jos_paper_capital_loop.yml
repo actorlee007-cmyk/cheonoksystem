@@ -38,6 +38,11 @@ jobs:
         env:
           CHEONOK_TELEGRAM_BOT_TOKEN: ${{ secrets.CHEONOK_TELEGRAM_BOT_TOKEN }}
           CHEONOK_TELEGRAM_CHAT_ID: ${{ secrets.CHEONOK_TELEGRAM_CHAT_ID }}
+          # Optional (Layer 4: KIS REAL DATA BRIDGE, .KS tickers only,
+          # read-only quote endpoint). If unset, falls back to yfinance
+          # with HOLD_KIS_SECRETS_MISSING.
+          CHEONOK_KIS_APP_KEY: ${{ secrets.CHEONOK_KIS_APP_KEY }}
+          CHEONOK_KIS_APP_SECRET: ${{ secrets.CHEONOK_KIS_APP_SECRET }}
         run: python automation/python_paper_capital_runtime/JOS_MASTER.py --once
 
       - name: Commit ledger updates
