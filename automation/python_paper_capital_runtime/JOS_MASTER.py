@@ -480,6 +480,7 @@ def market_feed():
 
     kis_app_key, kis_app_secret = kis_credentials()
     kis_hold_logged = False
+    kis_fail_logged = False
 
     for ticker, sector in WATCHLIST.items():
 
@@ -515,8 +516,11 @@ def market_feed():
 
                     try:
                         kis_data = kis_quote(ticker, kis_app_key, kis_app_secret)
-                    except Exception:
+                    except Exception as exc:
                         kis_data = None
+                        if not kis_fail_logged:
+                            print(f"HOLD_KIS_QUOTE_FAILED: {type(exc).__name__}: {exc}")
+                            kis_fail_logged = True
 
                     if kis_data:
                         price = kis_data["price"]
