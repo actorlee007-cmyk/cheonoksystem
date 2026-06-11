@@ -1,5 +1,5 @@
 {
-  "generated_ts": "2026-06-11T08:34:35.359928+00:00",
+  "generated_ts": "2026-06-11T09:13:58.544493+00:00",
   "leader": {
     "ticker": "NVDA",
     "sector": "AI_SEMI",
@@ -32,6 +32,14 @@
       ]
     },
     {
+      "ticker": "JNJ",
+      "sector": "BIO",
+      "score": 115,
+      "shared_drivers": [
+        "NEWS"
+      ]
+    },
+    {
       "ticker": "000660.KS",
       "sector": "AI_SEMI",
       "score": 110,
@@ -41,12 +49,11 @@
       ]
     },
     {
-      "ticker": "005930.KS",
-      "sector": "AI_SEMI",
-      "score": 105,
+      "ticker": "GOOGL",
+      "sector": "TECH_PLATFORM",
+      "score": 110,
       "shared_drivers": [
-        "NEWS",
-        "SECTOR:AI_SEMI"
+        "NEWS"
       ]
     }
   ]
