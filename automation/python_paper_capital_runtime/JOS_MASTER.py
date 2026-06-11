@@ -1,8 +1,9 @@
 """JOS MASTER - PAPER_CAPITAL_INTELLIGENCE single-source runtime.
 
 Real-time market feed (yfinance) + news feed (RSS) + scoring + ranking
-(volume score + foreign/US sector linkage + news theme bonus) + leader
-analysis (why #1 is #1, and similar watch-list candidates) + sector
+(volume score + foreign/US sector linkage + news theme bonus + trend
+breakout / bottom-fishing filter) + leader analysis (why #1 is #1, and
+similar watch-list candidates) + sector
 strength analysis + market state classification + PAPER position
 management (stop-loss / trailing-stop / rotation) + forward simulation
 (historical bootstrap) + adaptive learning stats + ledger persistence +
@@ -199,6 +200,21 @@ MACRO_SECTOR_RULES = {
 RANK_OVERLAP_TOP_N = 5
 RANK_OVERLAP_BONUS = 5
 
+# Trend breakout (추세 돌파매매, Layer 7 LEADER ROTATION extension):
+# trend-following principle summarized from
+# https://blog.naver.com/msj0629/224261876445 (돈깡TV x 완브로, "이거 깨닫고
+# 시드 40억 달성한 트레이더" - the source video's own transcript could not be
+# retrieved in this environment, YouTube transcript API is IP-blocked here).
+# The summarized principle: an apparent low is not a safe entry on its own
+# (price can keep falling from there) - the profitable entry is when price
+# actually breaks out of its recent consolidation range on above-average
+# volume.
+TREND_BREAKOUT_LOOKBACK_DAYS = 20
+TREND_CONSOLIDATION_MAX_RANGE_PCT = 8.0   # recent N-day high/low range, as % of the low
+TREND_BREAKOUT_VOLUME_MULT = 1.5          # breakout-day volume vs N-day average volume
+TREND_BREAKOUT_BONUS = 15
+TREND_BOTTOM_FISHING_PENALTY = -10        # price still at/below the recent N-day low
+
 # Hybrid mind engine (Layer 16: GOD HYBRID MIND ENGINE). Fuses the
 # rule-based score engine, the statistical forward-simulation engine, and
 # the market-regime engine into one BUY/WATCH/AVOID verdict per candidate.
@@ -344,7 +360,7 @@ def market_feed():
 
             data = yf.Ticker(ticker)
 
-            hist = data.history(period="5d")
+            hist = data.history(period="3mo")
 
             hist = hist.dropna(subset=["Close"])
 
@@ -362,12 +378,16 @@ def market_feed():
             else:
                 change_pct = 0.0
 
+            trend_bonus, trend_drivers = trend_breakout_signal(hist)
+
             rows.append({
                 "ticker": ticker,
                 "sector": sector,
                 "price": price,
                 "volume": volume,
-                "change_pct": change_pct
+                "change_pct": change_pct,
+                "trend_bonus": trend_bonus,
+                "trend_drivers": trend_drivers
             })
 
         except Exception:
@@ -495,6 +515,51 @@ def score_market(row):
     return score
 
 
+def trend_breakout_signal(hist):
+    """Score bonus/penalty from a confirmed trend breakout vs. 'bottom-
+    fishing' on a chart still making new lows. See the
+    TREND_BREAKOUT_LOOKBACK_DAYS comment for the source/principle."""
+
+    closes = hist["Close"]
+    volumes = hist["Volume"]
+
+    if len(closes) < TREND_BREAKOUT_LOOKBACK_DAYS + 1:
+        return 0, []
+
+    recent_closes = closes.iloc[-(TREND_BREAKOUT_LOOKBACK_DAYS + 1):-1]
+    recent_volumes = volumes.iloc[-(TREND_BREAKOUT_LOOKBACK_DAYS + 1):-1]
+
+    last_close = float(closes.iloc[-1])
+    last_volume = float(volumes.iloc[-1])
+
+    range_high = float(recent_closes.max())
+    range_low = float(recent_closes.min())
+    avg_volume = float(recent_volumes.mean()) if len(recent_volumes) else 0.0
+
+    if range_low <= 0:
+        return 0, []
+
+    consolidation_pct = (range_high - range_low) / range_low * 100
+
+    bonus = 0
+    drivers = []
+
+    if (
+        consolidation_pct <= TREND_CONSOLIDATION_MAX_RANGE_PCT
+        and last_close > range_high
+        and avg_volume > 0
+        and last_volume >= avg_volume * TREND_BREAKOUT_VOLUME_MULT
+    ):
+        bonus += TREND_BREAKOUT_BONUS
+        drivers.append("TREND_BREAKOUT")
+
+    if last_close <= range_low:
+        bonus += TREND_BOTTOM_FISHING_PENALTY
+        drivers.append("BOTTOM_FISHING_CAUTION")
+
+    return bonus, drivers
+
+
 def foreign_sector_strength(market):
     """Average change_pct of non-domestic (US) tickers per sector - the
     'foreign market pulse' used as a leading indicator for KRX tickers."""
@@ -607,6 +672,8 @@ def rank_engine(market, foreign_strength=None, news=None, global_flows=None):
             "foreign_sector_change_pct": foreign_strength.get(row["sector"], 0.0),
             "news_bonus": news_sector_bonus(row["sector"], news),
             "macro_bonus": macro_translation_bonus(row, global_flows),
+            "trend_bonus": row.get("trend_bonus", 0),
+            "trend_drivers": row.get("trend_drivers", []),
             "price": row["price"],
             "volume": row["volume"],
             "change_pct": row.get("change_pct", 0.0)
@@ -647,18 +714,26 @@ def rank_engine(market, foreign_strength=None, news=None, global_flows=None):
         if r["macro_bonus"]:
             drivers.append("MACRO(%+d)" % r["macro_bonus"])
 
+        if "TREND_BREAKOUT" in r["trend_drivers"]:
+            drivers.append("TREND_BREAKOUT(+%d)" % TREND_BREAKOUT_BONUS)
+
+        if "BOTTOM_FISHING_CAUTION" in r["trend_drivers"]:
+            drivers.append("BOTTOM_FISHING_CAUTION(%d)" % TREND_BOTTOM_FISHING_PENALTY)
+
         if overlap_bonus:
             drivers.append("OVERLAP(x%d,+%d)" % (overlap_count, overlap_bonus))
 
         ranking.append({
             "ticker": r["ticker"],
             "sector": r["sector"],
-            "score": r["volume_score"] + r["foreign_link_bonus"] + r["news_bonus"] + r["macro_bonus"] + overlap_bonus,
+            "score": r["volume_score"] + r["foreign_link_bonus"] + r["news_bonus"] + r["macro_bonus"] + r["trend_bonus"] + overlap_bonus,
             "volume_score": r["volume_score"],
             "foreign_link_bonus": r["foreign_link_bonus"],
             "foreign_sector_change_pct": r["foreign_sector_change_pct"],
             "news_bonus": r["news_bonus"],
             "macro_bonus": r["macro_bonus"],
+            "trend_bonus": r["trend_bonus"],
+            "trend_drivers": r["trend_drivers"],
             "overlap_count": overlap_count,
             "overlap_lists": memberships,
             "drivers": drivers,
