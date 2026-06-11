@@ -28,3 +28,13 @@
 {"ticker": "036930", "name": "주성엔지니어링", "price": 245500.0, "change_pct": 23.37, "volume": 7355861.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:49:22.650587+00:00"}
 {"ticker": "070300", "name": "엑스큐어", "price": 1710.0, "change_pct": 29.94, "volume": 2960819.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:49:22.650639+00:00"}
 {"ticker": "058450", "name": "한주에이알티", "price": 4750.0, "change_pct": 14.46, "volume": 44088.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:49:22.650691+00:00"}
+{"ticker": "085620", "name": "미래에셋생명", "price": 29350.0, "change_pct": 29.87, "volume": 6186618.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.457543+00:00"}
+{"ticker": "073190", "name": "듀오백", "price": 916.0, "change_pct": 29.93, "volume": 222361.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.457806+00:00"}
+{"ticker": "067170", "name": "오텍", "price": 2720.0, "change_pct": 29.83, "volume": 2893974.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.457879+00:00"}
+{"ticker": "050120", "name": "ES큐브", "price": 3105.0, "change_pct": 19.42, "volume": 56526.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.457936+00:00"}
+{"ticker": "027740", "name": "마니커", "price": 1340.0, "change_pct": 29.97, "volume": 1681261.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.457987+00:00"}
+{"ticker": "406820", "name": "뷰티스킨", "price": 2435.0, "change_pct": 29.94, "volume": 1308870.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.458036+00:00"}
+{"ticker": "183300", "name": "코미코", "price": 139200.0, "change_pct": 29.97, "volume": 621382.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.458084+00:00"}
+{"ticker": "036930", "name": "주성엔지니어링", "price": 245500.0, "change_pct": 23.37, "volume": 7355861.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.458133+00:00"}
+{"ticker": "070300", "name": "엑스큐어", "price": 1710.0, "change_pct": 29.94, "volume": 2960819.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.458182+00:00"}
+{"ticker": "058450", "name": "한주에이알티", "price": 4750.0, "change_pct": 14.46, "volume": 44088.0, "possible_drivers": [], "evidence_status": "NO_MATCH_HOLD", "ts": "2026-06-11T09:52:22.458231+00:00"}
