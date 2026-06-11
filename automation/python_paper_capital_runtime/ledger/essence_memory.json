@@ -161,12 +161,20 @@
         "VOLUME(+100)",
         "NEWS(+10)"
       ]
+    },
+    {
+      "ts": "2026-06-11T12:46:51.844379+00:00",
+      "ticker": "AMD",
+      "sector": "AI_SEMI",
+      "drivers": [
+        "VOLUME(+100)"
+      ]
     }
   ],
-  "sample_size": 17,
+  "sample_size": 18,
   "dominant_sector": "AI_SEMI",
-  "dominant_sector_count": 10,
+  "dominant_sector_count": 11,
   "dominant_driver": "VOLUME",
-  "dominant_driver_count": 17,
-  "updated_ts": "2026-06-11T11:11:05.180650+00:00"
+  "dominant_driver_count": 18,
+  "updated_ts": "2026-06-11T12:46:51.844848+00:00"
 }
