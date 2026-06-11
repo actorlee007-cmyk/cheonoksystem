@@ -18,12 +18,21 @@
         "VOLUME(+100)",
         "OVERLAP(x2,+5)"
       ]
+    },
+    {
+      "ts": "2026-06-11T00:14:55.741024+00:00",
+      "ticker": "AAPL",
+      "sector": "TECH_PLATFORM",
+      "drivers": [
+        "VOLUME(+100)",
+        "OVERLAP(x2,+5)"
+      ]
     }
   ],
-  "sample_size": 2,
-  "dominant_sector": "AI_SEMI",
-  "dominant_sector_count": 1,
+  "sample_size": 3,
+  "dominant_sector": "TECH_PLATFORM",
+  "dominant_sector_count": 2,
   "dominant_driver": "VOLUME",
-  "dominant_driver_count": 2,
-  "updated_ts": "2026-06-11T00:13:24.910402+00:00"
+  "dominant_driver_count": 3,
+  "updated_ts": "2026-06-11T00:14:55.741483+00:00"
 }
