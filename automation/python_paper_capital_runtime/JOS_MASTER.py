@@ -74,6 +74,8 @@ import os
 import time
 import json
 import random
+import re
+import html
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -1160,32 +1162,113 @@ def update_essence_memory(leader):
     return result
 
 # =====================================
+# EXTERNAL CAUSE-TRACE BRIDGES (opendart 공시 / Naver 뉴스검색)
+# Layer 21 SURGE SCANNER inputs - both read-only, both optional (each
+# degrades to "no data from this source" if its GitHub Secret is unset).
+# =====================================
+
+def opendart_credentials():
+    return os.environ.get("CHEONOK_OPENDART_API_KEY", "").strip()
+
+
+def opendart_today_disclosures(api_key):
+    """오늘 날짜 전체 공시 목록 (최신 100건, list.json 공시검색 API). Read-only -
+    used to cross-reference a surge candidate's name against today's
+    company disclosures (호재성 공시 등)."""
+
+    today = datetime.now(timezone.utc).strftime("%Y%m%d")
+
+    params = {
+        "crtfc_key": api_key,
+        "bgn_de": today,
+        "end_de": today,
+        "page_no": "1",
+        "page_count": "100"
+    }
+
+    url = "https://opendart.fss.or.kr/api/list.json?" + urllib.parse.urlencode(params)
+
+    with urllib.request.urlopen(url, timeout=10) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+
+    if payload.get("status") != "000":
+        return []
+
+    return payload.get("list") or []
+
+
+def naver_credentials():
+    client_id = os.environ.get("CHEONOK_NAVER_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("CHEONOK_NAVER_CLIENT_SECRET", "").strip()
+
+    if not client_id or not client_secret:
+        return None, None
+
+    return client_id, client_secret
+
+
+def naver_news_search(query, client_id, client_secret, display=3):
+    """네이버 뉴스 검색 (read-only, openapi.naver.com/v1/search/news.json).
+    Returns up to `display` most recent headline strings for `query`,
+    HTML tags/entities stripped."""
+
+    params = {"query": query, "display": str(display), "sort": "date"}
+
+    url = "https://openapi.naver.com/v1/search/news.json?" + urllib.parse.urlencode(params)
+
+    req = urllib.request.Request(url, headers={
+        "X-Naver-Client-Id": client_id,
+        "X-Naver-Client-Secret": client_secret
+    })
+
+    with urllib.request.urlopen(req, timeout=10) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+
+    headlines = []
+
+    for item in payload.get("items") or []:
+        title = re.sub("<[^>]+>", "", item.get("title", ""))
+        headlines.append(html.unescape(title))
+
+    return headlines
+
+# =====================================
 # SURGE CAUSE TRACE (Layer 21: SURGE SCANNER, market-wide)
 # =====================================
 
-def surge_cause_trace(name, news):
-    """Lightweight '역산출' (reverse cause-trace): cross-reference a
-    market-wide surge candidate's name against today's news headlines and
-    the sector-keyword map - using only data sources already wired into
-    this system. Each match is TITLE_ONLY evidence; a candidate with no
-    match is HOLD pending a real 공시/기사 본문 source (opendart, Naver
-    Search API, YouTube Data API - each requires its own GitHub Secret,
-    same pattern as CHEONOK_KIS_APP_KEY/SECRET)."""
+def surge_cause_trace(name, news, disclosures, naver_client_id, naver_client_secret):
+    """'역산출' (reverse cause-trace): cross-reference a market-wide surge
+    candidate's name against today's news headlines, today's opendart
+    disclosures, a live Naver news search, and the sector-keyword map. A
+    candidate with no match across all sources is HOLD."""
 
     drivers = []
 
-    if name:
+    if not name:
+        return drivers
 
-        for headline in news:
-            if name in headline:
-                drivers.append("NEWS: " + headline)
+    for headline in news:
+        if name in headline:
+            drivers.append("NEWS: " + headline)
 
-        for sector, keywords in SECTOR_KEYWORDS.items():
-            for keyword in keywords:
-                if keyword in name:
-                    drivers.append("SECTOR_KEYWORD:" + sector + "(" + keyword + ")")
+    for d in disclosures:
+        corp_name = d.get("corp_name", "")
+        if corp_name and (name in corp_name or corp_name in name):
+            drivers.append("DART: " + d.get("report_nm", "") + " (" + d.get("rcept_dt", "") + ")")
 
-    return drivers[:3]
+    if naver_client_id and naver_client_secret:
+        try:
+            for headline in naver_news_search(name, naver_client_id, naver_client_secret):
+                drivers.append("NAVER_NEWS: " + headline)
+        except Exception as exc:
+            print(f"HOLD_NAVER_NEWS_FAILED: {type(exc).__name__}: {exc}")
+
+    for sector, keywords in SECTOR_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in name:
+                drivers.append("SECTOR_KEYWORD:" + sector + "(" + keyword + ")")
+
+    return drivers[:5]
 
 
 def surge_scan(news):
@@ -1212,6 +1295,28 @@ def surge_scan(news):
         print(f"HOLD_SURGE_SCAN_FAILED: {type(exc).__name__}: {exc}{detail}")
         return []
 
+    disclosures = []
+    dart_key = opendart_credentials()
+
+    if dart_key:
+        try:
+            disclosures = opendart_today_disclosures(dart_key)
+        except Exception as exc:
+            detail = ""
+            if isinstance(exc, urllib.error.HTTPError):
+                try:
+                    detail = " | body: " + exc.read().decode("utf-8", "replace")[:300]
+                except Exception:
+                    pass
+            print(f"HOLD_OPENDART_FAILED: {type(exc).__name__}: {exc}{detail}")
+    else:
+        print("HOLD_OPENDART_SECRETS_MISSING")
+
+    naver_client_id, naver_client_secret = naver_credentials()
+
+    if not naver_client_id:
+        print("HOLD_NAVER_SECRETS_MISSING")
+
     surges = []
 
     for g in gainers:
@@ -1219,7 +1324,7 @@ def surge_scan(news):
         if g["change_pct"] < SURGE_SCAN_THRESHOLD_PCT:
             continue
 
-        drivers = surge_cause_trace(g["name"], news)
+        drivers = surge_cause_trace(g["name"], news, disclosures, naver_client_id, naver_client_secret)
 
         record = {
             "ticker": g["ticker"],
