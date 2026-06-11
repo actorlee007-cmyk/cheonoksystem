@@ -1,1 +1,2 @@
 {"signal_ts": "2026-06-10T09:55:45.749606+00:00", "ticker": "AMD", "sector": "AI_SEMI", "entry_price": 490.3299865722656, "exit_price": 475.5050048828125, "return_pct": -3.023470335373461, "win": false, "ts": "2026-06-10T09:56:30.680239+00:00"}
+{"signal_ts": "2026-06-10T22:51:15.275151+00:00", "ticker": "AMD", "sector": "AI_SEMI", "entry_price": 452.3999938964844, "exit_price": 452.3999938964844, "return_pct": 0.0, "win": false, "reason": "TRAILING_STOP", "ts": "2026-06-11T11:11:05.182627+00:00"}

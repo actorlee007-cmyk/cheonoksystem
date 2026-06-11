@@ -152,12 +152,21 @@
         "NEWS(+10)",
         "OVERLAP(x2,+5)"
       ]
+    },
+    {
+      "ts": "2026-06-11T11:11:05.180212+00:00",
+      "ticker": "RTX",
+      "sector": "DEFENSE",
+      "drivers": [
+        "VOLUME(+100)",
+        "NEWS(+10)"
+      ]
     }
   ],
-  "sample_size": 16,
+  "sample_size": 17,
   "dominant_sector": "AI_SEMI",
   "dominant_sector_count": 10,
   "dominant_driver": "VOLUME",
-  "dominant_driver_count": 16,
-  "updated_ts": "2026-06-11T08:47:00.790462+00:00"
+  "dominant_driver_count": 17,
+  "updated_ts": "2026-06-11T11:11:05.180650+00:00"
 }

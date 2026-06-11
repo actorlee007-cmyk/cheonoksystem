@@ -1,52 +1,51 @@
 {
-  "generated_ts": "2026-06-11T08:47:00.790050+00:00",
+  "generated_ts": "2026-06-11T11:11:05.180212+00:00",
   "leader": {
-    "ticker": "NVDA",
-    "sector": "AI_SEMI",
-    "score": 115,
+    "ticker": "RTX",
+    "sector": "DEFENSE",
+    "score": 110,
     "drivers": [
       "VOLUME(+100)",
-      "NEWS(+10)",
-      "OVERLAP(x2,+5)"
+      "NEWS(+10)"
     ],
-    "foreign_sector_change_pct": -1.4525490515890727,
-    "change_pct": -0.2156810532777033
+    "foreign_sector_change_pct": -1.4799330493649376,
+    "change_pct": -2.2857424280065177
   },
   "similar_candidates": [
     {
-      "ticker": "AMD",
-      "sector": "AI_SEMI",
-      "score": 115,
+      "ticker": "LMT",
+      "sector": "DEFENSE",
+      "score": 70,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:AI_SEMI"
+        "SECTOR:DEFENSE"
       ]
     },
     {
-      "ticker": "AVGO",
-      "sector": "AI_SEMI",
-      "score": 115,
+      "ticker": "NOC",
+      "sector": "DEFENSE",
+      "score": 70,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:AI_SEMI"
+        "SECTOR:DEFENSE"
       ]
     },
     {
-      "ticker": "000660.KS",
-      "sector": "AI_SEMI",
-      "score": 110,
+      "ticker": "047810.KS",
+      "sector": "DEFENSE",
+      "score": 55,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:AI_SEMI"
+        "SECTOR:DEFENSE"
       ]
     },
     {
-      "ticker": "005930.KS",
-      "sector": "AI_SEMI",
-      "score": 105,
+      "ticker": "012450.KS",
+      "sector": "DEFENSE",
+      "score": 20,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:AI_SEMI"
+        "SECTOR:DEFENSE"
       ]
     }
   ]

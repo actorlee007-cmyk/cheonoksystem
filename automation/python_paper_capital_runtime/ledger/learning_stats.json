@@ -1,12 +1,13 @@
 {
   "equity_curve": [
     1.0,
+    0.9697652966462654,
     0.9697652966462654
   ],
   "cumulative_return_pct": -3.023470335373457,
   "max_drawdown_pct": 3.023470335373457,
   "win_rate_pct": 0.0,
-  "total_trades": 1,
+  "total_trades": 2,
   "wins": 0,
-  "updated_ts": "2026-06-11T08:47:00.792768+00:00"
+  "updated_ts": "2026-06-11T11:11:05.183854+00:00"
 }
