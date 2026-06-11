@@ -1,0 +1,47 @@
+{
+  "generated_ts": "2026-06-11T11:25:33.323081+00:00",
+  "market_state": "RISK_OFF",
+  "regime_multiplier": 0.8,
+  "candidates": [
+    {
+      "ticker": "AMD",
+      "sector": "AI_SEMI",
+      "rule_score": 115,
+      "p_up": 0.729,
+      "hybrid_score": 75.16,
+      "verdict": "BUY_CANDIDATE"
+    },
+    {
+      "ticker": "GS",
+      "sector": "FINANCE",
+      "rule_score": 100,
+      "p_up": 0.637,
+      "hybrid_score": 65.48,
+      "verdict": "WATCH"
+    },
+    {
+      "ticker": "000660.KS",
+      "sector": "AI_SEMI",
+      "rule_score": 100,
+      "p_up": 0.68,
+      "hybrid_score": 67.2,
+      "verdict": "WATCH"
+    },
+    {
+      "ticker": "BAC",
+      "sector": "FINANCE",
+      "rule_score": 100,
+      "p_up": 0.623,
+      "hybrid_score": 64.92,
+      "verdict": "WATCH"
+    },
+    {
+      "ticker": "AAPL",
+      "sector": "TECH_PLATFORM",
+      "rule_score": 100,
+      "p_up": 0.61,
+      "hybrid_score": 64.4,
+      "verdict": "WATCH"
+    }
+  ]
+}

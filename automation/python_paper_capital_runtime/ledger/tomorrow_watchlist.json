@@ -1,45 +1,245 @@
 {
-  "generated_ts": "2026-06-10T09:56:31.648013+00:00",
+  "generated_ts": "2026-06-11T11:25:33.322533+00:00",
   "top": [
     {
       "ticker": "AMD",
       "sector": "AI_SEMI",
+      "score": 115,
+      "sector_avg_change_pct": -2.4554952778439794,
+      "p_up": 0.729,
+      "composite_score": 70.24900944431204
+    },
+    {
+      "ticker": "GS",
+      "sector": "FINANCE",
       "score": 100,
-      "sector_avg_change_pct": -1.6835316478953593,
-      "p_up": 0.758,
-      "composite_score": 66.95293670420928
+      "sector_avg_change_pct": -1.3669353442672698,
+      "p_up": 0.637,
+      "composite_score": 62.74612931146547
     },
     {
       "ticker": "000660.KS",
       "sector": "AI_SEMI",
       "score": 100,
-      "sector_avg_change_pct": -1.6835316478953593,
-      "p_up": 0.666,
-      "composite_score": 63.272936704209286
+      "sector_avg_change_pct": -2.4554952778439794,
+      "p_up": 0.68,
+      "composite_score": 62.28900944431204
+    },
+    {
+      "ticker": "BAC",
+      "sector": "FINANCE",
+      "score": 100,
+      "sector_avg_change_pct": -1.3669353442672698,
+      "p_up": 0.623,
+      "composite_score": 62.186129311465464
     },
     {
       "ticker": "AAPL",
       "sector": "TECH_PLATFORM",
       "score": 100,
-      "sector_avg_change_pct": -1.4278019352566729,
-      "p_up": 0.638,
-      "composite_score": 62.664396129486654
+      "sector_avg_change_pct": -1.3913292496881429,
+      "p_up": 0.61,
+      "composite_score": 61.61734150062372
+    },
+    {
+      "ticker": "AVGO",
+      "sector": "AI_SEMI",
+      "score": 105,
+      "sector_avg_change_pct": -2.4554952778439794,
+      "p_up": 0.591,
+      "composite_score": 60.72900944431204
+    },
+    {
+      "ticker": "JPM",
+      "sector": "FINANCE",
+      "score": 100,
+      "sector_avg_change_pct": -1.3669353442672698,
+      "p_up": 0.579,
+      "composite_score": 60.42612931146546
     },
     {
       "ticker": "005930.KS",
       "sector": "AI_SEMI",
+      "score": 95,
+      "sector_avg_change_pct": -2.4554952778439794,
+      "p_up": 0.639,
+      "composite_score": 58.64900944431204
+    },
+    {
+      "ticker": "NVDA",
+      "sector": "AI_SEMI",
+      "score": 105,
+      "sector_avg_change_pct": -2.4554952778439794,
+      "p_up": 0.528,
+      "composite_score": 58.209009444312045
+    },
+    {
+      "ticker": "RTX",
+      "sector": "DEFENSE",
+      "score": 110,
+      "sector_avg_change_pct": -0.5939598296189625,
+      "p_up": 0.366,
+      "composite_score": 57.45208034076207
+    },
+    {
+      "ticker": "JNJ",
+      "sector": "BIO",
       "score": 100,
-      "sector_avg_change_pct": -1.6835316478953593,
-      "p_up": 0.64,
-      "composite_score": 62.23293670420928
+      "sector_avg_change_pct": -0.9971827521228072,
+      "p_up": 0.472,
+      "composite_score": 56.88563449575439
     },
     {
       "ticker": "GOOGL",
       "sector": "TECH_PLATFORM",
+      "score": 90,
+      "sector_avg_change_pct": -1.3913292496881429,
+      "p_up": 0.566,
+      "composite_score": 55.85734150062372
+    },
+    {
+      "ticker": "PFE",
+      "sector": "BIO",
       "score": 100,
-      "sector_avg_change_pct": -1.4278019352566729,
-      "p_up": 0.569,
-      "composite_score": 59.90439612948665
+      "sector_avg_change_pct": -0.9971827521228072,
+      "p_up": 0.423,
+      "composite_score": 54.92563449575438
+    },
+    {
+      "ticker": "RIVN",
+      "sector": "EV_BATTERY",
+      "score": 100,
+      "sector_avg_change_pct": -1.9901258971931586,
+      "p_up": 0.462,
+      "composite_score": 54.499748205613685
+    },
+    {
+      "ticker": "MRNA",
+      "sector": "BIO",
+      "score": 100,
+      "sector_avg_change_pct": -0.9971827521228072,
+      "p_up": 0.383,
+      "composite_score": 53.325634495754386
+    },
+    {
+      "ticker": "MSFT",
+      "sector": "TECH_PLATFORM",
+      "score": 90,
+      "sector_avg_change_pct": -1.3913292496881429,
+      "p_up": 0.468,
+      "composite_score": 51.93734150062372
+    },
+    {
+      "ticker": "055550.KS",
+      "sector": "FINANCE",
+      "score": 80,
+      "sector_avg_change_pct": -1.3669353442672698,
+      "p_up": 0.56,
+      "composite_score": 51.66612931146547
+    },
+    {
+      "ticker": "META",
+      "sector": "TECH_PLATFORM",
+      "score": 90,
+      "sector_avg_change_pct": -1.3913292496881429,
+      "p_up": 0.457,
+      "composite_score": 51.49734150062372
+    },
+    {
+      "ticker": "TSLA",
+      "sector": "EV_BATTERY",
+      "score": 90,
+      "sector_avg_change_pct": -1.9901258971931586,
+      "p_up": 0.481,
+      "composite_score": 51.25974820561368
+    },
+    {
+      "ticker": "105560.KS",
+      "sector": "FINANCE",
+      "score": 80,
+      "sector_avg_change_pct": -1.3669353442672698,
+      "p_up": 0.549,
+      "composite_score": 51.22612931146546
+    },
+    {
+      "ticker": "035420.KS",
+      "sector": "TECH_PLATFORM",
+      "score": 80,
+      "sector_avg_change_pct": -1.3913292496881429,
+      "p_up": 0.491,
+      "composite_score": 48.85734150062372
+    },
+    {
+      "ticker": "LMT",
+      "sector": "DEFENSE",
+      "score": 70,
+      "sector_avg_change_pct": -0.5939598296189625,
+      "p_up": 0.344,
+      "composite_score": 40.57208034076208
+    },
+    {
+      "ticker": "NOC",
+      "sector": "DEFENSE",
+      "score": 70,
+      "sector_avg_change_pct": -0.5939598296189625,
+      "p_up": 0.247,
+      "composite_score": 36.692080340762075
+    },
+    {
+      "ticker": "047810.KS",
+      "sector": "DEFENSE",
+      "score": 45,
+      "sector_avg_change_pct": -0.5939598296189625,
+      "p_up": 0.422,
+      "composite_score": 33.692080340762075
+    },
+    {
+      "ticker": "247540.KS",
+      "sector": "EV_BATTERY",
+      "score": 50,
+      "sector_avg_change_pct": -1.9901258971931586,
+      "p_up": 0.427,
+      "composite_score": 33.09974820561368
+    },
+    {
+      "ticker": "068270.KS",
+      "sector": "BIO",
+      "score": 35,
+      "sector_avg_change_pct": -0.9971827521228072,
+      "p_up": 0.387,
+      "composite_score": 27.48563449575439
+    },
+    {
+      "ticker": "006400.KS",
+      "sector": "EV_BATTERY",
+      "score": 20,
+      "sector_avg_change_pct": -1.9901258971931586,
+      "p_up": 0.552,
+      "composite_score": 26.099748205613686
+    },
+    {
+      "ticker": "373220.KS",
+      "sector": "EV_BATTERY",
+      "score": 20,
+      "sector_avg_change_pct": -1.9901258971931586,
+      "p_up": 0.485,
+      "composite_score": 23.419748205613686
+    },
+    {
+      "ticker": "012450.KS",
+      "sector": "DEFENSE",
+      "score": 10,
+      "sector_avg_change_pct": -0.5939598296189625,
+      "p_up": 0.368,
+      "composite_score": 17.53208034076207
+    },
+    {
+      "ticker": "207940.KS",
+      "sector": "BIO",
+      "score": -25,
+      "sector_avg_change_pct": -0.9971827521228072,
+      "p_up": 0.356,
+      "composite_score": 2.2456344957543877
     }
   ]
 }

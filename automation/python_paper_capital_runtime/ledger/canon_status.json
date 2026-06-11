@@ -1,0 +1,28 @@
+{
+  "generated_ts": "2026-06-11T11:25:33.323975+00:00",
+  "layers": {
+    "GLOBAL_FIRST": true,
+    "KOREA_THEME_TRANSLATION": true,
+    "REAL_DATA_BRIDGE": true,
+    "KIS_REALTIME_BRIDGE": true,
+    "RANK_OVERLAP": true,
+    "THEME_CLUSTER": true,
+    "LEADER_ROTATION": true,
+    "REVERSE_TRACE": true,
+    "NEXT_DAY_TOP30": true,
+    "REALITY_SURVIVAL_SIM": true,
+    "PAPER_VALIDATION": true,
+    "SUBSCRIPTION_REPORT": true,
+    "CEO_REPORT_BOOK": true,
+    "TELEGRAM_SAFE_CONTROL": true,
+    "ACCOUNT_READ_ONLY_STATUS": true,
+    "GOD_HYBRID_MIND": true,
+    "ESSENCE_MEMORY": true,
+    "AUTO_PATCH_COUNCIL": true,
+    "FINAL_VETO": true,
+    "SURGE_CAUSE_TRACE": true
+  },
+  "pass_count": 20,
+  "total_layers": 20,
+  "regressions": []
+}

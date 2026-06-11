@@ -1,0 +1,12 @@
+{
+  "generated_ts": "2026-06-11T11:25:33.323415+00:00",
+  "findings": [
+    {
+      "id": "RISK_OFF_WITH_OPEN_POSITIONS",
+      "severity": "VERIFY_REQUIRED",
+      "detail": "market_state=RISK_OFF with 3 open position(s) - verify stop-loss coverage"
+    }
+  ],
+  "auto_code_patch": "BLOCKED",
+  "core_patch": "BLOCKED"
+}
