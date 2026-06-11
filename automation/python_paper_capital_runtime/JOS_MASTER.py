@@ -1928,13 +1928,13 @@ CANON_LAYER_CHECKS = {
     "REALITY_SURVIVAL_SIM": lambda ctx: True,
     "PAPER_VALIDATION": lambda ctx: True,
     "SUBSCRIPTION_REPORT": lambda ctx: bool(ctx.get("subscription_report")),
-    "CEO_REPORT_BOOK": lambda ctx: True,
+    "CEO_REPORT_BOOK": lambda ctx: bool(ctx.get("ceo_report_book_entry")),
     "TELEGRAM_SAFE_CONTROL": lambda ctx: "trading_paused" in (ctx.get("control") or {}),
     "ACCOUNT_READ_ONLY_STATUS": lambda ctx: bool(ctx.get("account_status")),
     "GOD_HYBRID_MIND": lambda ctx: bool(ctx.get("hybrid_mind")),
     "ESSENCE_MEMORY": lambda ctx: bool(ctx.get("essence_memory")),
     "AUTO_PATCH_COUNCIL": lambda ctx: bool(ctx.get("patch_council")),
-    "FINAL_VETO": lambda ctx: ctx.get("final_veto_ok") is not None,
+    "FINAL_VETO": lambda ctx: ctx.get("final_veto_ok") is True,
 }
 
 
@@ -2080,6 +2080,10 @@ def run_close():
         "patch_council": patch_council
     }
 
+    ceo_report_book_entry = append_ceo_report_book(close_data)
+
+    veto_ok, veto_reasons = final_veto_check(format_close_report(close_data))
+
     non_regression = non_regression_check({
         "market": market,
         "ranking": ranking,
@@ -2093,7 +2097,8 @@ def run_close():
         "hybrid_mind": hybrid_mind,
         "essence_memory": essence,
         "patch_council": patch_council,
-        "final_veto_ok": True
+        "final_veto_ok": veto_ok,
+        "ceo_report_book_entry": ceo_report_book_entry
     })
 
     close_data["non_regression"] = non_regression
@@ -2113,8 +2118,6 @@ def run_close():
 
     close_text = format_close_report(close_data)
 
-    veto_ok, veto_reasons = final_veto_check(close_text)
-
     if veto_ok:
         send_telegram(close_text)
     else:
@@ -2122,8 +2125,6 @@ def run_close():
 
     subscription_text = format_subscription_report(close_data)
     send_subscriber_telegram(subscription_text)
-
-    append_ceo_report_book(close_data)
 
 
 def main():
