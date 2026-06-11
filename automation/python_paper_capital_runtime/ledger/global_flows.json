@@ -1,11 +1,11 @@
 {
-  "generated_ts": "2026-06-11T00:34:49.133944+00:00",
+  "generated_ts": "2026-06-11T01:14:59.072838+00:00",
   "flows": [
     {
       "ticker": "^N225",
       "label": "JAPAN_NIKKEI",
-      "price": 62901.78125,
-      "change_pct": -3.8443553241700714
+      "price": 63456.8515625,
+      "change_pct": -2.9958397069934617
     },
     {
       "ticker": "^HSI",
@@ -16,8 +16,8 @@
     {
       "ticker": "KRW=X",
       "label": "USDKRW",
-      "price": 1524.3199462890625,
-      "change_pct": -0.09766040643753847
+      "price": 1525.8800048828125,
+      "change_pct": 0.004584206839412594
     },
     {
       "ticker": "^TNX",
@@ -28,14 +28,14 @@
     {
       "ticker": "CL=F",
       "label": "WTI_OIL",
-      "price": 92.30000305175781,
-      "change_pct": 4.648533158024488
+      "price": 92.01000213623047,
+      "change_pct": 4.319733922693989
     },
     {
       "ticker": "GC=F",
       "label": "GOLD",
-      "price": 4085.699951171875,
-      "change_pct": -4.091550441974765
+      "price": 4100.0,
+      "change_pct": -3.755868544600939
     }
   ]
 }

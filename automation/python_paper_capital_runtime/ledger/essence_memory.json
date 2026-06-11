@@ -37,12 +37,20 @@
         "NEWS(+10)",
         "OVERLAP(x2,+5)"
       ]
+    },
+    {
+      "ts": "2026-06-11T01:15:01.607762+00:00",
+      "ticker": "AMD",
+      "sector": "AI_SEMI",
+      "drivers": [
+        "VOLUME(+100)"
+      ]
     }
   ],
-  "sample_size": 4,
+  "sample_size": 5,
   "dominant_sector": "AI_SEMI",
-  "dominant_sector_count": 2,
+  "dominant_sector_count": 3,
   "dominant_driver": "VOLUME",
-  "dominant_driver_count": 4,
-  "updated_ts": "2026-06-11T00:34:51.670046+00:00"
+  "dominant_driver_count": 5,
+  "updated_ts": "2026-06-11T01:15:01.608147+00:00"
 }
