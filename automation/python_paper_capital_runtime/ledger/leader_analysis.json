@@ -1,5 +1,5 @@
 {
-  "generated_ts": "2026-06-11T05:14:53.092970+00:00",
+  "generated_ts": "2026-06-11T06:03:30.908711+00:00",
   "leader": {
     "ticker": "NVDA",
     "sector": "AI_SEMI",
@@ -34,7 +34,7 @@
     {
       "ticker": "000660.KS",
       "sector": "AI_SEMI",
-      "score": 100,
+      "score": 110,
       "shared_drivers": [
         "NEWS",
         "SECTOR:AI_SEMI"
@@ -43,7 +43,7 @@
     {
       "ticker": "005930.KS",
       "sector": "AI_SEMI",
-      "score": 95,
+      "score": 105,
       "shared_drivers": [
         "NEWS",
         "SECTOR:AI_SEMI"
