@@ -1,11 +1,13 @@
 {
-  "generated_ts": "2026-06-11T08:13:35.319842+00:00",
+  "generated_ts": "2026-06-11T08:34:35.359928+00:00",
   "leader": {
     "ticker": "NVDA",
     "sector": "AI_SEMI",
-    "score": 100,
+    "score": 115,
     "drivers": [
-      "VOLUME(+100)"
+      "VOLUME(+100)",
+      "NEWS(+10)",
+      "OVERLAP(x2,+5)"
     ],
     "foreign_sector_change_pct": -1.4525490515890727,
     "change_pct": -0.2156810532777033
@@ -14,32 +16,36 @@
     {
       "ticker": "AMD",
       "sector": "AI_SEMI",
-      "score": 100,
+      "score": 115,
       "shared_drivers": [
+        "NEWS",
         "SECTOR:AI_SEMI"
       ]
     },
     {
       "ticker": "AVGO",
       "sector": "AI_SEMI",
-      "score": 100,
+      "score": 115,
       "shared_drivers": [
+        "NEWS",
         "SECTOR:AI_SEMI"
       ]
     },
     {
       "ticker": "000660.KS",
       "sector": "AI_SEMI",
-      "score": 95,
+      "score": 110,
       "shared_drivers": [
+        "NEWS",
         "SECTOR:AI_SEMI"
       ]
     },
     {
       "ticker": "005930.KS",
       "sector": "AI_SEMI",
-      "score": 90,
+      "score": 105,
       "shared_drivers": [
+        "NEWS",
         "SECTOR:AI_SEMI"
       ]
     }
