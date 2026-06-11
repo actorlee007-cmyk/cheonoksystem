@@ -120,12 +120,20 @@
       "drivers": [
         "VOLUME(+100)"
       ]
+    },
+    {
+      "ts": "2026-06-11T08:13:35.319842+00:00",
+      "ticker": "NVDA",
+      "sector": "AI_SEMI",
+      "drivers": [
+        "VOLUME(+100)"
+      ]
     }
   ],
-  "sample_size": 13,
+  "sample_size": 14,
   "dominant_sector": "AI_SEMI",
-  "dominant_sector_count": 10,
+  "dominant_sector_count": 11,
   "dominant_driver": "VOLUME",
-  "dominant_driver_count": 13,
-  "updated_ts": "2026-06-11T07:33:07.327915+00:00"
+  "dominant_driver_count": 14,
+  "updated_ts": "2026-06-11T08:13:35.320252+00:00"
 }
