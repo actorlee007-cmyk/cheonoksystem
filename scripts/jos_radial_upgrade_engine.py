@@ -98,6 +98,24 @@ TOOL_EXPANSIONS = {
         },
         "readiness": ["YouTube account", "channel positioning", "content calendar", "disclosure rules", "analytics access"],
     },
+    "shopify": {
+        "essence": "E-commerce fulfillment leverage: turn 1-person automation tools/digital products into a "
+                    "store with connected payments, inventory, and orders - fills the D2 위탁/이커머스 "
+                    "gap flagged as '신규 영역' in JOS_NOTION_BOOKMARK_CLASSIFICATION_2026-06-11.md.",
+        "tool_chain": ["Shopify", "Canva", "Airtable", "GitHub Pages or Vercel", "PayPal or Stripe"],
+        "applications": {
+            "AI_AUTOMATION_SYSTEM_SALES": ["digital product checkout for automation templates", "order/delivery automation"],
+            "ADSENSE_AFFILIATE_REVENUE": ["위탁/중고 product catalog", "inventory-linked comparison page"],
+            "WEB_SUBSCRIPTION_SERVICE": ["recurring product subscription", "digital download product"],
+            "YOUTUBE_CHANNEL_OPERATION": ["video-linked goods/template storefront"],
+            "PAPER_CAPITAL_INTELLIGENCE": ["paid report digital product checkout"],
+        },
+        "readiness": [
+            "Shopify OAuth re-authorization (token expired as of 2026-06-11)",
+            "CEO decision: create store via get-new-store-previews or connect existing store",
+            "product catalog", "payment/shipping policy", "inventory sync",
+        ],
+    },
 }
 
 REVENUE_LOOPS = [
