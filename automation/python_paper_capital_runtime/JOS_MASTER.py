@@ -74,6 +74,7 @@ import os
 import time
 import json
 import random
+import urllib.error
 import urllib.parse
 import urllib.request
 import feedparser
@@ -519,7 +520,13 @@ def market_feed():
                     except Exception as exc:
                         kis_data = None
                         if not kis_fail_logged:
-                            print(f"HOLD_KIS_QUOTE_FAILED: {type(exc).__name__}: {exc}")
+                            detail = ""
+                            if isinstance(exc, urllib.error.HTTPError):
+                                try:
+                                    detail = " | body: " + exc.read().decode("utf-8", "replace")[:300]
+                                except Exception:
+                                    pass
+                            print(f"HOLD_KIS_QUOTE_FAILED: {type(exc).__name__}: {exc}{detail}")
                             kis_fail_logged = True
 
                     if kis_data:
