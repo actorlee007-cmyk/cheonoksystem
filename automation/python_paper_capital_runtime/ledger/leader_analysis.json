@@ -1,51 +1,59 @@
 {
-  "generated_ts": "2026-06-11T04:14:56.276862+00:00",
+  "generated_ts": "2026-06-11T04:42:51.009938+00:00",
   "leader": {
-    "ticker": "TSLA",
-    "sector": "EV_BATTERY",
-    "score": 110,
+    "ticker": "LMT",
+    "sector": "DEFENSE",
+    "score": 115,
     "drivers": [
       "VOLUME(+100)",
-      "NEWS(+10)"
+      "NEWS(+10)",
+      "OVERLAP(x2,+5)"
     ],
-    "foreign_sector_change_pct": -4.795911987601681,
-    "change_pct": -3.000371479396923
+    "foreign_sector_change_pct": 1.670306243349331,
+    "change_pct": 1.9343544939945383
   },
   "similar_candidates": [
+    {
+      "ticker": "RTX",
+      "sector": "DEFENSE",
+      "score": 115,
+      "shared_drivers": [
+        "NEWS",
+        "SECTOR:DEFENSE"
+      ]
+    },
+    {
+      "ticker": "TSLA",
+      "sector": "EV_BATTERY",
+      "score": 110,
+      "shared_drivers": [
+        "NEWS"
+      ]
+    },
     {
       "ticker": "RIVN",
       "sector": "EV_BATTERY",
       "score": 110,
       "shared_drivers": [
-        "NEWS",
-        "SECTOR:EV_BATTERY"
+        "NEWS"
       ]
     },
     {
-      "ticker": "373220.KS",
-      "sector": "EV_BATTERY",
-      "score": 10,
+      "ticker": "NOC",
+      "sector": "DEFENSE",
+      "score": 70,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:EV_BATTERY"
+        "SECTOR:DEFENSE"
       ]
     },
     {
-      "ticker": "006400.KS",
-      "sector": "EV_BATTERY",
-      "score": 10,
+      "ticker": "047810.KS",
+      "sector": "DEFENSE",
+      "score": 70,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:EV_BATTERY"
-      ]
-    },
-    {
-      "ticker": "247540.KS",
-      "sector": "EV_BATTERY",
-      "score": -10,
-      "shared_drivers": [
-        "NEWS",
-        "SECTOR:EV_BATTERY"
+        "SECTOR:DEFENSE"
       ]
     }
   ]
