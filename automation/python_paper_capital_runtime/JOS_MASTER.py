@@ -154,6 +154,26 @@ ROTATION_SCORE_GAP = 40      # rotate a non-profitable position into a candidate
                               # outscores it by at least this much
 MAX_OPEN_POSITIONS = 3        # max concurrent paper positions
 
+# EV-based risk framework (Layer 22): stop-loss / trailing-stop now scale
+# with each ticker's own volatility (ATR) at entry instead of one fixed %
+# for every ticker, targeting roughly a 2:1 reward:risk ratio (마크 미너비니
+# "트레이딩의 성배" / 노션 "수익은 짧고 손실은 길게? 이러면 절대 못 법니다" -
+# 손익비가 승률보다 중요하다는 원칙). STOP_LOSS_PCT / TRAILING_STOP_PCT above
+# remain the fallback when ATR can't be computed (e.g. yfinance outage) or
+# for positions opened before this layer existed.
+ATR_LOOKBACK_DAYS = 14
+ATR_STOP_MULT = 1.0        # stop-loss = ATR% x this multiple
+ATR_TRAILING_MULT = 1.5    # trailing stop (once in profit) = ATR% x this multiple
+ATR_TARGET_MULT = 2.0      # informational profit target = ATR% x this multiple (~2:1 R:R)
+ATR_STOP_FLOOR_PCT = 1.0   # never tighter than this (avoid noise stop-outs)
+ATR_STOP_CEIL_PCT = 5.0    # never wider than this (cap tail risk)
+
+# Rotation prefers composite_score (rule score + forward-sim p_up + sector
+# trend, from tomorrow_watchlist.json) over the raw rule-based score when
+# both the held ticker and the current #1 are in that list - 후보 교체 판단에
+# 통계적 확률(p_up)과 섹터 흐름까지 반영.
+ROTATION_COMPOSITE_GAP = 15
+
 # Foreign (US) -> domestic (KRX) sector linkage: KRX opens after the US
 # session closes, so a strong/weak US sector is treated as a leading
 # indicator for the matching Korean tickers in WATCHLIST.
@@ -1408,12 +1428,87 @@ def close_position(position, current_price, reason):
     return result
 
 
+def compute_atr_pct(ticker, lookback_days=ATR_LOOKBACK_DAYS):
+    """Average True Range over the last `lookback_days`, as a percentage of
+    the latest close. Returns None if history is unavailable, in which case
+    the caller falls back to the fixed STOP_LOSS_PCT / TRAILING_STOP_PCT."""
+
+    try:
+        hist = yf.Ticker(ticker).history(period="2mo")
+        hist = hist.dropna(subset=["High", "Low", "Close"])
+
+        closes = hist["Close"].tolist()
+        highs = hist["High"].tolist()
+        lows = hist["Low"].tolist()
+
+        if len(closes) < lookback_days + 1:
+            return None
+
+        true_ranges = []
+
+        for i in range(1, len(closes)):
+            true_ranges.append(max(
+                highs[i] - lows[i],
+                abs(highs[i] - closes[i - 1]),
+                abs(lows[i] - closes[i - 1]),
+            ))
+
+        atr = sum(true_ranges[-lookback_days:]) / lookback_days
+        last_close = closes[-1]
+
+        if not last_close:
+            return None
+
+        return (atr / last_close) * 100
+
+    except Exception:
+        return None
+
+
+def position_risk_levels(ticker):
+    """Stop-loss / trailing-stop / target widths (in %) for a new position,
+    sized off the ticker's ATR at entry for a ~2:1 reward:risk ratio. Falls
+    back to the fixed STOP_LOSS_PCT / TRAILING_STOP_PCT if ATR is unavailable."""
+
+    atr_pct = compute_atr_pct(ticker)
+
+    if atr_pct:
+        stop_loss_pct = min(max(atr_pct * ATR_STOP_MULT, ATR_STOP_FLOOR_PCT), ATR_STOP_CEIL_PCT)
+        trailing_stop_pct = min(max(atr_pct * ATR_TRAILING_MULT, ATR_STOP_FLOOR_PCT), ATR_STOP_CEIL_PCT)
+        target_pct = atr_pct * ATR_TARGET_MULT
+    else:
+        stop_loss_pct = STOP_LOSS_PCT
+        trailing_stop_pct = TRAILING_STOP_PCT
+        target_pct = STOP_LOSS_PCT * ATR_TARGET_MULT
+
+    return {
+        "atr_pct": atr_pct,
+        "stop_loss_pct": stop_loss_pct,
+        "trailing_stop_pct": trailing_stop_pct,
+        "target_pct": target_pct
+    }
+
+
 def manage_positions(ranking):
     """Check every open position for a stop-loss, trailing-stop (profit
     locked in once the trend reverses), or rotation exit. Profits have no
-    fixed cap - a position rides until the trailing stop triggers."""
+    fixed cap - a position rides until the trailing stop triggers.
+
+    Stop-loss / trailing-stop widths come from each position's own
+    stop_loss_pct / trailing_stop_pct (set at entry from ATR, see
+    position_risk_levels), falling back to STOP_LOSS_PCT / TRAILING_STOP_PCT
+    for positions opened before this field existed.
+
+    Rotation compares composite_score (score + forward-sim p_up + sector
+    trend, from tomorrow_watchlist.json) when both the held ticker and the
+    current #1 appear there, falling back to the raw score gap otherwise."""
 
     ranking_by_ticker = {row["ticker"]: row for row in ranking}
+
+    composite_by_ticker = {
+        c["ticker"]: c["composite_score"]
+        for c in load_json(WATCHLIST_FILE, {}).get("top", [])
+    }
 
     positions = load_positions()
     top = ranking[0] if ranking else None
@@ -1437,18 +1532,28 @@ def manage_positions(ranking):
 
         return_pct = ((current_price - entry_price) / entry_price) * 100
 
+        stop_loss_pct = position.get("stop_loss_pct", STOP_LOSS_PCT)
+        trailing_stop_pct = position.get("trailing_stop_pct", TRAILING_STOP_PCT)
+
         reason = None
 
-        if return_pct <= -STOP_LOSS_PCT:
+        if return_pct <= -stop_loss_pct:
             reason = "STOP_LOSS"
 
         elif peak_price > entry_price:
             drawdown_from_peak = ((peak_price - current_price) / peak_price) * 100
-            if drawdown_from_peak >= TRAILING_STOP_PCT:
+            if drawdown_from_peak >= trailing_stop_pct:
                 reason = "TRAILING_STOP"
 
         if reason is None and top and top["ticker"] != position["ticker"] and return_pct <= 0:
-            if top["score"] - row["score"] >= ROTATION_SCORE_GAP:
+
+            held_composite = composite_by_ticker.get(position["ticker"])
+            top_composite = composite_by_ticker.get(top["ticker"])
+
+            if held_composite is not None and top_composite is not None:
+                if top_composite - held_composite >= ROTATION_COMPOSITE_GAP:
+                    reason = "ROTATION"
+            elif top["score"] - row["score"] >= ROTATION_SCORE_GAP:
                 reason = "ROTATION"
 
         if reason:
@@ -1465,7 +1570,10 @@ def open_new_positions(ranking, excluded=None):
     """Open at most one new position per cycle. Candidates from the
     last close's tomorrow_watchlist are tried first, falling back to the
     full ranking, requiring the live score to clear ENTRY_SCORE_THRESHOLD.
-    Skips entirely if the operator safe-control switch is paused."""
+    Skips entirely if the operator safe-control switch is paused.
+
+    Stop-loss / trailing-stop / target are sized off the ticker's own ATR
+    at entry (Layer 22: EV-BASED RISK FRAMEWORK, ~2:1 reward:risk)."""
 
     if load_control().get("trading_paused"):
         return
@@ -1514,13 +1622,19 @@ def open_new_positions(ranking, excluded=None):
         STATE["paper_trades"].append(entry_signal)
         append_jsonl(SIGNALS_LOG, entry_signal)
 
+        risk = position_risk_levels(row["ticker"])
+
         positions.append({
             "ticker": row["ticker"],
             "sector": row["sector"],
             "entry_price": row["price"],
             "entry_ts": entry_signal["ts"],
             "peak_price": row["price"],
-            "score_at_entry": row["score"]
+            "score_at_entry": row["score"],
+            "atr_pct": risk["atr_pct"],
+            "stop_loss_pct": risk["stop_loss_pct"],
+            "trailing_stop_pct": risk["trailing_stop_pct"],
+            "target_pct": risk["target_pct"]
         })
 
         save_positions(positions)
@@ -1561,7 +1675,10 @@ def portfolio_engine(ranking=None):
             "entry_price": entry_price,
             "current_price": current_price,
             "peak_price": position["peak_price"],
-            "return_pct": ((current_price - entry_price) / entry_price) * 100
+            "return_pct": ((current_price - entry_price) / entry_price) * 100,
+            "stop_loss_pct": position.get("stop_loss_pct", STOP_LOSS_PCT),
+            "trailing_stop_pct": position.get("trailing_stop_pct", TRAILING_STOP_PCT),
+            "target_pct": position.get("target_pct", STOP_LOSS_PCT * ATR_TARGET_MULT)
         }
 
     STATE["portfolio"] = portfolio
@@ -2042,8 +2159,10 @@ def format_report_text(report_data):
         lines.append("[OPEN POSITIONS]")
         for ticker, p in portfolio.items():
             lines.append(
-                "  %s (%s) entry=%.2f current=%.2f return=%.2f%%" % (
-                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"]
+                "  %s (%s) entry=%.2f current=%.2f return=%.2f%% "
+                "(stop=-%.2f%% trail=%.2f%% target=+%.2f%%)" % (
+                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"],
+                    p["stop_loss_pct"], p["trailing_stop_pct"], p["target_pct"]
                 )
             )
 
@@ -2187,8 +2306,10 @@ def format_close_report(close_data):
     if close_data["open_positions"]:
         for ticker, p in close_data["open_positions"].items():
             lines.append(
-                "  %s (%s) entry=%.2f current=%.2f return=%.2f%%" % (
-                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"]
+                "  %s (%s) entry=%.2f current=%.2f return=%.2f%% "
+                "(stop=-%.2f%% trail=%.2f%% target=+%.2f%%)" % (
+                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"],
+                    p["stop_loss_pct"], p["trailing_stop_pct"], p["target_pct"]
                 )
             )
     else:
