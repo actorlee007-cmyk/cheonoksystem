@@ -74,7 +74,6 @@ import os
 import time
 import json
 import random
-import urllib.error
 import urllib.parse
 import urllib.request
 import feedparser
@@ -376,19 +375,9 @@ KIS_BASE_URL = os.environ.get(
     "CHEONOK_KIS_BASE_URL", "https://openapi.koreainvestment.com:9443"
 ).strip()
 
-# 모의투자(virtual/paper) domain - app keys issued for a paper-trading KIS
-# account return HTTP 403 against the real-trading domain above and vice
-# versa. Tried automatically as a fallback (see kis_quote_auto) since this
-# is a PAPER_ONLY system and a paper-account app key is the common case.
-KIS_BASE_URL_PAPER = "https://openapivts.koreainvestment.com:29443"
-
 # In-memory only - NEVER persisted to disk/ledger (ledger/ is committed to
 # git by CI, and a leaked KIS bearer token is valid for up to 24h).
-_KIS_TOKEN_CACHE = {"access_token": None, "expires_at": 0.0, "base_url": None}
-
-# Remembers which domain (real vs paper) actually accepted this app
-# key/secret pair, so later tickers in the same run skip straight to it.
-_KIS_WORKING_BASE_URL = [KIS_BASE_URL]
+_KIS_TOKEN_CACHE = {"access_token": None, "expires_at": 0.0}
 
 
 def kis_credentials():
@@ -401,15 +390,13 @@ def kis_credentials():
     return app_key, app_secret
 
 
-def kis_get_token(app_key, app_secret, base_url):
+def kis_get_token(app_key, app_secret):
     """Fetch a KIS OAuth2 access token (POST /oauth2/tokenP) and cache it
     in-memory for this process only. Never written to disk."""
 
     now = time.time()
 
-    if (_KIS_TOKEN_CACHE["access_token"]
-            and _KIS_TOKEN_CACHE["base_url"] == base_url
-            and now < _KIS_TOKEN_CACHE["expires_at"]):
+    if _KIS_TOKEN_CACHE["access_token"] and now < _KIS_TOKEN_CACHE["expires_at"]:
         return _KIS_TOKEN_CACHE["access_token"]
 
     body = json.dumps({
@@ -419,7 +406,7 @@ def kis_get_token(app_key, app_secret, base_url):
     }).encode("utf-8")
 
     req = urllib.request.Request(
-        base_url + "/oauth2/tokenP",
+        KIS_BASE_URL + "/oauth2/tokenP",
         data=body,
         method="POST",
         headers={"content-type": "application/json; charset=UTF-8"}
@@ -437,17 +424,16 @@ def kis_get_token(app_key, app_secret, base_url):
 
     _KIS_TOKEN_CACHE["access_token"] = token
     _KIS_TOKEN_CACHE["expires_at"] = now + max(expires_in - 60, 0)
-    _KIS_TOKEN_CACHE["base_url"] = base_url
 
     return token
 
 
-def kis_quote(ticker, app_key, app_secret, base_url):
+def kis_quote(ticker, app_key, app_secret):
     """Read-only domestic-stock current-price quote (국내주식 현재가 시세
     조회, tr_id FHKST01010100). KIS_ORDER_GATE remains BLOCKED - only this
     quotations endpoint is ever called, never an order/account endpoint."""
 
-    token = kis_get_token(app_key, app_secret, base_url)
+    token = kis_get_token(app_key, app_secret)
 
     if not token:
         return None
@@ -455,7 +441,7 @@ def kis_quote(ticker, app_key, app_secret, base_url):
     code = ticker.split(".")[0]
 
     url = (
-        base_url
+        KIS_BASE_URL
         + "/uapi/domestic-stock/v1/quotations/inquire-price"
         + "?FID_COND_MRKT_DIV_CODE=J&FID_INPUT_ISCD=" + code
     )
@@ -483,28 +469,6 @@ def kis_quote(ticker, app_key, app_secret, base_url):
         "volume": float(output.get("acml_vol") or 0.0),
         "change_pct": float(output.get("prdy_ctrt") or 0.0)
     }
-
-
-def kis_quote_auto(ticker, app_key, app_secret):
-    """Try the configured KIS domain first; on HTTP 403 (the app
-    key/secret pair is registered against the other domain - real vs
-    모의투자) retry once against the paper-trading domain and remember
-    whichever domain worked for the rest of this process."""
-
-    base_url = _KIS_WORKING_BASE_URL[0]
-
-    try:
-        return kis_quote(ticker, app_key, app_secret, base_url)
-    except urllib.error.HTTPError as exc:
-        if exc.code != 403 or base_url == KIS_BASE_URL_PAPER:
-            raise
-
-    fallback_url = KIS_BASE_URL_PAPER if base_url != KIS_BASE_URL_PAPER else KIS_BASE_URL
-    _KIS_TOKEN_CACHE["access_token"] = None
-    data = kis_quote(ticker, app_key, app_secret, fallback_url)
-    _KIS_WORKING_BASE_URL[0] = fallback_url
-
-    return data
 
 # =====================================
 # MARKET
@@ -551,7 +515,7 @@ def market_feed():
                 if kis_app_key and kis_app_secret:
 
                     try:
-                        kis_data = kis_quote_auto(ticker, kis_app_key, kis_app_secret)
+                        kis_data = kis_quote(ticker, kis_app_key, kis_app_secret)
                     except Exception as exc:
                         kis_data = None
                         if not kis_fail_logged:
