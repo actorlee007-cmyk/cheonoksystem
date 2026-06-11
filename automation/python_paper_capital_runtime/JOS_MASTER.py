@@ -237,6 +237,18 @@ TREND_BREAKOUT_VOLUME_MULT = 1.5          # breakout-day volume vs N-day average
 TREND_BREAKOUT_BONUS = 15
 TREND_BOTTOM_FISHING_PENALTY = -10        # price still at/below the recent N-day low
 
+# Surge cause trace (Layer 21: SURGE SCANNER, market-wide). Detects today's
+# biggest % movers across the ENTIRE KRX (not just the 30-ticker WATCHLIST)
+# via the KIS 등락률순위 ranking endpoint, and runs a lightweight '역산출'
+# (reverse cause-trace) against each using data sources already wired into
+# this system (RSS news headlines + sector keyword map). Read-only and
+# additive only - never affects WATCHLIST scoring, ranking, or open
+# positions. A genuine daily +30% mover (상한가 territory, KRX limit is
+# +/-30%) will surface near the top of this list when it occurs; the 10%
+# threshold below is a tunable starting point for surfacing candidates.
+SURGE_SCAN_THRESHOLD_PCT = 10.0   # flag market-wide movers at/above this daily change %
+SURGE_SCAN_LIMIT = 10             # how many top gainers to fetch from the KIS ranking
+
 # Hybrid mind engine (Layer 16: GOD HYBRID MIND ENGINE). Fuses the
 # rule-based score engine, the statistical forward-simulation engine, and
 # the market-regime engine into one BUY/WATCH/AVOID verdict per candidate.
@@ -287,7 +299,8 @@ STATE = {
     "paper_trades": [],
     "rankings": [],
     "portfolio": [],
-    "reports": []
+    "reports": [],
+    "surges": []
 }
 
 # =====================================
@@ -315,6 +328,7 @@ FINAL_VETO_LOG = LEDGER_DIR / "final_veto_log.jsonl"
 CANON_STATUS_FILE = LEDGER_DIR / "canon_status.json"
 SUBSCRIPTION_REPORT_FILE = LEDGER_DIR / "subscription_report.json"
 CEO_REPORT_BOOK = LEDGER_DIR / "ceo_report_book.jsonl"
+SURGE_LOG = LEDGER_DIR / "surge_log.jsonl"
 
 
 def ensure_ledger_dir():
@@ -470,6 +484,71 @@ def kis_quote(ticker, app_key, app_secret):
         "volume": float(output.get("acml_vol") or 0.0),
         "change_pct": float(output.get("prdy_ctrt") or 0.0)
     }
+
+
+def kis_top_gainers(app_key, app_secret, limit=SURGE_SCAN_LIMIT):
+    """Market-wide (전체 KRX 종목) 등락률순위 - today's top % gainers across
+    ALL listed stocks, not limited to WATCHLIST (read-only ranking
+    endpoint, tr_id FHPST01700000). KIS_ORDER_GATE remains BLOCKED - this
+    is a quotations/ranking lookup only."""
+
+    token = kis_get_token(app_key, app_secret)
+
+    if not token:
+        return []
+
+    params = {
+        "fid_cond_mrkt_div_code": "J",
+        "fid_cond_scr_div_code": "20170",
+        "fid_input_iscd": "0000",
+        "fid_rank_sort_cls_code": "0",
+        "fid_input_cnt_1": "0",
+        "fid_prc_cls_code": "0",
+        "fid_input_price_1": "",
+        "fid_input_price_2": "",
+        "fid_vol_cnt": "",
+        "fid_trgt_cls_code": "0",
+        "fid_trgt_exls_cls_code": "0",
+        "fid_div_cls_code": "0",
+        "fid_rsfl_rate1": "",
+        "fid_rsfl_rate2": ""
+    }
+
+    url = (
+        KIS_BASE_URL
+        + "/uapi/domestic-stock/v1/ranking/fluctuation"
+        + "?" + urllib.parse.urlencode(params)
+    )
+
+    req = urllib.request.Request(url, headers={
+        "content-type": "application/json; charset=UTF-8",
+        "authorization": "Bearer " + token,
+        "appkey": app_key,
+        "appsecret": app_secret,
+        "tr_id": "FHPST01700000",
+        "custtype": "P"
+    })
+
+    with urllib.request.urlopen(req, timeout=10) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+
+    output = payload.get("output") or []
+
+    gainers = []
+
+    for item in output[:limit]:
+        try:
+            gainers.append({
+                "ticker": (item.get("stck_shrn_iscd") or "").strip(),
+                "name": (item.get("hts_kor_isnm") or "").strip(),
+                "price": float(item.get("stck_prpr") or 0.0),
+                "change_pct": float(item.get("prdy_ctrt") or 0.0),
+                "volume": float(item.get("acml_vol") or 0.0)
+            })
+        except Exception:
+            continue
+
+    return gainers
 
 # =====================================
 # MARKET
@@ -1079,6 +1158,85 @@ def update_essence_memory(leader):
     save_json(ESSENCE_MEMORY_FILE, result)
 
     return result
+
+# =====================================
+# SURGE CAUSE TRACE (Layer 21: SURGE SCANNER, market-wide)
+# =====================================
+
+def surge_cause_trace(name, news):
+    """Lightweight '역산출' (reverse cause-trace): cross-reference a
+    market-wide surge candidate's name against today's news headlines and
+    the sector-keyword map - using only data sources already wired into
+    this system. Each match is TITLE_ONLY evidence; a candidate with no
+    match is HOLD pending a real 공시/기사 본문 source (opendart, Naver
+    Search API, YouTube Data API - each requires its own GitHub Secret,
+    same pattern as CHEONOK_KIS_APP_KEY/SECRET)."""
+
+    drivers = []
+
+    if name:
+
+        for headline in news:
+            if name in headline:
+                drivers.append("NEWS: " + headline)
+
+        for sector, keywords in SECTOR_KEYWORDS.items():
+            for keyword in keywords:
+                if keyword in name:
+                    drivers.append("SECTOR_KEYWORD:" + sector + "(" + keyword + ")")
+
+    return drivers[:3]
+
+
+def surge_scan(news):
+    """Market-wide '오늘의 급등주' detection (KIS 등락률순위, ALL KRX-listed
+    stocks - not limited to WATCHLIST). Each candidate at/above
+    SURGE_SCAN_THRESHOLD_PCT gets a cause-trace via surge_cause_trace() and
+    is appended to ledger/surge_log.jsonl. Read-only / additive only - does
+    not affect WATCHLIST ranking, scoring, or open positions."""
+
+    app_key, app_secret = kis_credentials()
+
+    if not app_key or not app_secret:
+        return []
+
+    try:
+        gainers = kis_top_gainers(app_key, app_secret)
+    except Exception as exc:
+        detail = ""
+        if isinstance(exc, urllib.error.HTTPError):
+            try:
+                detail = " | body: " + exc.read().decode("utf-8", "replace")[:300]
+            except Exception:
+                pass
+        print(f"HOLD_SURGE_SCAN_FAILED: {type(exc).__name__}: {exc}{detail}")
+        return []
+
+    surges = []
+
+    for g in gainers:
+
+        if g["change_pct"] < SURGE_SCAN_THRESHOLD_PCT:
+            continue
+
+        drivers = surge_cause_trace(g["name"], news)
+
+        record = {
+            "ticker": g["ticker"],
+            "name": g["name"],
+            "price": g["price"],
+            "change_pct": g["change_pct"],
+            "volume": g["volume"],
+            "possible_drivers": drivers,
+            "evidence_status": "TITLE_ONLY" if drivers else "NO_MATCH_HOLD",
+            "ts": datetime.now(timezone.utc).isoformat()
+        }
+
+        append_jsonl(SURGE_LOG, record)
+
+        surges.append(record)
+
+    return surges
 
 # =====================================
 # CONTROL (Layer 14: TELEGRAM REPORT / SAFE CONTROL)
@@ -1745,6 +1903,19 @@ def format_report_text(report_data):
                     )
                 )
 
+    surges = report_data.get("surge_scan") or []
+
+    if surges:
+        lines.append("")
+        lines.append("[SURGE SCAN] 전체 KRX 급등주 >= %.0f%% (WATCHLIST 외 포함)" % SURGE_SCAN_THRESHOLD_PCT)
+        for s in surges:
+            drivers = "; ".join(s["possible_drivers"]) or "원인 미확인 (HOLD)"
+            lines.append(
+                "  %s %s change=%.2f%% price=%s -> %s" % (
+                    s["ticker"], s["name"], s["change_pct"], s["price"], drivers
+                )
+            )
+
     exits = report_data.get("exits") or []
 
     if exits:
@@ -1853,6 +2024,19 @@ def format_close_report(close_data):
                         c["ticker"], c["sector"], c["score"], ",".join(c["shared_drivers"])
                     )
                 )
+
+    surges = close_data.get("surge_scan") or []
+
+    if surges:
+        lines.append("")
+        lines.append("[SURGE SCAN] 전체 KRX 급등주 >= %.0f%% (WATCHLIST 외 포함)" % SURGE_SCAN_THRESHOLD_PCT)
+        for s in surges:
+            drivers = "; ".join(s["possible_drivers"]) or "원인 미확인 (HOLD)"
+            lines.append(
+                "  %s %s change=%.2f%% price=%s -> %s" % (
+                    s["ticker"], s["name"], s["change_pct"], s["price"], drivers
+                )
+            )
 
     lines.append("")
     lines.append("[TODAY RESULTS]")
@@ -2064,7 +2248,7 @@ def append_ceo_report_book(close_data):
 # REPORT (intraday)
 # =====================================
 
-def report(exit_results=None, leader=None, global_flows=None, essence=None):
+def report(exit_results=None, leader=None, global_flows=None, essence=None, surges=None):
 
     ranking = STATE["rankings"]
 
@@ -2114,6 +2298,9 @@ def report(exit_results=None, leader=None, global_flows=None, essence=None):
 
         "essence_memory":
             essence,
+
+        "surge_scan":
+            surges or [],
 
         "ts":
             datetime.now(
@@ -2171,6 +2358,7 @@ CANON_LAYER_CHECKS = {
     "ESSENCE_MEMORY": lambda ctx: bool(ctx.get("essence_memory")),
     "AUTO_PATCH_COUNCIL": lambda ctx: bool(ctx.get("patch_council")),
     "FINAL_VETO": lambda ctx: ctx.get("final_veto_ok") is True,
+    "SURGE_CAUSE_TRACE": lambda ctx: "surge_scan" in ctx,
 }
 
 
@@ -2231,6 +2419,10 @@ def collect_cycle_data():
 
     essence = update_essence_memory(leader)
 
+    surges = surge_scan(news)
+
+    STATE["surges"] = surges
+
     for row in market:
 
         STATE["events"].append(row)
@@ -2253,12 +2445,12 @@ def collect_cycle_data():
             "ts": datetime.now(timezone.utc).isoformat()
         })
 
-    return market, news, ranking, leader, global_flows, essence
+    return market, news, ranking, leader, global_flows, essence, surges
 
 
 def run_cycle():
 
-    market, news, ranking, leader, global_flows, essence = collect_cycle_data()
+    market, news, ranking, leader, global_flows, essence, surges = collect_cycle_data()
 
     exit_results = paper_engine(
         ranking
@@ -2268,12 +2460,12 @@ def run_cycle():
 
     portfolio_engine(ranking)
 
-    report(exit_results, leader, global_flows, essence)
+    report(exit_results, leader, global_flows, essence, surges)
 
 
 def run_close():
 
-    market, news, ranking, leader, global_flows, essence = collect_cycle_data()
+    market, news, ranking, leader, global_flows, essence, surges = collect_cycle_data()
 
     market_state = market_state_engine(ranking)
     sector_strength = sector_strength_engine(ranking)
@@ -2313,7 +2505,8 @@ def run_close():
         "control": control,
         "essence_memory": essence,
         "hybrid_mind": hybrid_mind,
-        "patch_council": patch_council
+        "patch_council": patch_council,
+        "surge_scan": surges
     }
 
     ceo_report_book_entry = append_ceo_report_book(close_data)
@@ -2334,7 +2527,8 @@ def run_close():
         "essence_memory": essence,
         "patch_council": patch_council,
         "final_veto_ok": veto_ok,
-        "ceo_report_book_entry": ceo_report_book_entry
+        "ceo_report_book_entry": ceo_report_book_entry,
+        "surge_scan": surges
     })
 
     close_data["non_regression"] = non_regression
