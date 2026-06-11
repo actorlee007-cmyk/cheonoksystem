@@ -1,47 +1,52 @@
 {
-  "generated_ts": "2026-06-11T00:14:55.741024+00:00",
+  "generated_ts": "2026-06-11T00:34:51.669594+00:00",
   "leader": {
-    "ticker": "AAPL",
-    "sector": "TECH_PLATFORM",
-    "score": 105,
+    "ticker": "AMD",
+    "sector": "AI_SEMI",
+    "score": 115,
     "drivers": [
       "VOLUME(+100)",
+      "NEWS(+10)",
       "OVERLAP(x2,+5)"
     ],
-    "foreign_sector_change_pct": -1.4091615621101785,
-    "change_pct": 0.3544996808021896
+    "foreign_sector_change_pct": -4.569158796406633,
+    "change_pct": -4.860048241788088
   },
   "similar_candidates": [
     {
-      "ticker": "MSFT",
-      "sector": "TECH_PLATFORM",
-      "score": 100,
+      "ticker": "NVDA",
+      "sector": "AI_SEMI",
+      "score": 105,
       "shared_drivers": [
-        "SECTOR:TECH_PLATFORM"
+        "NEWS",
+        "SECTOR:AI_SEMI"
       ]
     },
     {
-      "ticker": "GOOGL",
-      "sector": "TECH_PLATFORM",
-      "score": 100,
+      "ticker": "AVGO",
+      "sector": "AI_SEMI",
+      "score": 105,
       "shared_drivers": [
-        "SECTOR:TECH_PLATFORM"
+        "NEWS",
+        "SECTOR:AI_SEMI"
       ]
     },
     {
-      "ticker": "META",
-      "sector": "TECH_PLATFORM",
-      "score": 100,
+      "ticker": "005930.KS",
+      "sector": "AI_SEMI",
+      "score": 85,
       "shared_drivers": [
-        "SECTOR:TECH_PLATFORM"
+        "NEWS",
+        "SECTOR:AI_SEMI"
       ]
     },
     {
-      "ticker": "035420.KS",
-      "sector": "TECH_PLATFORM",
-      "score": -30,
+      "ticker": "000660.KS",
+      "sector": "AI_SEMI",
+      "score": 40,
       "shared_drivers": [
-        "SECTOR:TECH_PLATFORM"
+        "NEWS",
+        "SECTOR:AI_SEMI"
       ]
     }
   ]
