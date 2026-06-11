@@ -25,14 +25,22 @@ TOOLS = [
     {"name": "Adalo", "capabilities": ["no_code_app", "mobile_app", "web_app", "database"], "connected": True},
     {"name": "Notion", "capabilities": ["knowledge_base", "notes", "workspace_search"], "connected": True},
     {"name": "Google Calendar", "capabilities": ["schedule", "availability", "meeting"], "connected": True},
+    {
+        "name": "Shopify",
+        "capabilities": ["ecommerce", "products", "orders", "customers", "inventory", "discounts", "reports"],
+        "connected": False,
+        "evidence": "2026-06-11 session: tool schema loaded, but get-shop-info -> "
+                    "'requires re-authorization (token expired)', server then disconnected. "
+                    "Re-auth required before this can be marked PASS.",
+    },
 ]
 
 BUSINESS_MAP = {
     "PAPER_CAPITAL_INTELLIGENCE": {"code", "audit", "docs", "sheets", "reports", "archive", "email", "web", "api"},
     "YOUTUBE_CHANNEL_OPERATION": {"thumbnail", "social_asset", "content_calendar", "docs", "archive", "design_system"},
-    "AI_AUTOMATION_SYSTEM_SALES": {"crm", "task_queue", "payments", "invoices", "email", "proposal", "reports", "deploy", "web"},
-    "ADSENSE_AFFILIATE_REVENUE": {"web", "domain", "thumbnail", "social_asset", "sheets", "ledger", "reports"},
-    "WEB_SUBSCRIPTION_SERVICE": {"subscriptions", "customers", "payments", "web", "api", "crm", "ledger", "email"},
+    "AI_AUTOMATION_SYSTEM_SALES": {"crm", "task_queue", "payments", "invoices", "email", "proposal", "reports", "deploy", "web", "ecommerce"},
+    "ADSENSE_AFFILIATE_REVENUE": {"web", "domain", "thumbnail", "social_asset", "sheets", "ledger", "reports", "ecommerce"},
+    "WEB_SUBSCRIPTION_SERVICE": {"subscriptions", "customers", "payments", "web", "api", "crm", "ledger", "email", "ecommerce"},
 }
 
 RISK_BY_CAPABILITY = {
@@ -42,6 +50,7 @@ RISK_BY_CAPABILITY = {
     "crm": "personal_data_handling_risk",
     "web": "public_claim_and_compliance_risk",
     "api": "secret_management_risk",
+    "ecommerce": "payment_dispute_or_refund_risk",
 }
 
 
