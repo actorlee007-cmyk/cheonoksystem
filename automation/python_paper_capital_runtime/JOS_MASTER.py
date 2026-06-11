@@ -1301,6 +1301,7 @@ def surge_scan(news):
     if dart_key:
         try:
             disclosures = opendart_today_disclosures(dart_key)
+            print(f"OPENDART_DISCLOSURES_FETCHED: {len(disclosures)}")
         except Exception as exc:
             detail = ""
             if isinstance(exc, urllib.error.HTTPError):
