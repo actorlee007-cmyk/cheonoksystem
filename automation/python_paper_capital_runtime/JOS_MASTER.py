@@ -40,6 +40,11 @@ Reporting:
 - Each report is also sent to Telegram via CHEONOK_TELEGRAM_BOT_TOKEN /
   CHEONOK_TELEGRAM_CHAT_ID (same secrets as CHEONOK Supreme Master OS).
   If the secrets are missing, sending is skipped (HOLD_TELEGRAM_SECRETS_MISSING).
+- The report is also sent to KakaoTalk ("나에게 보내기" memo) via
+  CHEONOK_KAKAO_ACCESS_TOKEN (Kakao Login talk_message scope). If missing,
+  sending is skipped (HOLD_KAKAO_SECRETS_MISSING). Kakao access tokens
+  expire after 6 hours - refresh logic is not implemented yet, so the
+  token must be re-issued manually until a refresh-token flow is added.
 
 KIS REAL DATA BRIDGE (Layer 4: REAL DATA BRIDGE, optional):
 - For domestic (.KS) tickers, market_feed() can additionally call the
@@ -2334,6 +2339,51 @@ def send_telegram(text, chat_id_env="CHEONOK_TELEGRAM_CHAT_ID"):
     return True
 
 
+# =====================================
+# KAKAOTALK ("나에게 보내기" Memo API)
+# =====================================
+
+def send_kakao_report(text, link_url="https://cheonoksystem.com"):
+
+    token = os.environ.get("CHEONOK_KAKAO_ACCESS_TOKEN", "").strip()
+
+    if not token:
+        print("HOLD_KAKAO_SECRETS_MISSING:CHEONOK_KAKAO_ACCESS_TOKEN")
+        print(text)
+        return False
+
+    url = "https://kapi.kakao.com/v2/api/talk/memo/default/send"
+
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    for i in range(0, len(text), 180):
+
+        chunk = text[i:i + 180]
+
+        template_object = {
+            "object_type": "text",
+            "text": chunk,
+            "link": {
+                "web_url": link_url,
+                "mobile_web_url": link_url
+            }
+        }
+
+        data = urllib.parse.urlencode({
+            "template_object": json.dumps(template_object, ensure_ascii=False)
+        }).encode("utf-8")
+
+        req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+
+        with urllib.request.urlopen(req, timeout=30) as res:
+            res.read()
+
+    return True
+
+
 def format_report_text(report_data):
 
     lines = [
@@ -2879,6 +2929,7 @@ def report(exit_results=None, leader=None, global_flows=None, essence=None, surg
 
     if veto_ok:
         send_telegram(report_text)
+        send_kakao_report(report_text)
     else:
         print("FINAL_VETO_BLOCK: " + ",".join(veto_reasons))
 

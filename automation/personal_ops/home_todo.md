@@ -22,3 +22,16 @@
 - https://easyvideo-landing.vercel.app/?ref=youtuber1sang
 - 연결: (3) 영상 광고 소재 제작 엔진 + 블로그 초안 001-003을 영상/쇼츠로 변환하는 파이프라인
 - 할 일: 가입 후 SKAG 영상 스크립트 1개 테스트 렌더링
+
+## 5. Higgsfield MCP / citevue.com (홈페이지구축 영상 참고)
+- Higgsfield MCP: 비주얼/디자인 에셋 생성 도구 - 랜딩페이지/광고 소재 제작에 쓸만한지 검토
+- citevue.com: 무료 AI 인용·AEO(AI 검색노출) 진단 - cheonoksystem.com에 한번 돌려볼 것
+- 우선순위: 낮음, 다른 작업 끝난 뒤
+
+## 6. 카카오톡 일일 리포트 (send_kakao_report 코드 작성 완료)
+- JOS_MASTER.py에 send_telegram()을 미러링한 send_kakao_report() 함수 추가됨
+  (카카오 "나에게 보내기" Memo API, https://kapi.kakao.com/v2/api/talk/memo/default/send)
+- 집에서 할 일: 카카오 디벨로퍼스에서 앱 생성 -> REST API 키 발급 -> 카카오 로그인(talk_message 스코프)으로
+  access_token 발급 -> CHEONOK_KAKAO_ACCESS_TOKEN 환경변수(GitHub Secrets)에 등록
+- 주의: 카카오 access_token은 6시간 만료. refresh_token 자동 재발급 로직은 아직 미구현
+  (토큰 만료되면 HOLD_KAKAO_SECRETS_MISSING으로 스킵, 텔레그램은 정상 발송)
