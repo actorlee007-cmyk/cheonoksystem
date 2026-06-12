@@ -244,6 +244,17 @@ MACRO_SECTOR_RULES = {
 RANK_OVERLAP_TOP_N = 5
 RANK_OVERLAP_BONUS = 5
 
+# Multiverse consensus (Layer 24: MULTIVERSE CONSENSUS SIGNAL). A new
+# position is tagged "consensus" when its overlap_count (Layer 5) meets
+# this bar - i.e. at least this many of the independent VOLUME/MOMENTUM/
+# FOREIGN_LINK/NEWS signal universes agree on it, not just one factor
+# driving the score alone. Win-rate / return are tracked separately for
+# consensus vs single-signal entries so the close report can show, with
+# real trade data, whether cross-universe agreement actually predicts
+# better outcomes - the "different model catches the blind spot of a
+# single model" idea applied to stock-picking instead of code review.
+MULTIVERSE_CONSENSUS_MIN_OVERLAP = 2
+
 # Trend breakout (추세 돌파매매, Layer 7 LEADER ROTATION extension):
 # trend-following principle summarized from
 # https://blog.naver.com/msj0629/224261876445 (돈깡TV x 완브로, "이거 깨닫고
@@ -1454,12 +1465,15 @@ def close_position(position, current_price, reason, strategy=STRATEGIES["primary
     entry_price = position["entry_price"]
     return_pct = ((current_price - entry_price) / entry_price) * 100
 
+    consensus_at_entry = position.get("consensus_at_entry", False)
+
     exit_signal = {
         "ticker": position["ticker"],
         "sector": position["sector"],
         "price": current_price,
         "action": "PAPER_SELL",
         "reason": reason,
+        "consensus_at_entry": consensus_at_entry,
         "ts": datetime.now(timezone.utc).isoformat()
     }
 
@@ -1477,6 +1491,7 @@ def close_position(position, current_price, reason, strategy=STRATEGIES["primary
         "return_pct": return_pct,
         "win": return_pct > 0,
         "reason": reason,
+        "consensus_at_entry": consensus_at_entry,
         "ts": exit_signal["ts"]
     }
 
@@ -1683,12 +1698,19 @@ def open_new_positions(ranking, excluded=None, strategy=STRATEGIES["primary"], t
         if row["score"] < ENTRY_SCORE_THRESHOLD:
             continue
 
+        overlap_count = row.get("overlap_count", 0)
+        overlap_lists = row.get("overlap_lists", [])
+        consensus = overlap_count >= MULTIVERSE_CONSENSUS_MIN_OVERLAP
+
         entry_signal = {
             "ticker": row["ticker"],
             "sector": row["sector"],
             "score": row["score"],
             "price": row["price"],
             "action": "PAPER_BUY",
+            "overlap_count": overlap_count,
+            "overlap_lists": overlap_lists,
+            "consensus": consensus,
             "ts": datetime.now(timezone.utc).isoformat()
         }
 
@@ -1709,7 +1731,10 @@ def open_new_positions(ranking, excluded=None, strategy=STRATEGIES["primary"], t
             "atr_pct": risk["atr_pct"],
             "stop_loss_pct": risk["stop_loss_pct"],
             "trailing_stop_pct": risk["trailing_stop_pct"],
-            "target_pct": risk["target_pct"]
+            "target_pct": risk["target_pct"],
+            "overlap_count_at_entry": overlap_count,
+            "overlap_lists_at_entry": overlap_lists,
+            "consensus_at_entry": consensus
         })
 
         save_positions(positions, strategy)
@@ -1753,7 +1778,9 @@ def portfolio_engine(ranking=None):
             "return_pct": ((current_price - entry_price) / entry_price) * 100,
             "stop_loss_pct": position.get("stop_loss_pct", STOP_LOSS_PCT),
             "trailing_stop_pct": position.get("trailing_stop_pct", TRAILING_STOP_PCT),
-            "target_pct": position.get("target_pct", STOP_LOSS_PCT * ATR_TARGET_MULT)
+            "target_pct": position.get("target_pct", STOP_LOSS_PCT * ATR_TARGET_MULT),
+            "consensus_at_entry": position.get("consensus_at_entry", False),
+            "overlap_lists_at_entry": position.get("overlap_lists_at_entry", [])
         }
 
     STATE["portfolio"] = portfolio
@@ -1873,6 +1900,15 @@ def forward_simulation(ticker, trials=FORWARD_SIM_TRIALS, horizon_days=FORWARD_S
 # =====================================
 
 def update_learning_stats(new_results, learning_file=LEARNING_FILE):
+    """Roll new exit results into the persisted learning_stats.
+
+    Layer 24 (MULTIVERSE CONSENSUS SIGNAL): each exit result carries
+    consensus_at_entry (set when the position was opened on a ticker that
+    >= MULTIVERSE_CONSENSUS_MIN_OVERLAP independent ranking signal-universes
+    agreed on - see open_new_positions / rank_engine's overlap_count).
+    Trades are split into consensus_* vs single_signal_* counters so the
+    close report can show, from real outcomes, whether cross-universe
+    agreement actually predicts better trades."""
 
     stats = load_json(learning_file, {
         "equity_curve": [1.0],
@@ -1881,18 +1917,41 @@ def update_learning_stats(new_results, learning_file=LEARNING_FILE):
         "win_rate_pct": 0.0,
         "total_trades": 0,
         "wins": 0,
+        "consensus_trades": 0,
+        "consensus_wins": 0,
+        "consensus_return_sum_pct": 0.0,
+        "single_signal_trades": 0,
+        "single_signal_wins": 0,
+        "single_signal_return_sum_pct": 0.0,
         "updated_ts": None
     })
 
     equity_curve = stats.get("equity_curve", [1.0])
     wins = stats.get("wins", 0)
     total_trades = stats.get("total_trades", 0)
+    consensus_trades = stats.get("consensus_trades", 0)
+    consensus_wins = stats.get("consensus_wins", 0)
+    consensus_return_sum = stats.get("consensus_return_sum_pct", 0.0)
+    single_signal_trades = stats.get("single_signal_trades", 0)
+    single_signal_wins = stats.get("single_signal_wins", 0)
+    single_signal_return_sum = stats.get("single_signal_return_sum_pct", 0.0)
 
     for r in new_results:
         equity_curve.append(equity_curve[-1] * (1 + r["return_pct"] / 100))
         total_trades += 1
         if r["win"]:
             wins += 1
+
+        if r.get("consensus_at_entry"):
+            consensus_trades += 1
+            consensus_return_sum += r["return_pct"]
+            if r["win"]:
+                consensus_wins += 1
+        else:
+            single_signal_trades += 1
+            single_signal_return_sum += r["return_pct"]
+            if r["win"]:
+                single_signal_wins += 1
 
     if len(equity_curve) > EQUITY_CURVE_MAX:
         equity_curve = equity_curve[-EQUITY_CURVE_MAX:]
@@ -1917,6 +1976,16 @@ def update_learning_stats(new_results, learning_file=LEARNING_FILE):
         "win_rate_pct": win_rate,
         "total_trades": total_trades,
         "wins": wins,
+        "consensus_trades": consensus_trades,
+        "consensus_wins": consensus_wins,
+        "consensus_return_sum_pct": consensus_return_sum,
+        "consensus_win_rate_pct": (consensus_wins / consensus_trades * 100) if consensus_trades else 0.0,
+        "consensus_avg_return_pct": (consensus_return_sum / consensus_trades) if consensus_trades else 0.0,
+        "single_signal_trades": single_signal_trades,
+        "single_signal_wins": single_signal_wins,
+        "single_signal_return_sum_pct": single_signal_return_sum,
+        "single_signal_win_rate_pct": (single_signal_wins / single_signal_trades * 100) if single_signal_trades else 0.0,
+        "single_signal_avg_return_pct": (single_signal_return_sum / single_signal_trades) if single_signal_trades else 0.0,
         "updated_ts": datetime.now(timezone.utc).isoformat()
     }
 
@@ -2340,11 +2409,12 @@ def format_report_text(report_data):
         lines.append("")
         lines.append("[OPEN POSITIONS]")
         for ticker, p in portfolio.items():
+            consensus_note = " [CONSENSUS]" if p.get("consensus_at_entry") else " [single_signal]"
             lines.append(
                 "  %s (%s) entry=%.2f current=%.2f return=%.2f%% "
-                "(stop=-%.2f%% trail=%.2f%% target=+%.2f%%)" % (
+                "(stop=-%.2f%% trail=%.2f%% target=+%.2f%%)%s" % (
                     ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"],
-                    p["stop_loss_pct"], p["trailing_stop_pct"], p["target_pct"]
+                    p["stop_loss_pct"], p["trailing_stop_pct"], p["target_pct"], consensus_note
                 )
             )
 
@@ -2465,6 +2535,22 @@ def format_close_report(close_data):
     lines.append("  max_drawdown: %.2f%%" % learn["max_drawdown_pct"])
 
     lines.append("")
+    lines.append("[MULTIVERSE CONSENSUS] (Layer 24: independent VOLUME/MOMENTUM/FOREIGN_LINK/NEWS "
+                  "signal-universes agree >= %d/4 -> consensus pick)" % MULTIVERSE_CONSENSUS_MIN_OVERLAP)
+    lines.append(
+        "  consensus: trades=%s win_rate=%.1f%% avg_return=%.2f%%" % (
+            learn.get("consensus_trades", 0), learn.get("consensus_win_rate_pct", 0.0),
+            learn.get("consensus_avg_return_pct", 0.0)
+        )
+    )
+    lines.append(
+        "  single_signal: trades=%s win_rate=%.1f%% avg_return=%.2f%%" % (
+            learn.get("single_signal_trades", 0), learn.get("single_signal_win_rate_pct", 0.0),
+            learn.get("single_signal_avg_return_pct", 0.0)
+        )
+    )
+
+    lines.append("")
     lines.append("[STRATEGY COMPARISON] (same ranking data, separate ledgers, auto canonical filtering)")
     promotion = close_data.get("strategy_promotion", {})
     active_name = promotion.get("active", "primary")
@@ -2510,11 +2596,15 @@ def format_close_report(close_data):
     lines.append("[OPEN POSITIONS]")
     if close_data["open_positions"]:
         for ticker, p in close_data["open_positions"].items():
+            consensus_note = (
+                " [CONSENSUS:%s]" % ",".join(p.get("overlap_lists_at_entry", []))
+                if p.get("consensus_at_entry") else " [single_signal]"
+            )
             lines.append(
                 "  %s (%s) entry=%.2f current=%.2f return=%.2f%% "
-                "(stop=-%.2f%% trail=%.2f%% target=+%.2f%%)" % (
+                "(stop=-%.2f%% trail=%.2f%% target=+%.2f%%)%s" % (
                     ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"],
-                    p["stop_loss_pct"], p["trailing_stop_pct"], p["target_pct"]
+                    p["stop_loss_pct"], p["trailing_stop_pct"], p["target_pct"], consensus_note
                 )
             )
     else:
@@ -2793,6 +2883,7 @@ CANON_LAYER_CHECKS = {
     "SURGE_CAUSE_TRACE": lambda ctx: "surge_scan" in ctx,
     "STRATEGY_COMPARISON": lambda ctx: len(ctx.get("strategy_results", {})) >= 2,
     "AUTO_CANONICAL_FILTERING": lambda ctx: "active" in (ctx.get("strategy_promotion") or {}),
+    "MULTIVERSE_CONSENSUS": lambda ctx: "consensus_trades" in (ctx.get("learning_stats") or {}),
 }
 
 
@@ -2966,7 +3057,8 @@ def run_close():
         "ceo_report_book_entry": ceo_report_book_entry,
         "surge_scan": surges,
         "strategy_results": strategy_results,
-        "strategy_promotion": strategy_promotion
+        "strategy_promotion": strategy_promotion,
+        "learning_stats": learning_stats
     })
 
     close_data["non_regression"] = non_regression
