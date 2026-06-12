@@ -7,6 +7,14 @@
   데모로 "매주 월요일 9시 자동 주간 매출 모니터링 시스템"을 Cowork로 셋업함.
   집에서 Cowork 켜놓고 같이 셋업해볼 것 - JOS_MASTER.py 주간 리포트와 역할 겹치는지/
   모바일 음성 인터페이스로 보완되는지 확인)
+- 첫 Cowork 적용 사례 (주식 시스템, 2WJnNhQD2go "Claude Fable 5 실거래 테스트" 영상 관련):
+  - JOS_MASTER.py Layer 22/23(STRATEGY MULTIVERSE/AUTO CANONICAL FILTERING)이 이미
+    "전략 생성->병행 페이퍼트레이딩 백테스트->자동 승격" 루프를 갖고 있음 (STRATEGIES 딕셔너리에
+    primary/shadow_fixed_pct 두 변형, evaluate_strategy_promotion이 우위 입증되면 자동 교체)
+  - Claude(Fable 5/Cowork)의 역할 = "전략 생성" 단계만: 매주 learning_stats.json
+    (primary vs shadow) + leader_analysis.json을 읽고 새 risk_mode/rotation_mode 조합을
+    새 shadow 변형으로 STRATEGIES에 제안 -> 기존 Layer 23이 검증/승격 그대로 처리
+  - PAPER_ONLY/LIVE_TRADE BLOCKED 불변 - Claude는 매매 안 함, 파라미터 가설만 제안
 - 참고 영상 (YouTube 자막 차단으로 못 읽음 - 집에서 직접 설명해주면 그걸로 설계):
   - https://youtu.be/3XhbI597gm8
   - https://youtube.com/shorts/Vw7GG0tKt_Q ("미래준비")
