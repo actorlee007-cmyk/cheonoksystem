@@ -2,6 +2,10 @@
 
 ## 1. 노트북 연동 시스템
 - 목적: 운전 중 떠오른 아이디어를 모바일로 던지고, 집 노트북에서 정리/실행하는 흐름 만들기
+- ✅ Claude Desktop ↔ cheonoksystem 저장소 MCP 연동 가이드 작성 완료 (2026-06-12):
+  automation/personal_ops/claude_desktop_setup.md - filesystem(+git) MCP 서버를
+  Claude Desktop에 연결해서 노트북에서 이 저장소를 직접 읽고/수정/git 다루는 설정.
+  지금 노트북에서 이 가이드 따라 설정 및 테스트할 것.
 - 우선 검토: Claude Cowork 기반 설계 - https://youtu.be/5q5ZUpwgj4E
   ("클로드 코워크 전문가처럼 쓰는 꿀팁 5가지" - 프로젝트로 사고하기 + 맥락 채우기 + 음성 기능,
   데모로 "매주 월요일 9시 자동 주간 매출 모니터링 시스템"을 Cowork로 셋업함.
