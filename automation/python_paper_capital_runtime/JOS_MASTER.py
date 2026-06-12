@@ -352,6 +352,39 @@ SUBSCRIPTION_REPORT_FILE = LEDGER_DIR / "subscription_report.json"
 CEO_REPORT_BOOK = LEDGER_DIR / "ceo_report_book.jsonl"
 SURGE_LOG = LEDGER_DIR / "surge_log.jsonl"
 
+# Strategy comparison (Layer 23: STRATEGY COMPARISON / SHADOW PORTFOLIO).
+# "primary" is the live ATR_v2 + composite-rotation strategy (Layer 22),
+# whose results drive STATE["paper_trades"], the Telegram report, and
+# account_status. Each other entry is a "shadow" control-group strategy
+# variant: it trades the SAME per-cycle ranking data in its own ledger
+# subdirectory, so the two can be compared honestly without any extra
+# market-data calls or Telegram messages. shadow_fixed_pct reproduces the
+# pre-Layer-22 strategy (fixed stop/trailing % + raw score-gap rotation).
+SHADOW_LEDGER_DIR = LEDGER_DIR / "shadow_fixed_pct"
+
+STRATEGIES = {
+    "primary": {
+        "label": "ATR_v2 (primary)",
+        "risk_mode": "atr",
+        "rotation_mode": "composite",
+        "track_state": True,
+        "positions_file": POSITIONS_FILE,
+        "signals_log": SIGNALS_LOG,
+        "results_log": RESULTS_LOG,
+        "learning_file": LEARNING_FILE,
+    },
+    "shadow_fixed_pct": {
+        "label": "Fixed% + ScoreGap (shadow)",
+        "risk_mode": "fixed",
+        "rotation_mode": "score_gap",
+        "track_state": False,
+        "positions_file": SHADOW_LEDGER_DIR / "positions.json",
+        "signals_log": SHADOW_LEDGER_DIR / "signals_log.jsonl",
+        "results_log": SHADOW_LEDGER_DIR / "results_log.jsonl",
+        "learning_file": SHADOW_LEDGER_DIR / "learning_stats.json",
+    },
+}
+
 
 def ensure_ledger_dir():
     LEDGER_DIR.mkdir(parents=True, exist_ok=True)
@@ -359,7 +392,7 @@ def ensure_ledger_dir():
 
 def append_jsonl(path, record):
 
-    ensure_ledger_dir()
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -399,7 +432,7 @@ def load_json(path, default):
 
 def save_json(path, data):
 
-    ensure_ledger_dir()
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -1386,15 +1419,15 @@ def load_control():
 # POSITION MANAGEMENT (stop-loss / trailing-stop / rotation)
 # =====================================
 
-def load_positions():
-    return load_json(POSITIONS_FILE, {"positions": []}).get("positions", [])
+def load_positions(strategy=STRATEGIES["primary"]):
+    return load_json(strategy["positions_file"], {"positions": []}).get("positions", [])
 
 
-def save_positions(positions):
-    save_json(POSITIONS_FILE, {"positions": positions})
+def save_positions(positions, strategy=STRATEGIES["primary"]):
+    save_json(strategy["positions_file"], {"positions": positions})
 
 
-def close_position(position, current_price, reason):
+def close_position(position, current_price, reason, strategy=STRATEGIES["primary"]):
 
     entry_price = position["entry_price"]
     return_pct = ((current_price - entry_price) / entry_price) * 100
@@ -1408,8 +1441,10 @@ def close_position(position, current_price, reason):
         "ts": datetime.now(timezone.utc).isoformat()
     }
 
-    STATE["paper_trades"].append(exit_signal)
-    append_jsonl(SIGNALS_LOG, exit_signal)
+    if strategy["track_state"]:
+        STATE["paper_trades"].append(exit_signal)
+
+    append_jsonl(strategy["signals_log"], exit_signal)
 
     result = {
         "signal_ts": position["entry_ts"],
@@ -1423,7 +1458,7 @@ def close_position(position, current_price, reason):
         "ts": exit_signal["ts"]
     }
 
-    append_jsonl(RESULTS_LOG, result)
+    append_jsonl(strategy["results_log"], result)
 
     return result
 
@@ -1465,12 +1500,21 @@ def compute_atr_pct(ticker, lookback_days=ATR_LOOKBACK_DAYS):
         return None
 
 
-def position_risk_levels(ticker):
-    """Stop-loss / trailing-stop / target widths (in %) for a new position,
-    sized off the ticker's ATR at entry for a ~2:1 reward:risk ratio. Falls
-    back to the fixed STOP_LOSS_PCT / TRAILING_STOP_PCT if ATR is unavailable."""
+def position_risk_levels(ticker, strategy=STRATEGIES["primary"]):
+    """Stop-loss / trailing-stop / target widths (in %) for a new position.
 
-    atr_pct = compute_atr_pct(ticker)
+    risk_mode == "atr": sized off the ticker's ATR at entry for a ~2:1
+    reward:risk ratio (Layer 22), falling back to the fixed
+    STOP_LOSS_PCT / TRAILING_STOP_PCT if ATR is unavailable.
+
+    risk_mode == "fixed": always the fixed STOP_LOSS_PCT / TRAILING_STOP_PCT
+    (pre-Layer-22 behaviour, used by shadow strategy variants - skips the
+    ATR lookup entirely so shadow variants add zero extra market-data calls)."""
+
+    if strategy["risk_mode"] == "atr":
+        atr_pct = compute_atr_pct(ticker)
+    else:
+        atr_pct = None
 
     if atr_pct:
         stop_loss_pct = min(max(atr_pct * ATR_STOP_MULT, ATR_STOP_FLOOR_PCT), ATR_STOP_CEIL_PCT)
@@ -1489,28 +1533,34 @@ def position_risk_levels(ticker):
     }
 
 
-def manage_positions(ranking):
+def manage_positions(ranking, strategy=STRATEGIES["primary"]):
     """Check every open position for a stop-loss, trailing-stop (profit
     locked in once the trend reverses), or rotation exit. Profits have no
     fixed cap - a position rides until the trailing stop triggers.
 
     Stop-loss / trailing-stop widths come from each position's own
-    stop_loss_pct / trailing_stop_pct (set at entry from ATR, see
-    position_risk_levels), falling back to STOP_LOSS_PCT / TRAILING_STOP_PCT
-    for positions opened before this field existed.
+    stop_loss_pct / trailing_stop_pct (set at entry from position_risk_levels),
+    falling back to STOP_LOSS_PCT / TRAILING_STOP_PCT for positions opened
+    before this field existed.
 
-    Rotation compares composite_score (score + forward-sim p_up + sector
-    trend, from tomorrow_watchlist.json) when both the held ticker and the
-    current #1 appear there, falling back to the raw score gap otherwise."""
+    Rotation: when rotation_mode == "composite" (primary), prefers
+    composite_score (score + forward-sim p_up + sector trend, from
+    tomorrow_watchlist.json) when both the held ticker and the current #1
+    appear there, falling back to the raw score gap otherwise. When
+    rotation_mode == "score_gap" (shadow), always uses the raw score gap
+    (pre-Layer-22 behaviour)."""
 
     ranking_by_ticker = {row["ticker"]: row for row in ranking}
 
-    composite_by_ticker = {
-        c["ticker"]: c["composite_score"]
-        for c in load_json(WATCHLIST_FILE, {}).get("top", [])
-    }
+    if strategy["rotation_mode"] == "composite":
+        composite_by_ticker = {
+            c["ticker"]: c["composite_score"]
+            for c in load_json(WATCHLIST_FILE, {}).get("top", [])
+        }
+    else:
+        composite_by_ticker = {}
 
-    positions = load_positions()
+    positions = load_positions(strategy)
     top = ranking[0] if ranking else None
 
     remaining = []
@@ -1557,28 +1607,29 @@ def manage_positions(ranking):
                 reason = "ROTATION"
 
         if reason:
-            exit_results.append(close_position(position, current_price, reason))
+            exit_results.append(close_position(position, current_price, reason, strategy))
         else:
             remaining.append(position)
 
-    save_positions(remaining)
+    save_positions(remaining, strategy)
 
     return exit_results
 
 
-def open_new_positions(ranking, excluded=None):
+def open_new_positions(ranking, excluded=None, strategy=STRATEGIES["primary"]):
     """Open at most one new position per cycle. Candidates from the
     last close's tomorrow_watchlist are tried first, falling back to the
     full ranking, requiring the live score to clear ENTRY_SCORE_THRESHOLD.
     Skips entirely if the operator safe-control switch is paused.
 
-    Stop-loss / trailing-stop / target are sized off the ticker's own ATR
-    at entry (Layer 22: EV-BASED RISK FRAMEWORK, ~2:1 reward:risk)."""
+    Stop-loss / trailing-stop / target are sized via position_risk_levels
+    (ATR-based for primary - Layer 22 EV-BASED RISK FRAMEWORK, fixed % for
+    shadow strategy variants)."""
 
     if load_control().get("trading_paused"):
         return
 
-    positions = load_positions()
+    positions = load_positions(strategy)
 
     if len(positions) >= MAX_OPEN_POSITIONS:
         return
@@ -1619,10 +1670,12 @@ def open_new_positions(ranking, excluded=None):
             "ts": datetime.now(timezone.utc).isoformat()
         }
 
-        STATE["paper_trades"].append(entry_signal)
-        append_jsonl(SIGNALS_LOG, entry_signal)
+        if strategy["track_state"]:
+            STATE["paper_trades"].append(entry_signal)
 
-        risk = position_risk_levels(row["ticker"])
+        append_jsonl(strategy["signals_log"], entry_signal)
+
+        risk = position_risk_levels(row["ticker"], strategy)
 
         positions.append({
             "ticker": row["ticker"],
@@ -1637,20 +1690,20 @@ def open_new_positions(ranking, excluded=None):
             "target_pct": risk["target_pct"]
         })
 
-        save_positions(positions)
+        save_positions(positions, strategy)
         return
 
 
-def paper_engine(ranking):
+def paper_engine(ranking, strategy=STRATEGIES["primary"]):
 
     if not ranking:
         return []
 
-    exit_results = manage_positions(ranking)
+    exit_results = manage_positions(ranking, strategy)
 
     just_exited = {r["ticker"] for r in exit_results}
 
-    open_new_positions(ranking, excluded=just_exited)
+    open_new_positions(ranking, excluded=just_exited, strategy=strategy)
 
     return exit_results
 
@@ -1797,9 +1850,9 @@ def forward_simulation(ticker, trials=FORWARD_SIM_TRIALS, horizon_days=FORWARD_S
 # LEARNING ENGINE (Result DB evaluation + rolling stats)
 # =====================================
 
-def update_learning_stats(new_results):
+def update_learning_stats(new_results, learning_file=LEARNING_FILE):
 
-    stats = load_json(LEARNING_FILE, {
+    stats = load_json(learning_file, {
         "equity_curve": [1.0],
         "cumulative_return_pct": 0.0,
         "max_drawdown_pct": 0.0,
@@ -1845,9 +1898,39 @@ def update_learning_stats(new_results):
         "updated_ts": datetime.now(timezone.utc).isoformat()
     }
 
-    save_json(LEARNING_FILE, stats)
+    save_json(learning_file, stats)
 
     return stats
+
+# =====================================
+# STRATEGY COMPARISON (Layer 23: SHADOW PORTFOLIO)
+# =====================================
+
+def run_shadow_strategies(ranking):
+    """Run every non-primary strategy variant against the SAME per-cycle
+    ranking data as the primary strategy, each in its own ledger
+    subdirectory (see STRATEGIES). Read-only/additive with respect to the
+    primary strategy: never touches STATE["paper_trades"], the primary
+    ledger files, market-data APIs, or Telegram - this is the honest
+    control-group comparison the close report surfaces in
+    [STRATEGY COMPARISON]."""
+
+    results = {}
+
+    for name, strategy in STRATEGIES.items():
+
+        if strategy["track_state"]:
+            continue
+
+        exit_results = paper_engine(ranking, strategy=strategy)
+        learning_stats = update_learning_stats(exit_results, learning_file=strategy["learning_file"])
+
+        results[name] = {
+            "label": strategy["label"],
+            "learning_stats": learning_stats
+        }
+
+    return results
 
 # =====================================
 # PATCH COUNCIL (Layer 18: AUTO REVIEW PATCH COUNCIL)
@@ -2283,6 +2366,23 @@ def format_close_report(close_data):
     lines.append("  max_drawdown: %.2f%%" % learn["max_drawdown_pct"])
 
     lines.append("")
+    lines.append("[STRATEGY COMPARISON] (same ranking data, separate ledgers)")
+    lines.append(
+        "  %s: trades=%s win_rate=%.1f%% return=%.2f%% drawdown=%.2f%%" % (
+            STRATEGIES["primary"]["label"], learn["total_trades"], learn["win_rate_pct"],
+            learn["cumulative_return_pct"], learn["max_drawdown_pct"]
+        )
+    )
+    for shadow in close_data.get("shadow_strategies", {}).values():
+        s = shadow["learning_stats"]
+        lines.append(
+            "  %s: trades=%s win_rate=%.1f%% return=%.2f%% drawdown=%.2f%%" % (
+                shadow["label"], s["total_trades"], s["win_rate_pct"],
+                s["cumulative_return_pct"], s["max_drawdown_pct"]
+            )
+        )
+
+    lines.append("")
     lines.append("[TOMORROW WATCHLIST TOP%s] (full ranked list of %s in tomorrow_watchlist.json)" % (
         min(TOMORROW_WATCHLIST_REPORT_N, len(close_data["tomorrow_watchlist"])),
         len(close_data["tomorrow_watchlist"])
@@ -2586,6 +2686,7 @@ CANON_LAYER_CHECKS = {
     "AUTO_PATCH_COUNCIL": lambda ctx: bool(ctx.get("patch_council")),
     "FINAL_VETO": lambda ctx: ctx.get("final_veto_ok") is True,
     "SURGE_CAUSE_TRACE": lambda ctx: "surge_scan" in ctx,
+    "STRATEGY_COMPARISON": lambda ctx: bool(ctx.get("shadow_strategies")),
 }
 
 
@@ -2685,6 +2786,8 @@ def run_cycle():
 
     update_learning_stats(exit_results)
 
+    run_shadow_strategies(ranking)
+
     portfolio_engine(ranking)
 
     report(exit_results, leader, global_flows, essence, surges)
@@ -2700,6 +2803,8 @@ def run_close():
 
     exit_results = paper_engine(ranking)
     learning_stats = update_learning_stats(exit_results)
+
+    shadow_strategies = run_shadow_strategies(ranking)
 
     portfolio_engine(ranking)
 
@@ -2722,6 +2827,7 @@ def run_close():
         "leader_analysis": leader,
         "exit_results": exit_results,
         "learning_stats": learning_stats,
+        "shadow_strategies": shadow_strategies,
         "tomorrow_watchlist": tomorrow_watchlist,
         "news": news,
         "portfolio_total": portfolio_total,
@@ -2755,7 +2861,8 @@ def run_close():
         "patch_council": patch_council,
         "final_veto_ok": veto_ok,
         "ceo_report_book_entry": ceo_report_book_entry,
-        "surge_scan": surges
+        "surge_scan": surges,
+        "shadow_strategies": shadow_strategies
     })
 
     close_data["non_regression"] = non_regression
