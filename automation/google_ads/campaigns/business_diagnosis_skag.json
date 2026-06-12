@@ -1,0 +1,48 @@
+{
+  "_source": "https://youtu.be/Gi50YPwbiVA (SKAG: 검색어=광고=랜딩페이지 정렬)",
+  "strategy": "SKAG (Single Keyword Ad Group) - 1 ad group = 1 keyword = 1 ad = 1 landing page",
+  "landing_page": "https://cheonoksystem.com/cta-5m.html",
+  "why_this_page": "offers.html은 사주/유튜브진단/사업자료 3개 니치가 한 페이지에 섞여있어 SKAG에 부적합. cta-5m.html은 이미 '링크 하나 -> 무료진단/CEO진단/B2B' 단일 메시지라 키워드와 1:1 정렬이 됨.",
+  "primary_keyword": "무료 사업 진단",
+  "match_type": "phrase",
+  "supporting_keywords_same_ad_group": [
+    "AI 매출 진단",
+    "사업 진단 무료",
+    "유튜브 블로그 매출 진단",
+    "온라인 사업 컨설팅 무료"
+  ],
+  "negative_keywords": ["채용", "취업", "자격증", "무료체험판"],
+  "headlines_15": [
+    "무료 사업 진단 받기",
+    "링크 하나로 매출 진단",
+    "AI가 찾는 매출 병목",
+    "7일 실행 로드맵 제공",
+    "무료진단 + 오늘의 행동",
+    "사업·채널 무료 분석",
+    "매출 막힌 지점 찾기",
+    "CEO 실행진단 $69",
+    "결제까지 구조 정리",
+    "유튜브·블로그·쇼핑몰 진단",
+    "무료 사업 진단 신청",
+    "AI 매출 시스템 진단",
+    "오늘 할 행동 정리",
+    "막힌 매출 뚫는 진단",
+    "무료로 먼저 확인하기"
+  ],
+  "descriptions_4": [
+    "사업·채널 링크 하나만 보내면 매출 병목, 돈 되는 구조, 오늘 할 행동을 무료로 진단해드립니다.",
+    "보장형 매출 약속 없이 실제 구조 기반으로 정리합니다. 무료진단 후 $69 CEO 실행 로드맵으로 이어집니다.",
+    "유튜브, 블로그, 쇼핑몰, 서비스 아이디어 모두 가능합니다. 링크 하나로 시작하세요.",
+    "대량 구축/B2B 상담은 ₩300만원부터. 무료진단에서 우선순위를 먼저 확인할 수 있습니다."
+  ],
+  "display_path": { "path1": "무료진단", "path2": "AI매출" },
+  "campaign_settings_checklist": [
+    "캠페인 유형: 검색(Search) 전용 - 디스플레이/파트너 네트워크 OFF",
+    "위치 타겟팅: 대한민국 (해외 트래픽 차단)",
+    "언어: 한국어",
+    "자동 추천(Auto-apply recommendations) OFF",
+    "IP 제외: 반복 클릭/봇 패턴 IP 차단 목록 운영",
+    "전환 추적: /api/lead 의 payment_click + subscription_lead 이벤트를 Google Ads 전환으로 연결"
+  ],
+  "conversion_tracking_note": "api/lead.js가 이미 모든 결제 클릭/구독 신청을 받고 있음. Google Ads 전환 태그를 offers.html, cta-5m.html에 추가하면 광고->리드->결제 퍼널 ROAS를 바로 측정 가능."
+}
