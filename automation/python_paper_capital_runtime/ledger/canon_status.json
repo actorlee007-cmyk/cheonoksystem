@@ -1,10 +1,10 @@
 {
-  "generated_ts": "2026-06-12T10:50:12.238795+00:00",
+  "generated_ts": "2026-06-12T17:45:49.899881+00:00",
   "layers": {
     "GLOBAL_FIRST": true,
     "KOREA_THEME_TRANSLATION": true,
     "REAL_DATA_BRIDGE": true,
-    "KIS_REALTIME_BRIDGE": true,
+    "KIS_REALTIME_BRIDGE": false,
     "RANK_OVERLAP": true,
     "THEME_CLUSTER": true,
     "LEADER_ROTATION": true,
@@ -19,9 +19,15 @@
     "GOD_HYBRID_MIND": true,
     "ESSENCE_MEMORY": true,
     "AUTO_PATCH_COUNCIL": true,
-    "FINAL_VETO": true
+    "FINAL_VETO": true,
+    "SURGE_CAUSE_TRACE": true,
+    "STRATEGY_COMPARISON": true,
+    "AUTO_CANONICAL_FILTERING": true,
+    "MULTIVERSE_CONSENSUS": true
   },
-  "pass_count": 19,
-  "total_layers": 19,
-  "regressions": []
+  "pass_count": 22,
+  "total_layers": 23,
+  "regressions": [
+    "KIS_REALTIME_BRIDGE"
+  ]
 }

@@ -1,14 +1,6 @@
 {
   "positions": [
     {
-      "ticker": "AAPL",
-      "sector": "TECH_PLATFORM",
-      "entry_price": 291.5799865722656,
-      "entry_ts": "2026-06-10T22:58:35.750356+00:00",
-      "peak_price": 295.6300048828125,
-      "score_at_entry": 100
-    },
-    {
       "ticker": "GOOGL",
       "sector": "TECH_PLATFORM",
       "entry_price": 356.3800048828125,
@@ -21,8 +13,28 @@
       "sector": "AI_SEMI",
       "entry_price": 488.45001220703125,
       "entry_ts": "2026-06-12T08:25:46.615477+00:00",
-      "peak_price": 488.45001220703125,
+      "peak_price": 520.4949951171875,
       "score_at_entry": 105
+    },
+    {
+      "ticker": "000660.KS",
+      "sector": "AI_SEMI",
+      "entry_price": 2101000.0,
+      "entry_ts": "2026-06-12T17:45:47.191100+00:00",
+      "peak_price": 2101000.0,
+      "score_at_entry": 135,
+      "atr_pct": 8.427560916130295,
+      "stop_loss_pct": 5.0,
+      "trailing_stop_pct": 5.0,
+      "target_pct": 16.85512183226059,
+      "overlap_count_at_entry": 4,
+      "overlap_lists_at_entry": [
+        "VOLUME_TOP",
+        "MOMENTUM_TOP",
+        "FOREIGN_LINK_TOP",
+        "NEWS_TOP"
+      ],
+      "consensus_at_entry": true
     }
   ]
 }

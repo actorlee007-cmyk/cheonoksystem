@@ -221,12 +221,24 @@
         "NEWS(+10)",
         "OVERLAP(x2,+5)"
       ]
+    },
+    {
+      "ts": "2026-06-12T17:45:46.619911+00:00",
+      "ticker": "000660.KS",
+      "sector": "AI_SEMI",
+      "drivers": [
+        "VOLUME(+100)",
+        "FOREIGN_LINK(+20)",
+        "NEWS(+10)",
+        "MACRO(-10)",
+        "OVERLAP(x4,+15)"
+      ]
     }
   ],
-  "sample_size": 23,
+  "sample_size": 24,
   "dominant_sector": "AI_SEMI",
-  "dominant_sector_count": 15,
+  "dominant_sector_count": 16,
   "dominant_driver": "VOLUME",
-  "dominant_driver_count": 23,
-  "updated_ts": "2026-06-12T12:19:08.691090+00:00"
+  "dominant_driver_count": 24,
+  "updated_ts": "2026-06-12T17:45:46.620293+00:00"
 }

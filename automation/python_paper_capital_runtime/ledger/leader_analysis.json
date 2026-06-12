@@ -1,61 +1,62 @@
 {
-  "generated_ts": "2026-06-12T12:19:08.690590+00:00",
+  "generated_ts": "2026-06-12T17:45:46.619911+00:00",
   "leader": {
-    "ticker": "105560.KS",
-    "sector": "FINANCE",
+    "ticker": "000660.KS",
+    "sector": "AI_SEMI",
     "score": 135,
     "drivers": [
       "VOLUME(+100)",
       "FOREIGN_LINK(+20)",
       "NEWS(+10)",
-      "OVERLAP(x2,+5)"
+      "MACRO(-10)",
+      "OVERLAP(x4,+15)"
     ],
-    "foreign_sector_change_pct": 1.991492716841729,
-    "change_pct": 6.4
+    "foreign_sector_change_pct": 1.849831261816391,
+    "change_pct": 2.587890625
   },
   "similar_candidates": [
-    {
-      "ticker": "055550.KS",
-      "sector": "FINANCE",
-      "score": 135,
-      "shared_drivers": [
-        "FOREIGN_LINK",
-        "NEWS",
-        "SECTOR:FINANCE"
-      ]
-    },
     {
       "ticker": "005930.KS",
       "sector": "AI_SEMI",
       "score": 130,
       "shared_drivers": [
-        "FOREIGN_LINK"
+        "FOREIGN_LINK",
+        "NEWS",
+        "SECTOR:AI_SEMI"
       ]
     },
     {
-      "ticker": "000660.KS",
+      "ticker": "AMD",
       "sector": "AI_SEMI",
-      "score": 125,
+      "score": 120,
+      "shared_drivers": [
+        "NEWS",
+        "SECTOR:AI_SEMI"
+      ]
+    },
+    {
+      "ticker": "105560.KS",
+      "sector": "FINANCE",
+      "score": 120,
       "shared_drivers": [
         "FOREIGN_LINK"
       ]
     },
     {
-      "ticker": "JPM",
+      "ticker": "055550.KS",
       "sector": "FINANCE",
-      "score": 110,
+      "score": 120,
       "shared_drivers": [
-        "NEWS",
-        "SECTOR:FINANCE"
+        "FOREIGN_LINK"
       ]
     },
     {
-      "ticker": "BAC",
-      "sector": "FINANCE",
-      "score": 110,
+      "ticker": "NVDA",
+      "sector": "AI_SEMI",
+      "score": 115,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:FINANCE"
+        "SECTOR:AI_SEMI"
       ]
     }
   ]

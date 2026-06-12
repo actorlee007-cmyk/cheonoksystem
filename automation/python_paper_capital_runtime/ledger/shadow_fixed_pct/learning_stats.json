@@ -1,0 +1,21 @@
+{
+  "equity_curve": [
+    1.0
+  ],
+  "cumulative_return_pct": 0.0,
+  "max_drawdown_pct": 0.0,
+  "win_rate_pct": 0.0,
+  "total_trades": 0,
+  "wins": 0,
+  "consensus_trades": 0,
+  "consensus_wins": 0,
+  "consensus_return_sum_pct": 0.0,
+  "consensus_win_rate_pct": 0.0,
+  "consensus_avg_return_pct": 0.0,
+  "single_signal_trades": 0,
+  "single_signal_wins": 0,
+  "single_signal_return_sum_pct": 0.0,
+  "single_signal_win_rate_pct": 0.0,
+  "single_signal_avg_return_pct": 0.0,
+  "updated_ts": "2026-06-12T17:45:47.300772+00:00"
+}

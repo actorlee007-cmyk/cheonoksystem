@@ -3,12 +3,23 @@
     1.0,
     0.9697652966462654,
     0.9697652966462654,
-    0.9923823835266401
+    0.9923823835266401,
+    0.988638654724721
   ],
-  "cumulative_return_pct": -0.76176164733599,
+  "cumulative_return_pct": -1.136134527527899,
   "max_drawdown_pct": 3.023470335373457,
-  "win_rate_pct": 33.33333333333333,
-  "total_trades": 3,
+  "win_rate_pct": 25.0,
+  "total_trades": 4,
   "wins": 1,
-  "updated_ts": "2026-06-12T12:19:08.693086+00:00"
+  "consensus_trades": 0,
+  "consensus_wins": 0,
+  "consensus_return_sum_pct": 0.0,
+  "consensus_win_rate_pct": 0.0,
+  "consensus_avg_return_pct": 0.0,
+  "single_signal_trades": 1,
+  "single_signal_wins": 0,
+  "single_signal_return_sum_pct": -0.37724660010740496,
+  "single_signal_win_rate_pct": 0.0,
+  "single_signal_avg_return_pct": -0.37724660010740496,
+  "updated_ts": "2026-06-12T17:45:47.299936+00:00"
 }

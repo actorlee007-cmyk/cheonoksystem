@@ -7,3 +7,5 @@
 {"ticker": "000660.KS", "sector": "AI_SEMI", "score": 85, "price": 2101000.0, "action": "PAPER_BUY", "ts": "2026-06-11T11:11:05.183054+00:00"}
 {"ticker": "000660.KS", "sector": "AI_SEMI", "price": 2150000.0, "action": "PAPER_SELL", "reason": "TRAILING_STOP", "ts": "2026-06-12T08:25:46.614998+00:00"}
 {"ticker": "AMD", "sector": "AI_SEMI", "score": 105, "price": 488.45001220703125, "action": "PAPER_BUY", "ts": "2026-06-12T08:25:46.615477+00:00"}
+{"ticker": "AAPL", "sector": "TECH_PLATFORM", "price": 290.4800109863281, "action": "PAPER_SELL", "reason": "ROTATION", "consensus_at_entry": false, "ts": "2026-06-12T17:45:47.190596+00:00"}
+{"ticker": "000660.KS", "sector": "AI_SEMI", "score": 135, "price": 2101000.0, "action": "PAPER_BUY", "overlap_count": 4, "overlap_lists": ["VOLUME_TOP", "MOMENTUM_TOP", "FOREIGN_LINK_TOP", "NEWS_TOP"], "consensus": true, "ts": "2026-06-12T17:45:47.191100+00:00"}

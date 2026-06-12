@@ -1,0 +1,24 @@
+{
+  "positions": [
+    {
+      "ticker": "000660.KS",
+      "sector": "AI_SEMI",
+      "entry_price": 2101000.0,
+      "entry_ts": "2026-06-12T17:45:47.300501+00:00",
+      "peak_price": 2101000.0,
+      "score_at_entry": 135,
+      "atr_pct": null,
+      "stop_loss_pct": 2.0,
+      "trailing_stop_pct": 3.0,
+      "target_pct": 4.0,
+      "overlap_count_at_entry": 4,
+      "overlap_lists_at_entry": [
+        "VOLUME_TOP",
+        "MOMENTUM_TOP",
+        "FOREIGN_LINK_TOP",
+        "NEWS_TOP"
+      ],
+      "consensus_at_entry": true
+    }
+  ]
+}

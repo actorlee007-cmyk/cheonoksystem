@@ -2,12 +2,12 @@
   "mode": "PAPER_ONLY",
   "live_trade": "BLOCKED",
   "starting_capital_krw": 100000000,
-  "equity_krw": 99238238.35266401,
+  "equity_krw": 98863865.4724721,
   "cash_krw": 0.0,
-  "open_positions_value_krw": 100593006.38384496,
+  "open_positions_value_krw": 102656851.68828072,
   "open_positions_count": 3,
-  "cumulative_return_pct": -0.76176164733599,
+  "cumulative_return_pct": -1.136134527527899,
   "max_drawdown_pct": 3.023470335373457,
-  "total_trades": 3,
-  "updated_ts": "2026-06-12T12:19:08.693305+00:00"
+  "total_trades": 4,
+  "updated_ts": "2026-06-12T17:45:47.301139+00:00"
 }
