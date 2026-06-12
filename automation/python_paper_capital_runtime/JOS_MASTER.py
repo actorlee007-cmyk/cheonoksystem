@@ -2194,7 +2194,9 @@ def build_tomorrow_watchlist(ranking, sector_strength, top_n=TOMORROW_WATCHLIST_
             "score": row["score"],
             "sector_avg_change_pct": sector_change,
             "p_up": p_up,
-            "composite_score": composite_score
+            "composite_score": composite_score,
+            "overlap_count": row.get("overlap_count", 0),
+            "consensus": row.get("overlap_count", 0) >= MULTIVERSE_CONSENSUS_MIN_OVERLAP
         })
 
     composite.sort(
@@ -2688,8 +2690,9 @@ def format_close_report(close_data):
 
 def format_subscription_report(close_data):
     """Subscriber-facing summary: market read, sector themes, leader
-    pattern, and tomorrow's candidate watch list - no raw position entry
-    prices or account-level figures (those stay in the CEO report)."""
+    pattern, self-validation transparency (Layer 24 consensus tracking),
+    and tomorrow's candidate watch list - no raw position entry prices or
+    account-level figures (those stay in the CEO report)."""
 
     lines = [
         "JOS PAPER CAPITAL - SUBSCRIBER BRIEFING",
@@ -2713,12 +2716,35 @@ def format_subscription_report(close_data):
             ",".join(leader["leader"]["drivers"]) or "-"
         ))
 
+    learn = close_data["learning_stats"]
+    consensus_trades = learn.get("consensus_trades") or 0
+    single_trades = learn.get("single_signal_trades") or 0
+
+    lines.append("")
+    lines.append("[SYSTEM SELF-CHECK] (Layer 24: 4 independent signal sources - "
+                  "volume / momentum / foreign-flow / news - cross-checked against each other)")
+    if consensus_trades or single_trades:
+        lines.append("  multi-signal agreement: trades=%d win_rate=%.1f%% avg_return=%.2f%%" % (
+            consensus_trades, learn.get("consensus_win_rate_pct", 0.0),
+            learn.get("consensus_avg_return_pct", 0.0)
+        ))
+        lines.append("  single-signal only:     trades=%d win_rate=%.1f%% avg_return=%.2f%%" % (
+            single_trades, learn.get("single_signal_win_rate_pct", 0.0),
+            learn.get("single_signal_avg_return_pct", 0.0)
+        ))
+    else:
+        lines.append("  multi-signal vs single-signal track record: accumulating "
+                      "(needs more closed trades before a split is meaningful)")
+
     watchlist = close_data["tomorrow_watchlist"][:TOMORROW_WATCHLIST_REPORT_N]
 
     lines.append("")
-    lines.append("[TOMORROW WATCH LIST TOP%d]" % len(watchlist))
+    lines.append("[TOMORROW WATCH LIST TOP%d] ([CONSENSUS] = >=%d/4 signal sources agree)" % (
+        len(watchlist), MULTIVERSE_CONSENSUS_MIN_OVERLAP
+    ))
     for w in watchlist:
-        lines.append("  %s (%s)" % (w["ticker"], w["sector"]))
+        tag = " [CONSENSUS]" if w.get("consensus") else ""
+        lines.append("  %s (%s)%s" % (w["ticker"], w["sector"], tag))
 
     lines.append("")
     lines.append("Disclaimer: simulated PAPER data only. LIVE_TRADE BLOCKED.")
