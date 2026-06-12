@@ -210,12 +210,23 @@
         "FOREIGN_LINK(+20)",
         "OVERLAP(x3,+10)"
       ]
+    },
+    {
+      "ts": "2026-06-12T12:19:08.690590+00:00",
+      "ticker": "105560.KS",
+      "sector": "FINANCE",
+      "drivers": [
+        "VOLUME(+100)",
+        "FOREIGN_LINK(+20)",
+        "NEWS(+10)",
+        "OVERLAP(x2,+5)"
+      ]
     }
   ],
-  "sample_size": 22,
+  "sample_size": 23,
   "dominant_sector": "AI_SEMI",
   "dominant_sector_count": 15,
   "dominant_driver": "VOLUME",
-  "dominant_driver_count": 22,
-  "updated_ts": "2026-06-12T10:50:10.934840+00:00"
+  "dominant_driver_count": 23,
+  "updated_ts": "2026-06-12T12:19:08.691090+00:00"
 }
