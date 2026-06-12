@@ -83,3 +83,17 @@
 - "Claude 업그레이드" 메커니즘 확인: 모델 가중치 재학습은 불가, 대신 영상/자료 인사이트를
   두뇌형(docs/canon)+기억형(_company/_shared)에 기록하는 것이 실질적 업그레이드 경로
   (다음 Claude 세션 + 집 Gemma 에이전트 둘 다 이걸 읽음) - 계속 자료 공유하는 방식 유지
+- 드랍쉬핑 트랙 참고 영상 추가: https://youtu.be/kdo8YGcilGg ("Claude로 $1.8M 드랍쉬핑
+  브랜드 클론" - Grant Zuco, Skool 커뮤니티/buildyourstore.ai/Consentmo/AutoDS 제휴형
+  코스 광고). w-iIZQi35kU와 같은 패턴(코스 퍼널)이지만 "Claude로 쇼피파이 스토어를
+  분석->클론 구조 설계->빌드"하는 워크플로 자체는 드랍쉬핑 트랙에 그대로 적용 가능.
+
+## 10. "홈페이지 클로드로 만든거 자료" - B2B 포트폴리오 자산 (2026-06-12)
+- cheonoksystem.com 자체(offers.html, cta-5m.html, operator-os.html 등)가 Claude Code로
+  구축/유지되고 있고, 그 "자료(증빙)"는 이 저장소의 git 커밋 히스토리 그 자체임
+  (이번 세션 커밋들 포함: 1c8397a, aeea120, 4c1a58f, 4734f2d, 38e51dd + offers.html
+  진단·구축 카드 추가 커밋)
+- B2B 진단·구축(₩300만+) 영업 시 "우리 사이트도 Claude Code로 이렇게 만들고 운영합니다"를
+  포트폴리오/증빙으로 제시 가능 - 별도 자료 제작 불필요, 이미 존재하는 운영 기록을 그대로 활용
+- offers.html에 B2B 진단·구축 카드(₩300만+, cta-5m.html과 동일 폼 링크) 추가 완료 ->
+  "진단만" 메시지에서 "직접 구축까지" 메시지로 정렬
