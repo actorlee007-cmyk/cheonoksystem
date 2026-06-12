@@ -352,22 +352,37 @@ SUBSCRIPTION_REPORT_FILE = LEDGER_DIR / "subscription_report.json"
 CEO_REPORT_BOOK = LEDGER_DIR / "ceo_report_book.jsonl"
 SURGE_LOG = LEDGER_DIR / "surge_log.jsonl"
 
-# Strategy comparison (Layer 23: STRATEGY COMPARISON / SHADOW PORTFOLIO).
-# "primary" is the live ATR_v2 + composite-rotation strategy (Layer 22),
-# whose results drive STATE["paper_trades"], the Telegram report, and
-# account_status. Each other entry is a "shadow" control-group strategy
-# variant: it trades the SAME per-cycle ranking data in its own ledger
-# subdirectory, so the two can be compared honestly without any extra
-# market-data calls or Telegram messages. shadow_fixed_pct reproduces the
-# pre-Layer-22 strategy (fixed stop/trailing % + raw score-gap rotation).
+# Strategy multiverse + auto canonical filtering (Layer 23: STRATEGY
+# COMPARISON / AUTO CANONICAL FILTERING). Every entry in STRATEGIES is an
+# independent paper-trading "universe": it trades the SAME per-cycle
+# ranking data in its own ledger subdirectory, so all variants can be
+# compared honestly without any extra market-data calls. "primary" is the
+# live ATR_v2 + composite-rotation strategy (Layer 22); shadow_fixed_pct
+# reproduces the pre-Layer-22 strategy (fixed stop/trailing % + raw
+# score-gap rotation).
+#
+# Exactly one universe is "active" at a time (see active_strategy_name /
+# STRATEGY_PROMOTION_FILE) - only the active universe writes to
+# STATE["paper_trades"] and drives the Telegram report / account_status.
+# evaluate_strategy_promotion() automatically promotes a challenger to
+# active once it has enough trades (PROMOTION_MIN_TRADES) and has led the
+# active universe's cumulative_return_pct by PROMOTION_MARGIN_PCT for
+# PROMOTION_STREAK_REQUIRED consecutive close reports (no flip-flopping on
+# a single noisy day). Every promotion is appended to history in
+# STRATEGY_PROMOTION_FILE with the stats that justified it - the switch is
+# automatic but never silent.
 SHADOW_LEDGER_DIR = LEDGER_DIR / "shadow_fixed_pct"
+STRATEGY_PROMOTION_FILE = LEDGER_DIR / "strategy_promotion.json"
+
+PROMOTION_MIN_TRADES = 20
+PROMOTION_MARGIN_PCT = 5.0
+PROMOTION_STREAK_REQUIRED = 5
 
 STRATEGIES = {
     "primary": {
         "label": "ATR_v2 (primary)",
         "risk_mode": "atr",
         "rotation_mode": "composite",
-        "track_state": True,
         "positions_file": POSITIONS_FILE,
         "signals_log": SIGNALS_LOG,
         "results_log": RESULTS_LOG,
@@ -377,13 +392,20 @@ STRATEGIES = {
         "label": "Fixed% + ScoreGap (shadow)",
         "risk_mode": "fixed",
         "rotation_mode": "score_gap",
-        "track_state": False,
         "positions_file": SHADOW_LEDGER_DIR / "positions.json",
         "signals_log": SHADOW_LEDGER_DIR / "signals_log.jsonl",
         "results_log": SHADOW_LEDGER_DIR / "results_log.jsonl",
         "learning_file": SHADOW_LEDGER_DIR / "learning_stats.json",
     },
 }
+
+
+def active_strategy_name():
+    return load_json(STRATEGY_PROMOTION_FILE, {"active": "primary"}).get("active", "primary")
+
+
+def active_strategy():
+    return STRATEGIES.get(active_strategy_name(), STRATEGIES["primary"])
 
 
 def ensure_ledger_dir():
@@ -1427,7 +1449,7 @@ def save_positions(positions, strategy=STRATEGIES["primary"]):
     save_json(strategy["positions_file"], {"positions": positions})
 
 
-def close_position(position, current_price, reason, strategy=STRATEGIES["primary"]):
+def close_position(position, current_price, reason, strategy=STRATEGIES["primary"], track_state=True):
 
     entry_price = position["entry_price"]
     return_pct = ((current_price - entry_price) / entry_price) * 100
@@ -1441,7 +1463,7 @@ def close_position(position, current_price, reason, strategy=STRATEGIES["primary
         "ts": datetime.now(timezone.utc).isoformat()
     }
 
-    if strategy["track_state"]:
+    if track_state:
         STATE["paper_trades"].append(exit_signal)
 
     append_jsonl(strategy["signals_log"], exit_signal)
@@ -1533,7 +1555,7 @@ def position_risk_levels(ticker, strategy=STRATEGIES["primary"]):
     }
 
 
-def manage_positions(ranking, strategy=STRATEGIES["primary"]):
+def manage_positions(ranking, strategy=STRATEGIES["primary"], track_state=True):
     """Check every open position for a stop-loss, trailing-stop (profit
     locked in once the trend reverses), or rotation exit. Profits have no
     fixed cap - a position rides until the trailing stop triggers.
@@ -1607,7 +1629,7 @@ def manage_positions(ranking, strategy=STRATEGIES["primary"]):
                 reason = "ROTATION"
 
         if reason:
-            exit_results.append(close_position(position, current_price, reason, strategy))
+            exit_results.append(close_position(position, current_price, reason, strategy, track_state))
         else:
             remaining.append(position)
 
@@ -1616,7 +1638,7 @@ def manage_positions(ranking, strategy=STRATEGIES["primary"]):
     return exit_results
 
 
-def open_new_positions(ranking, excluded=None, strategy=STRATEGIES["primary"]):
+def open_new_positions(ranking, excluded=None, strategy=STRATEGIES["primary"], track_state=True):
     """Open at most one new position per cycle. Candidates from the
     last close's tomorrow_watchlist are tried first, falling back to the
     full ranking, requiring the live score to clear ENTRY_SCORE_THRESHOLD.
@@ -1670,7 +1692,7 @@ def open_new_positions(ranking, excluded=None, strategy=STRATEGIES["primary"]):
             "ts": datetime.now(timezone.utc).isoformat()
         }
 
-        if strategy["track_state"]:
+        if track_state:
             STATE["paper_trades"].append(entry_signal)
 
         append_jsonl(strategy["signals_log"], entry_signal)
@@ -1694,16 +1716,16 @@ def open_new_positions(ranking, excluded=None, strategy=STRATEGIES["primary"]):
         return
 
 
-def paper_engine(ranking, strategy=STRATEGIES["primary"]):
+def paper_engine(ranking, strategy=STRATEGIES["primary"], track_state=True):
 
     if not ranking:
         return []
 
-    exit_results = manage_positions(ranking, strategy)
+    exit_results = manage_positions(ranking, strategy, track_state)
 
     just_exited = {r["ticker"] for r in exit_results}
 
-    open_new_positions(ranking, excluded=just_exited, strategy=strategy)
+    open_new_positions(ranking, excluded=just_exited, strategy=strategy, track_state=track_state)
 
     return exit_results
 
@@ -1717,7 +1739,7 @@ def portfolio_engine(ranking=None):
 
     portfolio = {}
 
-    for position in load_positions():
+    for position in load_positions(active_strategy()):
 
         ticker = position["ticker"]
         entry_price = position["entry_price"]
@@ -1741,7 +1763,7 @@ def portfolio_from_ledger():
 
     portfolio = {}
 
-    for row in read_jsonl(SIGNALS_LOG):
+    for row in read_jsonl(active_strategy()["signals_log"]):
 
         if row.get("action") != "PAPER_BUY":
             continue
@@ -1903,34 +1925,111 @@ def update_learning_stats(new_results, learning_file=LEARNING_FILE):
     return stats
 
 # =====================================
-# STRATEGY COMPARISON (Layer 23: SHADOW PORTFOLIO)
+# STRATEGY COMPARISON (Layer 23: STRATEGY MULTIVERSE / AUTO CANONICAL FILTERING)
 # =====================================
 
-def run_shadow_strategies(ranking):
-    """Run every non-primary strategy variant against the SAME per-cycle
-    ranking data as the primary strategy, each in its own ledger
-    subdirectory (see STRATEGIES). Read-only/additive with respect to the
-    primary strategy: never touches STATE["paper_trades"], the primary
-    ledger files, market-data APIs, or Telegram - this is the honest
-    control-group comparison the close report surfaces in
-    [STRATEGY COMPARISON]."""
+def run_all_strategies(ranking):
+    """Run every strategy variant in STRATEGIES against the SAME per-cycle
+    ranking data, each in its own ledger (see STRATEGIES). Only the
+    currently-active strategy (active_strategy_name) writes to
+    STATE["paper_trades"] - every other variant trades silently in its own
+    ledger as a control group. No extra market-data calls or Telegram
+    messages versus running one strategy alone.
 
-    results = {}
+    Returns (active_exit_results, results_by_name), where results_by_name
+    maps each strategy name to {label, exit_results, learning_stats}."""
+
+    active_name = active_strategy_name()
+
+    results_by_name = {}
+    active_exit_results = []
 
     for name, strategy in STRATEGIES.items():
 
-        if strategy["track_state"]:
-            continue
+        is_active = (name == active_name)
 
-        exit_results = paper_engine(ranking, strategy=strategy)
+        exit_results = paper_engine(ranking, strategy=strategy, track_state=is_active)
         learning_stats = update_learning_stats(exit_results, learning_file=strategy["learning_file"])
 
-        results[name] = {
+        results_by_name[name] = {
             "label": strategy["label"],
+            "exit_results": exit_results,
             "learning_stats": learning_stats
         }
 
-    return results
+        if is_active:
+            active_exit_results = exit_results
+
+    return active_exit_results, results_by_name
+
+
+def evaluate_strategy_promotion(results_by_name):
+    """Layer 23: AUTO CANONICAL FILTERING. Compare every strategy variant's
+    just-updated learning_stats against the currently-active variant and
+    decide whether to promote a challenger to active.
+
+    Promotion requires, every close report:
+      - both the active strategy and the challenger have at least
+        PROMOTION_MIN_TRADES closed trades (a judgment needs real data), and
+      - the challenger's cumulative_return_pct leads the active strategy's
+        by >= PROMOTION_MARGIN_PCT, for PROMOTION_STREAK_REQUIRED
+        consecutive close reports in a row (no flip-flopping on one noisy
+        day).
+
+    Every promotion is appended to "history" with the stats that justified
+    it and persisted to STRATEGY_PROMOTION_FILE - the switch is automatic
+    but never silent."""
+
+    state = load_json(STRATEGY_PROMOTION_FILE, {
+        "active": "primary",
+        "streaks": {},
+        "history": []
+    })
+
+    active_name = state.get("active", "primary")
+    active_stats = results_by_name.get(active_name, {}).get("learning_stats", {})
+    active_trades = active_stats.get("total_trades", 0)
+    active_return = active_stats.get("cumulative_return_pct", 0.0)
+
+    streaks = state.get("streaks", {})
+    promoted_to = None
+
+    for name, result in results_by_name.items():
+
+        if name == active_name:
+            continue
+
+        stats = result["learning_stats"]
+
+        leads = (
+            active_trades >= PROMOTION_MIN_TRADES
+            and stats.get("total_trades", 0) >= PROMOTION_MIN_TRADES
+            and stats.get("cumulative_return_pct", 0.0) - active_return >= PROMOTION_MARGIN_PCT
+        )
+
+        streaks[name] = streaks.get(name, 0) + 1 if leads else 0
+
+        if streaks[name] >= PROMOTION_STREAK_REQUIRED:
+            promoted_to = name
+
+    if promoted_to:
+
+        state["history"].append({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "from": active_name,
+            "to": promoted_to,
+            "from_stats": active_stats,
+            "to_stats": results_by_name[promoted_to]["learning_stats"]
+        })
+
+        state["active"] = promoted_to
+        streaks = {name: 0 for name in results_by_name}
+
+    state["streaks"] = streaks
+
+    save_json(STRATEGY_PROMOTION_FILE, state)
+
+    return state
 
 # =====================================
 # PATCH COUNCIL (Layer 18: AUTO REVIEW PATCH COUNCIL)
@@ -2366,21 +2465,27 @@ def format_close_report(close_data):
     lines.append("  max_drawdown: %.2f%%" % learn["max_drawdown_pct"])
 
     lines.append("")
-    lines.append("[STRATEGY COMPARISON] (same ranking data, separate ledgers)")
-    lines.append(
-        "  %s: trades=%s win_rate=%.1f%% return=%.2f%% drawdown=%.2f%%" % (
-            STRATEGIES["primary"]["label"], learn["total_trades"], learn["win_rate_pct"],
-            learn["cumulative_return_pct"], learn["max_drawdown_pct"]
+    lines.append("[STRATEGY COMPARISON] (same ranking data, separate ledgers, auto canonical filtering)")
+    promotion = close_data.get("strategy_promotion", {})
+    active_name = promotion.get("active", "primary")
+    streaks = promotion.get("streaks", {})
+    for name, result in close_data.get("strategy_results", {}).items():
+        s = result["learning_stats"]
+        marker = " <- ACTIVE" if name == active_name else ""
+        streak = streaks.get(name, 0)
+        streak_note = (
+            " (promotion_streak=%s/%s)" % (streak, PROMOTION_STREAK_REQUIRED)
+            if streak else ""
         )
-    )
-    for shadow in close_data.get("shadow_strategies", {}).values():
-        s = shadow["learning_stats"]
         lines.append(
-            "  %s: trades=%s win_rate=%.1f%% return=%.2f%% drawdown=%.2f%%" % (
-                shadow["label"], s["total_trades"], s["win_rate_pct"],
-                s["cumulative_return_pct"], s["max_drawdown_pct"]
+            "  %s: trades=%s win_rate=%.1f%% return=%.2f%% drawdown=%.2f%%%s%s" % (
+                result["label"], s["total_trades"], s["win_rate_pct"],
+                s["cumulative_return_pct"], s["max_drawdown_pct"], marker, streak_note
             )
         )
+    if promotion.get("history"):
+        last = promotion["history"][-1]
+        lines.append("  last_promotion: %s -> %s at %s" % (last["from"], last["to"], last["ts"]))
 
     lines.append("")
     lines.append("[TOMORROW WATCHLIST TOP%s] (full ranked list of %s in tomorrow_watchlist.json)" % (
@@ -2581,7 +2686,7 @@ def report(exit_results=None, leader=None, global_flows=None, essence=None, surg
 
     global_flows = global_flows or []
 
-    learning_stats = load_json(LEARNING_FILE, {
+    learning_stats = load_json(active_strategy()["learning_file"], {
         "cumulative_return_pct": 0.0, "max_drawdown_pct": 0.0, "total_trades": 0
     })
 
@@ -2686,7 +2791,8 @@ CANON_LAYER_CHECKS = {
     "AUTO_PATCH_COUNCIL": lambda ctx: bool(ctx.get("patch_council")),
     "FINAL_VETO": lambda ctx: ctx.get("final_veto_ok") is True,
     "SURGE_CAUSE_TRACE": lambda ctx: "surge_scan" in ctx,
-    "STRATEGY_COMPARISON": lambda ctx: bool(ctx.get("shadow_strategies")),
+    "STRATEGY_COMPARISON": lambda ctx: len(ctx.get("strategy_results", {})) >= 2,
+    "AUTO_CANONICAL_FILTERING": lambda ctx: "active" in (ctx.get("strategy_promotion") or {}),
 }
 
 
@@ -2780,13 +2886,7 @@ def run_cycle():
 
     market, news, ranking, leader, global_flows, essence, surges = collect_cycle_data()
 
-    exit_results = paper_engine(
-        ranking
-    )
-
-    update_learning_stats(exit_results)
-
-    run_shadow_strategies(ranking)
+    exit_results, _ = run_all_strategies(ranking)
 
     portfolio_engine(ranking)
 
@@ -2801,10 +2901,12 @@ def run_close():
     sector_strength = sector_strength_engine(ranking)
     g_risk_state = global_risk_state(global_flows)
 
-    exit_results = paper_engine(ranking)
-    learning_stats = update_learning_stats(exit_results)
+    exit_results, strategy_results = run_all_strategies(ranking)
 
-    shadow_strategies = run_shadow_strategies(ranking)
+    strategy_promotion = evaluate_strategy_promotion(strategy_results)
+
+    active_name = active_strategy_name()
+    learning_stats = strategy_results[active_name]["learning_stats"]
 
     portfolio_engine(ranking)
 
@@ -2815,7 +2917,7 @@ def run_close():
 
     hybrid_mind = hybrid_mind_engine(tomorrow_watchlist, market_state)
 
-    patch_council = patch_council_review(learning_stats, market_state, load_positions())
+    patch_council = patch_council_review(learning_stats, market_state, load_positions(active_strategy()))
 
     portfolio_total = sum(portfolio_from_ledger().values())
 
@@ -2827,7 +2929,8 @@ def run_close():
         "leader_analysis": leader,
         "exit_results": exit_results,
         "learning_stats": learning_stats,
-        "shadow_strategies": shadow_strategies,
+        "strategy_results": strategy_results,
+        "strategy_promotion": strategy_promotion,
         "tomorrow_watchlist": tomorrow_watchlist,
         "news": news,
         "portfolio_total": portfolio_total,
@@ -2862,7 +2965,8 @@ def run_close():
         "final_veto_ok": veto_ok,
         "ceo_report_book_entry": ceo_report_book_entry,
         "surge_scan": surges,
-        "shadow_strategies": shadow_strategies
+        "strategy_results": strategy_results,
+        "strategy_promotion": strategy_promotion
     })
 
     close_data["non_regression"] = non_regression
