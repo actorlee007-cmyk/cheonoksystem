@@ -59,3 +59,16 @@
 - 관련 항목: 2(플리 채널), 3(AI영상 광고소재), 4(이지비디오), 5(Higgsfield/citevue)
 - 공통 리스크: 양산형/AI 콘텐츠 채널 단속 (uhRTrXT1efQ) - 어떤 채널이든 "진짜 가치 추가"가
   보이는 포맷으로 설계할 것
+- 편집 자동화: https://youtu.be/hIkEOSygniM ("캡컷 자동화" - Claude Desktop + PyCapCut으로
+  버벅임/무음 구간 자동 컷 + 자막 생성 "캡컷 에이전트"). 항목 2/4의 영상 파이프라인에서
+  EasyVideo 대신/병행 옵션으로 검토 - 집에서 Claude Desktop + PyCapCut 셋업 테스트
+
+## 8. _company/_shared 3-tier 정리 완료 (2026-06-12)
+- "같은 LLM 위키, 결과물 1,000배 차이" (6olWUM11rVA) 프레임을 적용:
+  두뇌형=docs/+canon/, 기억형=_company/_shared/(CHEONOK 운영 기준으로 재정렬됨),
+  거울형=이 파일(home_todo.md)
+- _company/_shared/identity.md, goals.md를 CHEONOK_TOP1_DECISION_CANON.md +
+  CHEONOK_REVENUE_TARGET_OS.md 기준으로 갱신, decisions.md/schedule.md의 5/14
+  "Connect AI" 로컬템플릿(Ollama/Gemma) 일반론 로그는 archived 표시
+- 후속 확인 필요: agent_models.json(로컬 Gemma 설정)이 실제로 쓰이는 도구인지,
+  쓰지 않으면 _company/ 폴더 전체를 정리/삭제할지 집에서 판단

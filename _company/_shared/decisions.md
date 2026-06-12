@@ -2,6 +2,12 @@
 
 _자가학습이 자동 누적합니다. 잘못된 항목은 직접 삭제하세요._
 
+> ⚠️ ARCHIVED (2026-05-14 세션, "Connect AI" 로컬 1인기업 OS 템플릿 - Ollama/LM Studio +
+> google/gemma-4-e4b 기반, agent_models.json 참고). 아래 항목들은 CHEONOK의 실제 운영
+> 시스템(automation/, cloud_runtime/, JOS_MASTER.py, Google Ads SKAG 등)과 무관한
+> 일반론적 자가학습 로그임. 참고용으로만 남겨두고, 2026-06-12 이후 CHEONOK 운영 기준
+> 정렬은 이 파일 맨 아래 최신 항목 + identity.md/goals.md 참고.
+
 ## [2026-05-14] [자율 사이클 — 2026-05-14] 1인 기업 24시간 운영 중. 회사 목표·각 에이전트의 개인 목표(_
 - 핵심 비즈니스 모델은 실행이 아닌, 최적화된 방법론과 설계도(템플릿) 판매에 집중한다.
 - 외부 API 의존도를 최소화하고 사용자가 자립하여 성장하는 경험을 제공하는 시스템을 구축한다.
@@ -56,3 +62,13 @@ _세션: 2026-05-14T11-01_
 - LLM 호출 실패 시에는 메모리 및 Context Length 초과를 최우선으로 점검한다.
 - 시스템 안정화를 위해 모델 오케스트레이션 시 항상 작은 규모의 대체 모델을 확보하고 사용한다.
 _세션: 2026-05-14T11-05_
+
+---
+
+## [2026-06-12] CHEONOK 운영 기준 3-tier 정렬
+- `_company/_shared/`(기억형)를 CHEONOK_TOP1_DECISION_CANON.md + CHEONOK_REVENUE_TARGET_OS.md
+  기준으로 재정렬: identity.md/goals.md 갱신, 위 5/14 로그는 archived 표시.
+- 3-tier 역할 확정: 두뇌형 = docs/ + canon/CHEONOK_INFORMATION_FIRST_CONSTITUTION.json,
+  기억형 = _company/_shared/ (이 파일), 거울형 = automation/personal_ops/home_todo.md
+- schedule.md의 5/14 일정도 archived - 현재 일정/cron은 .github/workflows + home_todo.md 참고.
+_세션: 2026-06-12 (CHEONOK 시스템 점검)_

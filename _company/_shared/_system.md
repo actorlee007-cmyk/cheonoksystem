@@ -23,6 +23,16 @@
 4. 개인 메모리
 5. 지식 베이스 (`10_Wiki/`)
 
+## CHEONOK 3-tier 정리 (2026-06-12)
+"같은 LLM 위키, 결과물 1,000배 차이" 프레임을 CHEONOK 저장소에 매핑:
+- **두뇌형** (지식 라이브러리): `docs/` + `canon/CHEONOK_INFORMATION_FIRST_CONSTITUTION.json`
+- **기억형** (AI 기억장치): 이 폴더(`_company/_shared/`) - CHEONOK 운영 기준(TOP1_DECISION_CANON,
+  REVENUE_TARGET_OS)에 정렬됨. agent_models.json(google/gemma-4-e4b 등)은 이 "Connect AI"
+  로컬 템플릿 도구 전용 설정이며, 클라우드 자동화(automation/, cloud_runtime/, JOS_MASTER.py)와는
+  별개임.
+- **거울형** (자기반영 기록): `automation/personal_ops/home_todo.md` - 영상 분석/결정 로그가
+  실시간으로 누적되는 곳.
+
 ## 다른 PC로 옮길 때
 1. 새 PC에 Connect AI 설치
 2. 👔 모드 ON → "📥 다른 PC에서 가져오기" 선택
