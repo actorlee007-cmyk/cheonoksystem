@@ -74,6 +74,9 @@ import os
 import time
 import json
 import random
+import re
+import html
+import urllib.error
 import urllib.parse
 import urllib.request
 import feedparser
@@ -151,6 +154,26 @@ ROTATION_SCORE_GAP = 40      # rotate a non-profitable position into a candidate
                               # outscores it by at least this much
 MAX_OPEN_POSITIONS = 3        # max concurrent paper positions
 
+# EV-based risk framework (Layer 22): stop-loss / trailing-stop now scale
+# with each ticker's own volatility (ATR) at entry instead of one fixed %
+# for every ticker, targeting roughly a 2:1 reward:risk ratio (마크 미너비니
+# "트레이딩의 성배" / 노션 "수익은 짧고 손실은 길게? 이러면 절대 못 법니다" -
+# 손익비가 승률보다 중요하다는 원칙). STOP_LOSS_PCT / TRAILING_STOP_PCT above
+# remain the fallback when ATR can't be computed (e.g. yfinance outage) or
+# for positions opened before this layer existed.
+ATR_LOOKBACK_DAYS = 14
+ATR_STOP_MULT = 1.0        # stop-loss = ATR% x this multiple
+ATR_TRAILING_MULT = 1.5    # trailing stop (once in profit) = ATR% x this multiple
+ATR_TARGET_MULT = 2.0      # informational profit target = ATR% x this multiple (~2:1 R:R)
+ATR_STOP_FLOOR_PCT = 1.0   # never tighter than this (avoid noise stop-outs)
+ATR_STOP_CEIL_PCT = 5.0    # never wider than this (cap tail risk)
+
+# Rotation prefers composite_score (rule score + forward-sim p_up + sector
+# trend, from tomorrow_watchlist.json) over the raw rule-based score when
+# both the held ticker and the current #1 are in that list - 후보 교체 판단에
+# 통계적 확률(p_up)과 섹터 흐름까지 반영.
+ROTATION_COMPOSITE_GAP = 15
+
 # Foreign (US) -> domestic (KRX) sector linkage: KRX opens after the US
 # session closes, so a strong/weak US sector is treated as a leading
 # indicator for the matching Korean tickers in WATCHLIST.
@@ -221,6 +244,17 @@ MACRO_SECTOR_RULES = {
 RANK_OVERLAP_TOP_N = 5
 RANK_OVERLAP_BONUS = 5
 
+# Multiverse consensus (Layer 24: MULTIVERSE CONSENSUS SIGNAL). A new
+# position is tagged "consensus" when its overlap_count (Layer 5) meets
+# this bar - i.e. at least this many of the independent VOLUME/MOMENTUM/
+# FOREIGN_LINK/NEWS signal universes agree on it, not just one factor
+# driving the score alone. Win-rate / return are tracked separately for
+# consensus vs single-signal entries so the close report can show, with
+# real trade data, whether cross-universe agreement actually predicts
+# better outcomes - the "different model catches the blind spot of a
+# single model" idea applied to stock-picking instead of code review.
+MULTIVERSE_CONSENSUS_MIN_OVERLAP = 2
+
 # Trend breakout (추세 돌파매매, Layer 7 LEADER ROTATION extension):
 # trend-following principle summarized from
 # https://blog.naver.com/msj0629/224261876445 (돈깡TV x 완브로, "이거 깨닫고
@@ -235,6 +269,18 @@ TREND_CONSOLIDATION_MAX_RANGE_PCT = 8.0   # recent N-day high/low range, as % of
 TREND_BREAKOUT_VOLUME_MULT = 1.5          # breakout-day volume vs N-day average volume
 TREND_BREAKOUT_BONUS = 15
 TREND_BOTTOM_FISHING_PENALTY = -10        # price still at/below the recent N-day low
+
+# Surge cause trace (Layer 21: SURGE SCANNER, market-wide). Detects today's
+# biggest % movers across the ENTIRE KRX (not just the 30-ticker WATCHLIST)
+# via the KIS 등락률순위 ranking endpoint, and runs a lightweight '역산출'
+# (reverse cause-trace) against each using data sources already wired into
+# this system (RSS news headlines + sector keyword map). Read-only and
+# additive only - never affects WATCHLIST scoring, ranking, or open
+# positions. A genuine daily +30% mover (상한가 territory, KRX limit is
+# +/-30%) will surface near the top of this list when it occurs; the 10%
+# threshold below is a tunable starting point for surfacing candidates.
+SURGE_SCAN_THRESHOLD_PCT = 10.0   # flag market-wide movers at/above this daily change %
+SURGE_SCAN_LIMIT = 10             # how many top gainers to fetch from the KIS ranking
 
 # Hybrid mind engine (Layer 16: GOD HYBRID MIND ENGINE). Fuses the
 # rule-based score engine, the statistical forward-simulation engine, and
@@ -286,7 +332,8 @@ STATE = {
     "paper_trades": [],
     "rankings": [],
     "portfolio": [],
-    "reports": []
+    "reports": [],
+    "surges": []
 }
 
 # =====================================
@@ -314,6 +361,62 @@ FINAL_VETO_LOG = LEDGER_DIR / "final_veto_log.jsonl"
 CANON_STATUS_FILE = LEDGER_DIR / "canon_status.json"
 SUBSCRIPTION_REPORT_FILE = LEDGER_DIR / "subscription_report.json"
 CEO_REPORT_BOOK = LEDGER_DIR / "ceo_report_book.jsonl"
+SURGE_LOG = LEDGER_DIR / "surge_log.jsonl"
+
+# Strategy multiverse + auto canonical filtering (Layer 23: STRATEGY
+# COMPARISON / AUTO CANONICAL FILTERING). Every entry in STRATEGIES is an
+# independent paper-trading "universe": it trades the SAME per-cycle
+# ranking data in its own ledger subdirectory, so all variants can be
+# compared honestly without any extra market-data calls. "primary" is the
+# live ATR_v2 + composite-rotation strategy (Layer 22); shadow_fixed_pct
+# reproduces the pre-Layer-22 strategy (fixed stop/trailing % + raw
+# score-gap rotation).
+#
+# Exactly one universe is "active" at a time (see active_strategy_name /
+# STRATEGY_PROMOTION_FILE) - only the active universe writes to
+# STATE["paper_trades"] and drives the Telegram report / account_status.
+# evaluate_strategy_promotion() automatically promotes a challenger to
+# active once it has enough trades (PROMOTION_MIN_TRADES) and has led the
+# active universe's cumulative_return_pct by PROMOTION_MARGIN_PCT for
+# PROMOTION_STREAK_REQUIRED consecutive close reports (no flip-flopping on
+# a single noisy day). Every promotion is appended to history in
+# STRATEGY_PROMOTION_FILE with the stats that justified it - the switch is
+# automatic but never silent.
+SHADOW_LEDGER_DIR = LEDGER_DIR / "shadow_fixed_pct"
+STRATEGY_PROMOTION_FILE = LEDGER_DIR / "strategy_promotion.json"
+
+PROMOTION_MIN_TRADES = 20
+PROMOTION_MARGIN_PCT = 5.0
+PROMOTION_STREAK_REQUIRED = 5
+
+STRATEGIES = {
+    "primary": {
+        "label": "ATR_v2 (primary)",
+        "risk_mode": "atr",
+        "rotation_mode": "composite",
+        "positions_file": POSITIONS_FILE,
+        "signals_log": SIGNALS_LOG,
+        "results_log": RESULTS_LOG,
+        "learning_file": LEARNING_FILE,
+    },
+    "shadow_fixed_pct": {
+        "label": "Fixed% + ScoreGap (shadow)",
+        "risk_mode": "fixed",
+        "rotation_mode": "score_gap",
+        "positions_file": SHADOW_LEDGER_DIR / "positions.json",
+        "signals_log": SHADOW_LEDGER_DIR / "signals_log.jsonl",
+        "results_log": SHADOW_LEDGER_DIR / "results_log.jsonl",
+        "learning_file": SHADOW_LEDGER_DIR / "learning_stats.json",
+    },
+}
+
+
+def active_strategy_name():
+    return load_json(STRATEGY_PROMOTION_FILE, {"active": "primary"}).get("active", "primary")
+
+
+def active_strategy():
+    return STRATEGIES.get(active_strategy_name(), STRATEGIES["primary"])
 
 
 def ensure_ledger_dir():
@@ -322,7 +425,7 @@ def ensure_ledger_dir():
 
 def append_jsonl(path, record):
 
-    ensure_ledger_dir()
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -362,7 +465,7 @@ def load_json(path, default):
 
 def save_json(path, data):
 
-    ensure_ledger_dir()
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
@@ -470,6 +573,71 @@ def kis_quote(ticker, app_key, app_secret):
         "change_pct": float(output.get("prdy_ctrt") or 0.0)
     }
 
+
+def kis_top_gainers(app_key, app_secret, limit=SURGE_SCAN_LIMIT):
+    """Market-wide (전체 KRX 종목) 등락률순위 - today's top % gainers across
+    ALL listed stocks, not limited to WATCHLIST (read-only ranking
+    endpoint, tr_id FHPST01700000). KIS_ORDER_GATE remains BLOCKED - this
+    is a quotations/ranking lookup only."""
+
+    token = kis_get_token(app_key, app_secret)
+
+    if not token:
+        return []
+
+    params = {
+        "fid_cond_mrkt_div_code": "J",
+        "fid_cond_scr_div_code": "20170",
+        "fid_input_iscd": "0000",
+        "fid_rank_sort_cls_code": "0",
+        "fid_input_cnt_1": "0",
+        "fid_prc_cls_code": "0",
+        "fid_input_price_1": "",
+        "fid_input_price_2": "",
+        "fid_vol_cnt": "",
+        "fid_trgt_cls_code": "0",
+        "fid_trgt_exls_cls_code": "0",
+        "fid_div_cls_code": "0",
+        "fid_rsfl_rate1": "",
+        "fid_rsfl_rate2": ""
+    }
+
+    url = (
+        KIS_BASE_URL
+        + "/uapi/domestic-stock/v1/ranking/fluctuation"
+        + "?" + urllib.parse.urlencode(params)
+    )
+
+    req = urllib.request.Request(url, headers={
+        "content-type": "application/json; charset=UTF-8",
+        "authorization": "Bearer " + token,
+        "appkey": app_key,
+        "appsecret": app_secret,
+        "tr_id": "FHPST01700000",
+        "custtype": "P"
+    })
+
+    with urllib.request.urlopen(req, timeout=10) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+
+    output = payload.get("output") or []
+
+    gainers = []
+
+    for item in output[:limit]:
+        try:
+            gainers.append({
+                "ticker": (item.get("stck_shrn_iscd") or "").strip(),
+                "name": (item.get("hts_kor_isnm") or "").strip(),
+                "price": float(item.get("stck_prpr") or 0.0),
+                "change_pct": float(item.get("prdy_ctrt") or 0.0),
+                "volume": float(item.get("acml_vol") or 0.0)
+            })
+        except Exception:
+            continue
+
+    return gainers
+
 # =====================================
 # MARKET
 # =====================================
@@ -480,6 +648,7 @@ def market_feed():
 
     kis_app_key, kis_app_secret = kis_credentials()
     kis_hold_logged = False
+    kis_fail_logged = False
 
     for ticker, sector in WATCHLIST.items():
 
@@ -515,8 +684,17 @@ def market_feed():
 
                     try:
                         kis_data = kis_quote(ticker, kis_app_key, kis_app_secret)
-                    except Exception:
+                    except Exception as exc:
                         kis_data = None
+                        if not kis_fail_logged:
+                            detail = ""
+                            if isinstance(exc, urllib.error.HTTPError):
+                                try:
+                                    detail = " | body: " + exc.read().decode("utf-8", "replace")[:300]
+                                except Exception:
+                                    pass
+                            print(f"HOLD_KIS_QUOTE_FAILED: {type(exc).__name__}: {exc}{detail}")
+                            kis_fail_logged = True
 
                     if kis_data:
                         price = kis_data["price"]
@@ -1070,6 +1248,189 @@ def update_essence_memory(leader):
     return result
 
 # =====================================
+# EXTERNAL CAUSE-TRACE BRIDGES (opendart 공시 / Naver 뉴스검색)
+# Layer 21 SURGE SCANNER inputs - both read-only, both optional (each
+# degrades to "no data from this source" if its GitHub Secret is unset).
+# =====================================
+
+def opendart_credentials():
+    return os.environ.get("CHEONOK_OPENDART_API_KEY", "").strip()
+
+
+def opendart_today_disclosures(api_key):
+    """오늘 날짜 전체 공시 목록 (최신 100건, list.json 공시검색 API). Read-only -
+    used to cross-reference a surge candidate's name against today's
+    company disclosures (호재성 공시 등)."""
+
+    today = datetime.now(timezone.utc).strftime("%Y%m%d")
+
+    params = {
+        "crtfc_key": api_key,
+        "bgn_de": today,
+        "end_de": today,
+        "page_no": "1",
+        "page_count": "100"
+    }
+
+    url = "https://opendart.fss.or.kr/api/list.json?" + urllib.parse.urlencode(params)
+
+    with urllib.request.urlopen(url, timeout=10) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+
+    if payload.get("status") != "000":
+        return []
+
+    return payload.get("list") or []
+
+
+def naver_credentials():
+    client_id = os.environ.get("CHEONOK_NAVER_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("CHEONOK_NAVER_CLIENT_SECRET", "").strip()
+
+    if not client_id or not client_secret:
+        return None, None
+
+    return client_id, client_secret
+
+
+def naver_news_search(query, client_id, client_secret, display=3):
+    """네이버 뉴스 검색 (read-only, openapi.naver.com/v1/search/news.json).
+    Returns up to `display` most recent headline strings for `query`,
+    HTML tags/entities stripped."""
+
+    params = {"query": query, "display": str(display), "sort": "date"}
+
+    url = "https://openapi.naver.com/v1/search/news.json?" + urllib.parse.urlencode(params)
+
+    req = urllib.request.Request(url, headers={
+        "X-Naver-Client-Id": client_id,
+        "X-Naver-Client-Secret": client_secret
+    })
+
+    with urllib.request.urlopen(req, timeout=10) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+
+    headlines = []
+
+    for item in payload.get("items") or []:
+        title = re.sub("<[^>]+>", "", item.get("title", ""))
+        headlines.append(html.unescape(title))
+
+    return headlines
+
+# =====================================
+# SURGE CAUSE TRACE (Layer 21: SURGE SCANNER, market-wide)
+# =====================================
+
+def surge_cause_trace(name, news, disclosures, naver_client_id, naver_client_secret):
+    """'역산출' (reverse cause-trace): cross-reference a market-wide surge
+    candidate's name against today's news headlines, today's opendart
+    disclosures, a live Naver news search, and the sector-keyword map. A
+    candidate with no match across all sources is HOLD."""
+
+    drivers = []
+
+    if not name:
+        return drivers
+
+    for headline in news:
+        if name in headline:
+            drivers.append("NEWS: " + headline)
+
+    for d in disclosures:
+        corp_name = d.get("corp_name", "")
+        if corp_name and (name in corp_name or corp_name in name):
+            drivers.append("DART: " + d.get("report_nm", "") + " (" + d.get("rcept_dt", "") + ")")
+
+    if naver_client_id and naver_client_secret:
+        try:
+            for headline in naver_news_search(name, naver_client_id, naver_client_secret):
+                drivers.append("NAVER_NEWS: " + headline)
+        except Exception as exc:
+            print(f"HOLD_NAVER_NEWS_FAILED: {type(exc).__name__}: {exc}")
+
+    for sector, keywords in SECTOR_KEYWORDS.items():
+        for keyword in keywords:
+            if keyword in name:
+                drivers.append("SECTOR_KEYWORD:" + sector + "(" + keyword + ")")
+
+    return drivers[:5]
+
+
+def surge_scan(news):
+    """Market-wide '오늘의 급등주' detection (KIS 등락률순위, ALL KRX-listed
+    stocks - not limited to WATCHLIST). Each candidate at/above
+    SURGE_SCAN_THRESHOLD_PCT gets a cause-trace via surge_cause_trace() and
+    is appended to ledger/surge_log.jsonl. Read-only / additive only - does
+    not affect WATCHLIST ranking, scoring, or open positions."""
+
+    app_key, app_secret = kis_credentials()
+
+    if not app_key or not app_secret:
+        return []
+
+    try:
+        gainers = kis_top_gainers(app_key, app_secret)
+    except Exception as exc:
+        detail = ""
+        if isinstance(exc, urllib.error.HTTPError):
+            try:
+                detail = " | body: " + exc.read().decode("utf-8", "replace")[:300]
+            except Exception:
+                pass
+        print(f"HOLD_SURGE_SCAN_FAILED: {type(exc).__name__}: {exc}{detail}")
+        return []
+
+    disclosures = []
+    dart_key = opendart_credentials()
+
+    if dart_key:
+        try:
+            disclosures = opendart_today_disclosures(dart_key)
+            print(f"OPENDART_DISCLOSURES_FETCHED: {len(disclosures)}")
+        except Exception as exc:
+            detail = ""
+            if isinstance(exc, urllib.error.HTTPError):
+                try:
+                    detail = " | body: " + exc.read().decode("utf-8", "replace")[:300]
+                except Exception:
+                    pass
+            print(f"HOLD_OPENDART_FAILED: {type(exc).__name__}: {exc}{detail}")
+    else:
+        print("HOLD_OPENDART_SECRETS_MISSING")
+
+    naver_client_id, naver_client_secret = naver_credentials()
+
+    if not naver_client_id:
+        print("HOLD_NAVER_SECRETS_MISSING")
+
+    surges = []
+
+    for g in gainers:
+
+        if g["change_pct"] < SURGE_SCAN_THRESHOLD_PCT:
+            continue
+
+        drivers = surge_cause_trace(g["name"], news, disclosures, naver_client_id, naver_client_secret)
+
+        record = {
+            "ticker": g["ticker"],
+            "name": g["name"],
+            "price": g["price"],
+            "change_pct": g["change_pct"],
+            "volume": g["volume"],
+            "possible_drivers": drivers,
+            "evidence_status": "TITLE_ONLY" if drivers else "NO_MATCH_HOLD",
+            "ts": datetime.now(timezone.utc).isoformat()
+        }
+
+        append_jsonl(SURGE_LOG, record)
+
+        surges.append(record)
+
+    return surges
+
+# =====================================
 # CONTROL (Layer 14: TELEGRAM REPORT / SAFE CONTROL)
 # =====================================
 
@@ -1091,18 +1452,20 @@ def load_control():
 # POSITION MANAGEMENT (stop-loss / trailing-stop / rotation)
 # =====================================
 
-def load_positions():
-    return load_json(POSITIONS_FILE, {"positions": []}).get("positions", [])
+def load_positions(strategy=STRATEGIES["primary"]):
+    return load_json(strategy["positions_file"], {"positions": []}).get("positions", [])
 
 
-def save_positions(positions):
-    save_json(POSITIONS_FILE, {"positions": positions})
+def save_positions(positions, strategy=STRATEGIES["primary"]):
+    save_json(strategy["positions_file"], {"positions": positions})
 
 
-def close_position(position, current_price, reason):
+def close_position(position, current_price, reason, strategy=STRATEGIES["primary"], track_state=True):
 
     entry_price = position["entry_price"]
     return_pct = ((current_price - entry_price) / entry_price) * 100
+
+    consensus_at_entry = position.get("consensus_at_entry", False)
 
     exit_signal = {
         "ticker": position["ticker"],
@@ -1110,11 +1473,14 @@ def close_position(position, current_price, reason):
         "price": current_price,
         "action": "PAPER_SELL",
         "reason": reason,
+        "consensus_at_entry": consensus_at_entry,
         "ts": datetime.now(timezone.utc).isoformat()
     }
 
-    STATE["paper_trades"].append(exit_signal)
-    append_jsonl(SIGNALS_LOG, exit_signal)
+    if track_state:
+        STATE["paper_trades"].append(exit_signal)
+
+    append_jsonl(strategy["signals_log"], exit_signal)
 
     result = {
         "signal_ts": position["entry_ts"],
@@ -1125,22 +1491,113 @@ def close_position(position, current_price, reason):
         "return_pct": return_pct,
         "win": return_pct > 0,
         "reason": reason,
+        "consensus_at_entry": consensus_at_entry,
         "ts": exit_signal["ts"]
     }
 
-    append_jsonl(RESULTS_LOG, result)
+    append_jsonl(strategy["results_log"], result)
 
     return result
 
 
-def manage_positions(ranking):
+def compute_atr_pct(ticker, lookback_days=ATR_LOOKBACK_DAYS):
+    """Average True Range over the last `lookback_days`, as a percentage of
+    the latest close. Returns None if history is unavailable, in which case
+    the caller falls back to the fixed STOP_LOSS_PCT / TRAILING_STOP_PCT."""
+
+    try:
+        hist = yf.Ticker(ticker).history(period="2mo")
+        hist = hist.dropna(subset=["High", "Low", "Close"])
+
+        closes = hist["Close"].tolist()
+        highs = hist["High"].tolist()
+        lows = hist["Low"].tolist()
+
+        if len(closes) < lookback_days + 1:
+            return None
+
+        true_ranges = []
+
+        for i in range(1, len(closes)):
+            true_ranges.append(max(
+                highs[i] - lows[i],
+                abs(highs[i] - closes[i - 1]),
+                abs(lows[i] - closes[i - 1]),
+            ))
+
+        atr = sum(true_ranges[-lookback_days:]) / lookback_days
+        last_close = closes[-1]
+
+        if not last_close:
+            return None
+
+        return (atr / last_close) * 100
+
+    except Exception:
+        return None
+
+
+def position_risk_levels(ticker, strategy=STRATEGIES["primary"]):
+    """Stop-loss / trailing-stop / target widths (in %) for a new position.
+
+    risk_mode == "atr": sized off the ticker's ATR at entry for a ~2:1
+    reward:risk ratio (Layer 22), falling back to the fixed
+    STOP_LOSS_PCT / TRAILING_STOP_PCT if ATR is unavailable.
+
+    risk_mode == "fixed": always the fixed STOP_LOSS_PCT / TRAILING_STOP_PCT
+    (pre-Layer-22 behaviour, used by shadow strategy variants - skips the
+    ATR lookup entirely so shadow variants add zero extra market-data calls)."""
+
+    if strategy["risk_mode"] == "atr":
+        atr_pct = compute_atr_pct(ticker)
+    else:
+        atr_pct = None
+
+    if atr_pct:
+        stop_loss_pct = min(max(atr_pct * ATR_STOP_MULT, ATR_STOP_FLOOR_PCT), ATR_STOP_CEIL_PCT)
+        trailing_stop_pct = min(max(atr_pct * ATR_TRAILING_MULT, ATR_STOP_FLOOR_PCT), ATR_STOP_CEIL_PCT)
+        target_pct = atr_pct * ATR_TARGET_MULT
+    else:
+        stop_loss_pct = STOP_LOSS_PCT
+        trailing_stop_pct = TRAILING_STOP_PCT
+        target_pct = STOP_LOSS_PCT * ATR_TARGET_MULT
+
+    return {
+        "atr_pct": atr_pct,
+        "stop_loss_pct": stop_loss_pct,
+        "trailing_stop_pct": trailing_stop_pct,
+        "target_pct": target_pct
+    }
+
+
+def manage_positions(ranking, strategy=STRATEGIES["primary"], track_state=True):
     """Check every open position for a stop-loss, trailing-stop (profit
     locked in once the trend reverses), or rotation exit. Profits have no
-    fixed cap - a position rides until the trailing stop triggers."""
+    fixed cap - a position rides until the trailing stop triggers.
+
+    Stop-loss / trailing-stop widths come from each position's own
+    stop_loss_pct / trailing_stop_pct (set at entry from position_risk_levels),
+    falling back to STOP_LOSS_PCT / TRAILING_STOP_PCT for positions opened
+    before this field existed.
+
+    Rotation: when rotation_mode == "composite" (primary), prefers
+    composite_score (score + forward-sim p_up + sector trend, from
+    tomorrow_watchlist.json) when both the held ticker and the current #1
+    appear there, falling back to the raw score gap otherwise. When
+    rotation_mode == "score_gap" (shadow), always uses the raw score gap
+    (pre-Layer-22 behaviour)."""
 
     ranking_by_ticker = {row["ticker"]: row for row in ranking}
 
-    positions = load_positions()
+    if strategy["rotation_mode"] == "composite":
+        composite_by_ticker = {
+            c["ticker"]: c["composite_score"]
+            for c in load_json(WATCHLIST_FILE, {}).get("top", [])
+        }
+    else:
+        composite_by_ticker = {}
+
+    positions = load_positions(strategy)
     top = ranking[0] if ranking else None
 
     remaining = []
@@ -1162,40 +1619,54 @@ def manage_positions(ranking):
 
         return_pct = ((current_price - entry_price) / entry_price) * 100
 
+        stop_loss_pct = position.get("stop_loss_pct", STOP_LOSS_PCT)
+        trailing_stop_pct = position.get("trailing_stop_pct", TRAILING_STOP_PCT)
+
         reason = None
 
-        if return_pct <= -STOP_LOSS_PCT:
+        if return_pct <= -stop_loss_pct:
             reason = "STOP_LOSS"
 
         elif peak_price > entry_price:
             drawdown_from_peak = ((peak_price - current_price) / peak_price) * 100
-            if drawdown_from_peak >= TRAILING_STOP_PCT:
+            if drawdown_from_peak >= trailing_stop_pct:
                 reason = "TRAILING_STOP"
 
         if reason is None and top and top["ticker"] != position["ticker"] and return_pct <= 0:
-            if top["score"] - row["score"] >= ROTATION_SCORE_GAP:
+
+            held_composite = composite_by_ticker.get(position["ticker"])
+            top_composite = composite_by_ticker.get(top["ticker"])
+
+            if held_composite is not None and top_composite is not None:
+                if top_composite - held_composite >= ROTATION_COMPOSITE_GAP:
+                    reason = "ROTATION"
+            elif top["score"] - row["score"] >= ROTATION_SCORE_GAP:
                 reason = "ROTATION"
 
         if reason:
-            exit_results.append(close_position(position, current_price, reason))
+            exit_results.append(close_position(position, current_price, reason, strategy, track_state))
         else:
             remaining.append(position)
 
-    save_positions(remaining)
+    save_positions(remaining, strategy)
 
     return exit_results
 
 
-def open_new_positions(ranking, excluded=None):
+def open_new_positions(ranking, excluded=None, strategy=STRATEGIES["primary"], track_state=True):
     """Open at most one new position per cycle. Candidates from the
     last close's tomorrow_watchlist are tried first, falling back to the
     full ranking, requiring the live score to clear ENTRY_SCORE_THRESHOLD.
-    Skips entirely if the operator safe-control switch is paused."""
+    Skips entirely if the operator safe-control switch is paused.
+
+    Stop-loss / trailing-stop / target are sized via position_risk_levels
+    (ATR-based for primary - Layer 22 EV-BASED RISK FRAMEWORK, fixed % for
+    shadow strategy variants)."""
 
     if load_control().get("trading_paused"):
         return
 
-    positions = load_positions()
+    positions = load_positions(strategy)
 
     if len(positions) >= MAX_OPEN_POSITIONS:
         return
@@ -1227,17 +1698,28 @@ def open_new_positions(ranking, excluded=None):
         if row["score"] < ENTRY_SCORE_THRESHOLD:
             continue
 
+        overlap_count = row.get("overlap_count", 0)
+        overlap_lists = row.get("overlap_lists", [])
+        consensus = overlap_count >= MULTIVERSE_CONSENSUS_MIN_OVERLAP
+
         entry_signal = {
             "ticker": row["ticker"],
             "sector": row["sector"],
             "score": row["score"],
             "price": row["price"],
             "action": "PAPER_BUY",
+            "overlap_count": overlap_count,
+            "overlap_lists": overlap_lists,
+            "consensus": consensus,
             "ts": datetime.now(timezone.utc).isoformat()
         }
 
-        STATE["paper_trades"].append(entry_signal)
-        append_jsonl(SIGNALS_LOG, entry_signal)
+        if track_state:
+            STATE["paper_trades"].append(entry_signal)
+
+        append_jsonl(strategy["signals_log"], entry_signal)
+
+        risk = position_risk_levels(row["ticker"], strategy)
 
         positions.append({
             "ticker": row["ticker"],
@@ -1245,23 +1727,30 @@ def open_new_positions(ranking, excluded=None):
             "entry_price": row["price"],
             "entry_ts": entry_signal["ts"],
             "peak_price": row["price"],
-            "score_at_entry": row["score"]
+            "score_at_entry": row["score"],
+            "atr_pct": risk["atr_pct"],
+            "stop_loss_pct": risk["stop_loss_pct"],
+            "trailing_stop_pct": risk["trailing_stop_pct"],
+            "target_pct": risk["target_pct"],
+            "overlap_count_at_entry": overlap_count,
+            "overlap_lists_at_entry": overlap_lists,
+            "consensus_at_entry": consensus
         })
 
-        save_positions(positions)
+        save_positions(positions, strategy)
         return
 
 
-def paper_engine(ranking):
+def paper_engine(ranking, strategy=STRATEGIES["primary"], track_state=True):
 
     if not ranking:
         return []
 
-    exit_results = manage_positions(ranking)
+    exit_results = manage_positions(ranking, strategy, track_state)
 
     just_exited = {r["ticker"] for r in exit_results}
 
-    open_new_positions(ranking, excluded=just_exited)
+    open_new_positions(ranking, excluded=just_exited, strategy=strategy, track_state=track_state)
 
     return exit_results
 
@@ -1275,7 +1764,7 @@ def portfolio_engine(ranking=None):
 
     portfolio = {}
 
-    for position in load_positions():
+    for position in load_positions(active_strategy()):
 
         ticker = position["ticker"]
         entry_price = position["entry_price"]
@@ -1286,7 +1775,12 @@ def portfolio_engine(ranking=None):
             "entry_price": entry_price,
             "current_price": current_price,
             "peak_price": position["peak_price"],
-            "return_pct": ((current_price - entry_price) / entry_price) * 100
+            "return_pct": ((current_price - entry_price) / entry_price) * 100,
+            "stop_loss_pct": position.get("stop_loss_pct", STOP_LOSS_PCT),
+            "trailing_stop_pct": position.get("trailing_stop_pct", TRAILING_STOP_PCT),
+            "target_pct": position.get("target_pct", STOP_LOSS_PCT * ATR_TARGET_MULT),
+            "consensus_at_entry": position.get("consensus_at_entry", False),
+            "overlap_lists_at_entry": position.get("overlap_lists_at_entry", [])
         }
 
     STATE["portfolio"] = portfolio
@@ -1296,7 +1790,7 @@ def portfolio_from_ledger():
 
     portfolio = {}
 
-    for row in read_jsonl(SIGNALS_LOG):
+    for row in read_jsonl(active_strategy()["signals_log"]):
 
         if row.get("action") != "PAPER_BUY":
             continue
@@ -1405,27 +1899,59 @@ def forward_simulation(ticker, trials=FORWARD_SIM_TRIALS, horizon_days=FORWARD_S
 # LEARNING ENGINE (Result DB evaluation + rolling stats)
 # =====================================
 
-def update_learning_stats(new_results):
+def update_learning_stats(new_results, learning_file=LEARNING_FILE):
+    """Roll new exit results into the persisted learning_stats.
 
-    stats = load_json(LEARNING_FILE, {
+    Layer 24 (MULTIVERSE CONSENSUS SIGNAL): each exit result carries
+    consensus_at_entry (set when the position was opened on a ticker that
+    >= MULTIVERSE_CONSENSUS_MIN_OVERLAP independent ranking signal-universes
+    agreed on - see open_new_positions / rank_engine's overlap_count).
+    Trades are split into consensus_* vs single_signal_* counters so the
+    close report can show, from real outcomes, whether cross-universe
+    agreement actually predicts better trades."""
+
+    stats = load_json(learning_file, {
         "equity_curve": [1.0],
         "cumulative_return_pct": 0.0,
         "max_drawdown_pct": 0.0,
         "win_rate_pct": 0.0,
         "total_trades": 0,
         "wins": 0,
+        "consensus_trades": 0,
+        "consensus_wins": 0,
+        "consensus_return_sum_pct": 0.0,
+        "single_signal_trades": 0,
+        "single_signal_wins": 0,
+        "single_signal_return_sum_pct": 0.0,
         "updated_ts": None
     })
 
     equity_curve = stats.get("equity_curve", [1.0])
     wins = stats.get("wins", 0)
     total_trades = stats.get("total_trades", 0)
+    consensus_trades = stats.get("consensus_trades", 0)
+    consensus_wins = stats.get("consensus_wins", 0)
+    consensus_return_sum = stats.get("consensus_return_sum_pct", 0.0)
+    single_signal_trades = stats.get("single_signal_trades", 0)
+    single_signal_wins = stats.get("single_signal_wins", 0)
+    single_signal_return_sum = stats.get("single_signal_return_sum_pct", 0.0)
 
     for r in new_results:
         equity_curve.append(equity_curve[-1] * (1 + r["return_pct"] / 100))
         total_trades += 1
         if r["win"]:
             wins += 1
+
+        if r.get("consensus_at_entry"):
+            consensus_trades += 1
+            consensus_return_sum += r["return_pct"]
+            if r["win"]:
+                consensus_wins += 1
+        else:
+            single_signal_trades += 1
+            single_signal_return_sum += r["return_pct"]
+            if r["win"]:
+                single_signal_wins += 1
 
     if len(equity_curve) > EQUITY_CURVE_MAX:
         equity_curve = equity_curve[-EQUITY_CURVE_MAX:]
@@ -1450,12 +1976,129 @@ def update_learning_stats(new_results):
         "win_rate_pct": win_rate,
         "total_trades": total_trades,
         "wins": wins,
+        "consensus_trades": consensus_trades,
+        "consensus_wins": consensus_wins,
+        "consensus_return_sum_pct": consensus_return_sum,
+        "consensus_win_rate_pct": (consensus_wins / consensus_trades * 100) if consensus_trades else 0.0,
+        "consensus_avg_return_pct": (consensus_return_sum / consensus_trades) if consensus_trades else 0.0,
+        "single_signal_trades": single_signal_trades,
+        "single_signal_wins": single_signal_wins,
+        "single_signal_return_sum_pct": single_signal_return_sum,
+        "single_signal_win_rate_pct": (single_signal_wins / single_signal_trades * 100) if single_signal_trades else 0.0,
+        "single_signal_avg_return_pct": (single_signal_return_sum / single_signal_trades) if single_signal_trades else 0.0,
         "updated_ts": datetime.now(timezone.utc).isoformat()
     }
 
-    save_json(LEARNING_FILE, stats)
+    save_json(learning_file, stats)
 
     return stats
+
+# =====================================
+# STRATEGY COMPARISON (Layer 23: STRATEGY MULTIVERSE / AUTO CANONICAL FILTERING)
+# =====================================
+
+def run_all_strategies(ranking):
+    """Run every strategy variant in STRATEGIES against the SAME per-cycle
+    ranking data, each in its own ledger (see STRATEGIES). Only the
+    currently-active strategy (active_strategy_name) writes to
+    STATE["paper_trades"] - every other variant trades silently in its own
+    ledger as a control group. No extra market-data calls or Telegram
+    messages versus running one strategy alone.
+
+    Returns (active_exit_results, results_by_name), where results_by_name
+    maps each strategy name to {label, exit_results, learning_stats}."""
+
+    active_name = active_strategy_name()
+
+    results_by_name = {}
+    active_exit_results = []
+
+    for name, strategy in STRATEGIES.items():
+
+        is_active = (name == active_name)
+
+        exit_results = paper_engine(ranking, strategy=strategy, track_state=is_active)
+        learning_stats = update_learning_stats(exit_results, learning_file=strategy["learning_file"])
+
+        results_by_name[name] = {
+            "label": strategy["label"],
+            "exit_results": exit_results,
+            "learning_stats": learning_stats
+        }
+
+        if is_active:
+            active_exit_results = exit_results
+
+    return active_exit_results, results_by_name
+
+
+def evaluate_strategy_promotion(results_by_name):
+    """Layer 23: AUTO CANONICAL FILTERING. Compare every strategy variant's
+    just-updated learning_stats against the currently-active variant and
+    decide whether to promote a challenger to active.
+
+    Promotion requires, every close report:
+      - both the active strategy and the challenger have at least
+        PROMOTION_MIN_TRADES closed trades (a judgment needs real data), and
+      - the challenger's cumulative_return_pct leads the active strategy's
+        by >= PROMOTION_MARGIN_PCT, for PROMOTION_STREAK_REQUIRED
+        consecutive close reports in a row (no flip-flopping on one noisy
+        day).
+
+    Every promotion is appended to "history" with the stats that justified
+    it and persisted to STRATEGY_PROMOTION_FILE - the switch is automatic
+    but never silent."""
+
+    state = load_json(STRATEGY_PROMOTION_FILE, {
+        "active": "primary",
+        "streaks": {},
+        "history": []
+    })
+
+    active_name = state.get("active", "primary")
+    active_stats = results_by_name.get(active_name, {}).get("learning_stats", {})
+    active_trades = active_stats.get("total_trades", 0)
+    active_return = active_stats.get("cumulative_return_pct", 0.0)
+
+    streaks = state.get("streaks", {})
+    promoted_to = None
+
+    for name, result in results_by_name.items():
+
+        if name == active_name:
+            continue
+
+        stats = result["learning_stats"]
+
+        leads = (
+            active_trades >= PROMOTION_MIN_TRADES
+            and stats.get("total_trades", 0) >= PROMOTION_MIN_TRADES
+            and stats.get("cumulative_return_pct", 0.0) - active_return >= PROMOTION_MARGIN_PCT
+        )
+
+        streaks[name] = streaks.get(name, 0) + 1 if leads else 0
+
+        if streaks[name] >= PROMOTION_STREAK_REQUIRED:
+            promoted_to = name
+
+    if promoted_to:
+
+        state["history"].append({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "from": active_name,
+            "to": promoted_to,
+            "from_stats": active_stats,
+            "to_stats": results_by_name[promoted_to]["learning_stats"]
+        })
+
+        state["active"] = promoted_to
+        streaks = {name: 0 for name in results_by_name}
+
+    state["streaks"] = streaks
+
+    save_json(STRATEGY_PROMOTION_FILE, state)
+
+    return state
 
 # =====================================
 # PATCH COUNCIL (Layer 18: AUTO REVIEW PATCH COUNCIL)
@@ -1551,7 +2194,9 @@ def build_tomorrow_watchlist(ranking, sector_strength, top_n=TOMORROW_WATCHLIST_
             "score": row["score"],
             "sector_avg_change_pct": sector_change,
             "p_up": p_up,
-            "composite_score": composite_score
+            "composite_score": composite_score,
+            "overlap_count": row.get("overlap_count", 0),
+            "consensus": row.get("overlap_count", 0) >= MULTIVERSE_CONSENSUS_MIN_OVERLAP
         })
 
     composite.sort(
@@ -1734,6 +2379,19 @@ def format_report_text(report_data):
                     )
                 )
 
+    surges = report_data.get("surge_scan") or []
+
+    if surges:
+        lines.append("")
+        lines.append("[SURGE SCAN] 전체 KRX 급등주 >= %.0f%% (WATCHLIST 외 포함)" % SURGE_SCAN_THRESHOLD_PCT)
+        for s in surges:
+            drivers = "; ".join(s["possible_drivers"]) or "원인 미확인 (HOLD)"
+            lines.append(
+                "  %s %s change=%.2f%% price=%s -> %s" % (
+                    s["ticker"], s["name"], s["change_pct"], s["price"], drivers
+                )
+            )
+
     exits = report_data.get("exits") or []
 
     if exits:
@@ -1753,9 +2411,12 @@ def format_report_text(report_data):
         lines.append("")
         lines.append("[OPEN POSITIONS]")
         for ticker, p in portfolio.items():
+            consensus_note = " [CONSENSUS]" if p.get("consensus_at_entry") else " [single_signal]"
             lines.append(
-                "  %s (%s) entry=%.2f current=%.2f return=%.2f%%" % (
-                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"]
+                "  %s (%s) entry=%.2f current=%.2f return=%.2f%% "
+                "(stop=-%.2f%% trail=%.2f%% target=+%.2f%%)%s" % (
+                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"],
+                    p["stop_loss_pct"], p["trailing_stop_pct"], p["target_pct"], consensus_note
                 )
             )
 
@@ -1843,6 +2504,19 @@ def format_close_report(close_data):
                     )
                 )
 
+    surges = close_data.get("surge_scan") or []
+
+    if surges:
+        lines.append("")
+        lines.append("[SURGE SCAN] 전체 KRX 급등주 >= %.0f%% (WATCHLIST 외 포함)" % SURGE_SCAN_THRESHOLD_PCT)
+        for s in surges:
+            drivers = "; ".join(s["possible_drivers"]) or "원인 미확인 (HOLD)"
+            lines.append(
+                "  %s %s change=%.2f%% price=%s -> %s" % (
+                    s["ticker"], s["name"], s["change_pct"], s["price"], drivers
+                )
+            )
+
     lines.append("")
     lines.append("[TODAY RESULTS]")
     lines.append("  closed_positions: " + str(len(close_data["exit_results"])))
@@ -1861,6 +2535,45 @@ def format_close_report(close_data):
     lines.append("  win_rate: %.1f%%" % learn["win_rate_pct"])
     lines.append("  cumulative_return: %.2f%%" % learn["cumulative_return_pct"])
     lines.append("  max_drawdown: %.2f%%" % learn["max_drawdown_pct"])
+
+    lines.append("")
+    lines.append("[MULTIVERSE CONSENSUS] (Layer 24: independent VOLUME/MOMENTUM/FOREIGN_LINK/NEWS "
+                  "signal-universes agree >= %d/4 -> consensus pick)" % MULTIVERSE_CONSENSUS_MIN_OVERLAP)
+    lines.append(
+        "  consensus: trades=%s win_rate=%.1f%% avg_return=%.2f%%" % (
+            learn.get("consensus_trades", 0), learn.get("consensus_win_rate_pct", 0.0),
+            learn.get("consensus_avg_return_pct", 0.0)
+        )
+    )
+    lines.append(
+        "  single_signal: trades=%s win_rate=%.1f%% avg_return=%.2f%%" % (
+            learn.get("single_signal_trades", 0), learn.get("single_signal_win_rate_pct", 0.0),
+            learn.get("single_signal_avg_return_pct", 0.0)
+        )
+    )
+
+    lines.append("")
+    lines.append("[STRATEGY COMPARISON] (same ranking data, separate ledgers, auto canonical filtering)")
+    promotion = close_data.get("strategy_promotion", {})
+    active_name = promotion.get("active", "primary")
+    streaks = promotion.get("streaks", {})
+    for name, result in close_data.get("strategy_results", {}).items():
+        s = result["learning_stats"]
+        marker = " <- ACTIVE" if name == active_name else ""
+        streak = streaks.get(name, 0)
+        streak_note = (
+            " (promotion_streak=%s/%s)" % (streak, PROMOTION_STREAK_REQUIRED)
+            if streak else ""
+        )
+        lines.append(
+            "  %s: trades=%s win_rate=%.1f%% return=%.2f%% drawdown=%.2f%%%s%s" % (
+                result["label"], s["total_trades"], s["win_rate_pct"],
+                s["cumulative_return_pct"], s["max_drawdown_pct"], marker, streak_note
+            )
+        )
+    if promotion.get("history"):
+        last = promotion["history"][-1]
+        lines.append("  last_promotion: %s -> %s at %s" % (last["from"], last["to"], last["ts"]))
 
     lines.append("")
     lines.append("[TOMORROW WATCHLIST TOP%s] (full ranked list of %s in tomorrow_watchlist.json)" % (
@@ -1885,9 +2598,15 @@ def format_close_report(close_data):
     lines.append("[OPEN POSITIONS]")
     if close_data["open_positions"]:
         for ticker, p in close_data["open_positions"].items():
+            consensus_note = (
+                " [CONSENSUS:%s]" % ",".join(p.get("overlap_lists_at_entry", []))
+                if p.get("consensus_at_entry") else " [single_signal]"
+            )
             lines.append(
-                "  %s (%s) entry=%.2f current=%.2f return=%.2f%%" % (
-                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"]
+                "  %s (%s) entry=%.2f current=%.2f return=%.2f%% "
+                "(stop=-%.2f%% trail=%.2f%% target=+%.2f%%)%s" % (
+                    ticker, p["sector"], p["entry_price"], p["current_price"], p["return_pct"],
+                    p["stop_loss_pct"], p["trailing_stop_pct"], p["target_pct"], consensus_note
                 )
             )
     else:
@@ -1971,8 +2690,9 @@ def format_close_report(close_data):
 
 def format_subscription_report(close_data):
     """Subscriber-facing summary: market read, sector themes, leader
-    pattern, and tomorrow's candidate watch list - no raw position entry
-    prices or account-level figures (those stay in the CEO report)."""
+    pattern, self-validation transparency (Layer 24 consensus tracking),
+    and tomorrow's candidate watch list - no raw position entry prices or
+    account-level figures (those stay in the CEO report)."""
 
     lines = [
         "JOS PAPER CAPITAL - SUBSCRIBER BRIEFING",
@@ -1996,12 +2716,35 @@ def format_subscription_report(close_data):
             ",".join(leader["leader"]["drivers"]) or "-"
         ))
 
+    learn = close_data["learning_stats"]
+    consensus_trades = learn.get("consensus_trades") or 0
+    single_trades = learn.get("single_signal_trades") or 0
+
+    lines.append("")
+    lines.append("[SYSTEM SELF-CHECK] (Layer 24: 4 independent signal sources - "
+                  "volume / momentum / foreign-flow / news - cross-checked against each other)")
+    if consensus_trades or single_trades:
+        lines.append("  multi-signal agreement: trades=%d win_rate=%.1f%% avg_return=%.2f%%" % (
+            consensus_trades, learn.get("consensus_win_rate_pct", 0.0),
+            learn.get("consensus_avg_return_pct", 0.0)
+        ))
+        lines.append("  single-signal only:     trades=%d win_rate=%.1f%% avg_return=%.2f%%" % (
+            single_trades, learn.get("single_signal_win_rate_pct", 0.0),
+            learn.get("single_signal_avg_return_pct", 0.0)
+        ))
+    else:
+        lines.append("  multi-signal vs single-signal track record: accumulating "
+                      "(needs more closed trades before a split is meaningful)")
+
     watchlist = close_data["tomorrow_watchlist"][:TOMORROW_WATCHLIST_REPORT_N]
 
     lines.append("")
-    lines.append("[TOMORROW WATCH LIST TOP%d]" % len(watchlist))
+    lines.append("[TOMORROW WATCH LIST TOP%d] ([CONSENSUS] = >=%d/4 signal sources agree)" % (
+        len(watchlist), MULTIVERSE_CONSENSUS_MIN_OVERLAP
+    ))
     for w in watchlist:
-        lines.append("  %s (%s)" % (w["ticker"], w["sector"]))
+        tag = " [CONSENSUS]" if w.get("consensus") else ""
+        lines.append("  %s (%s)%s" % (w["ticker"], w["sector"], tag))
 
     lines.append("")
     lines.append("Disclaimer: simulated PAPER data only. LIVE_TRADE BLOCKED.")
@@ -2053,13 +2796,13 @@ def append_ceo_report_book(close_data):
 # REPORT (intraday)
 # =====================================
 
-def report(exit_results=None, leader=None, global_flows=None, essence=None):
+def report(exit_results=None, leader=None, global_flows=None, essence=None, surges=None):
 
     ranking = STATE["rankings"]
 
     global_flows = global_flows or []
 
-    learning_stats = load_json(LEARNING_FILE, {
+    learning_stats = load_json(active_strategy()["learning_file"], {
         "cumulative_return_pct": 0.0, "max_drawdown_pct": 0.0, "total_trades": 0
     })
 
@@ -2103,6 +2846,9 @@ def report(exit_results=None, leader=None, global_flows=None, essence=None):
 
         "essence_memory":
             essence,
+
+        "surge_scan":
+            surges or [],
 
         "ts":
             datetime.now(
@@ -2160,6 +2906,10 @@ CANON_LAYER_CHECKS = {
     "ESSENCE_MEMORY": lambda ctx: bool(ctx.get("essence_memory")),
     "AUTO_PATCH_COUNCIL": lambda ctx: bool(ctx.get("patch_council")),
     "FINAL_VETO": lambda ctx: ctx.get("final_veto_ok") is True,
+    "SURGE_CAUSE_TRACE": lambda ctx: "surge_scan" in ctx,
+    "STRATEGY_COMPARISON": lambda ctx: len(ctx.get("strategy_results", {})) >= 2,
+    "AUTO_CANONICAL_FILTERING": lambda ctx: "active" in (ctx.get("strategy_promotion") or {}),
+    "MULTIVERSE_CONSENSUS": lambda ctx: "consensus_trades" in (ctx.get("learning_stats") or {}),
 }
 
 
@@ -2220,6 +2970,10 @@ def collect_cycle_data():
 
     essence = update_essence_memory(leader)
 
+    surges = surge_scan(news)
+
+    STATE["surges"] = surges
+
     for row in market:
 
         STATE["events"].append(row)
@@ -2242,34 +2996,34 @@ def collect_cycle_data():
             "ts": datetime.now(timezone.utc).isoformat()
         })
 
-    return market, news, ranking, leader, global_flows, essence
+    return market, news, ranking, leader, global_flows, essence, surges
 
 
 def run_cycle():
 
-    market, news, ranking, leader, global_flows, essence = collect_cycle_data()
+    market, news, ranking, leader, global_flows, essence, surges = collect_cycle_data()
 
-    exit_results = paper_engine(
-        ranking
-    )
-
-    update_learning_stats(exit_results)
+    exit_results, _ = run_all_strategies(ranking)
 
     portfolio_engine(ranking)
 
-    report(exit_results, leader, global_flows, essence)
+    report(exit_results, leader, global_flows, essence, surges)
 
 
 def run_close():
 
-    market, news, ranking, leader, global_flows, essence = collect_cycle_data()
+    market, news, ranking, leader, global_flows, essence, surges = collect_cycle_data()
 
     market_state = market_state_engine(ranking)
     sector_strength = sector_strength_engine(ranking)
     g_risk_state = global_risk_state(global_flows)
 
-    exit_results = paper_engine(ranking)
-    learning_stats = update_learning_stats(exit_results)
+    exit_results, strategy_results = run_all_strategies(ranking)
+
+    strategy_promotion = evaluate_strategy_promotion(strategy_results)
+
+    active_name = active_strategy_name()
+    learning_stats = strategy_results[active_name]["learning_stats"]
 
     portfolio_engine(ranking)
 
@@ -2280,7 +3034,7 @@ def run_close():
 
     hybrid_mind = hybrid_mind_engine(tomorrow_watchlist, market_state)
 
-    patch_council = patch_council_review(learning_stats, market_state, load_positions())
+    patch_council = patch_council_review(learning_stats, market_state, load_positions(active_strategy()))
 
     portfolio_total = sum(portfolio_from_ledger().values())
 
@@ -2292,6 +3046,8 @@ def run_close():
         "leader_analysis": leader,
         "exit_results": exit_results,
         "learning_stats": learning_stats,
+        "strategy_results": strategy_results,
+        "strategy_promotion": strategy_promotion,
         "tomorrow_watchlist": tomorrow_watchlist,
         "news": news,
         "portfolio_total": portfolio_total,
@@ -2302,7 +3058,8 @@ def run_close():
         "control": control,
         "essence_memory": essence,
         "hybrid_mind": hybrid_mind,
-        "patch_council": patch_council
+        "patch_council": patch_council,
+        "surge_scan": surges
     }
 
     ceo_report_book_entry = append_ceo_report_book(close_data)
@@ -2323,7 +3080,11 @@ def run_close():
         "essence_memory": essence,
         "patch_council": patch_council,
         "final_veto_ok": veto_ok,
-        "ceo_report_book_entry": ceo_report_book_entry
+        "ceo_report_book_entry": ceo_report_book_entry,
+        "surge_scan": surges,
+        "strategy_results": strategy_results,
+        "strategy_promotion": strategy_promotion,
+        "learning_stats": learning_stats
     })
 
     close_data["non_regression"] = non_regression

@@ -43,6 +43,12 @@ jobs:
           # with HOLD_KIS_SECRETS_MISSING.
           CHEONOK_KIS_APP_KEY: ${{ secrets.CHEONOK_KIS_APP_KEY }}
           CHEONOK_KIS_APP_SECRET: ${{ secrets.CHEONOK_KIS_APP_SECRET }}
+          # Optional (Layer 21: SURGE CAUSE TRACE external bridges).
+          # If unset, surge_cause_trace prints HOLD_*_SECRETS_MISSING
+          # and falls back to RSS news / sector-keyword matching only.
+          CHEONOK_OPENDART_API_KEY: ${{ secrets.CHEONOK_OPENDART_API_KEY || secrets.OPENDART }}
+          CHEONOK_NAVER_CLIENT_ID: ${{ secrets.CHEONOK_NAVER_CLIENT_ID }}
+          CHEONOK_NAVER_CLIENT_SECRET: ${{ secrets.CHEONOK_NAVER_CLIENT_SECRET }}
         run: python automation/python_paper_capital_runtime/JOS_MASTER.py --once
 
       - name: Commit ledger updates
