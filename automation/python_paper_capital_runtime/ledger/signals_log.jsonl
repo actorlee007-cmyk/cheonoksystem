@@ -5,3 +5,5 @@
 {"ticker": "GOOGL", "sector": "TECH_PLATFORM", "score": 100, "price": 356.3800048828125, "action": "PAPER_BUY", "ts": "2026-06-10T23:45:12.325072+00:00"}
 {"ticker": "AMD", "sector": "AI_SEMI", "price": 452.3999938964844, "action": "PAPER_SELL", "reason": "TRAILING_STOP", "ts": "2026-06-11T11:11:05.182627+00:00"}
 {"ticker": "000660.KS", "sector": "AI_SEMI", "score": 85, "price": 2101000.0, "action": "PAPER_BUY", "ts": "2026-06-11T11:11:05.183054+00:00"}
+{"ticker": "000660.KS", "sector": "AI_SEMI", "price": 2150000.0, "action": "PAPER_SELL", "reason": "TRAILING_STOP", "ts": "2026-06-12T08:25:46.614998+00:00"}
+{"ticker": "AMD", "sector": "AI_SEMI", "score": 105, "price": 488.45001220703125, "action": "PAPER_BUY", "ts": "2026-06-12T08:25:46.615477+00:00"}

@@ -17,12 +17,12 @@
       "score_at_entry": 100
     },
     {
-      "ticker": "000660.KS",
+      "ticker": "AMD",
       "sector": "AI_SEMI",
-      "entry_price": 2101000.0,
-      "entry_ts": "2026-06-11T11:11:05.183054+00:00",
-      "peak_price": 2287000.0,
-      "score_at_entry": 85
+      "entry_price": 488.45001220703125,
+      "entry_ts": "2026-06-12T08:25:46.615477+00:00",
+      "peak_price": 488.45001220703125,
+      "score_at_entry": 105
     }
   ]
 }
