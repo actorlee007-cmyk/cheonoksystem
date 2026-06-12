@@ -16,3 +16,9 @@
 - 참고: https://youtu.be/4kIM20RPZHs (AI 광고 생성 파이프라인이 만든 6초 영상 광고 소재 샘플)
 - 연결: automation/google_ads/campaigns/business_diagnosis_skag.json (무료 사업 진단 SKAG 캠페인)의 영상 광고 버전
 - 할 일: 같은 포맷(6초, 한국어, CTA-Value)으로 스크립트/스토리보드 작성 -> Capcut AI/Veo 등으로 렌더링 시도
+
+## 4. 이지비디오(EasyVideo) - 대본->AI영상 SaaS 가입/평가
+- 참고: https://youtu.be/NeOYP50G_Jk (할인코드 ai1sang5000, 5000원 할인)
+- https://easyvideo-landing.vercel.app/?ref=youtuber1sang
+- 연결: (3) 영상 광고 소재 제작 엔진 + 블로그 초안 001-003을 영상/쇼츠로 변환하는 파이프라인
+- 할 일: 가입 후 SKAG 영상 스크립트 1개 테스트 렌더링
