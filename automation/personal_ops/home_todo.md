@@ -24,6 +24,8 @@
 - 아이디어: 큐레이션 + 썸네일 자동화 기반 음악 플레이리스트 채널 (CHEONOK 본 시스템과 독립)
 - 참고: https://youtu.be/LXhRtn5EDLw (플리 썸네일 공식 - 음악보다 썸네일이 조회수 가른다)
 - 우선순위: 주식 시스템/구독 정리 이후, 별도 트랙으로 시작
+- ⚠️ 양산형 채널 단속 주의 (uhRTrXT1efQ): 유튜브가 AI생성/대량복제형 채널을 단속 중 -
+  단순 자동복제가 아니라 큐레이션/가치 추가가 드러나는 형태로 설계할 것
 
 ## 3. AI 영상 광고 소재 (6초 KO 16:9 CTA-Value) 만들어보기
 - 참고: https://youtu.be/4kIM20RPZHs (AI 광고 생성 파이프라인이 만든 6초 영상 광고 소재 샘플)
@@ -35,6 +37,8 @@
 - https://easyvideo-landing.vercel.app/?ref=youtuber1sang
 - 연결: (3) 영상 광고 소재 제작 엔진 + 블로그 초안 001-003을 영상/쇼츠로 변환하는 파이프라인
 - 할 일: 가입 후 SKAG 영상 스크립트 1개 테스트 렌더링
+- ⚠️ 양산형 채널 단속 주의 (uhRTrXT1efQ): 블로그->AI영상 대량 변환 파이프라인도 같은 리스크 -
+  채널별 충분한 차별화/편집 가치 확보 필요
 
 ## 5. Higgsfield MCP / citevue.com (홈페이지구축 영상 참고)
 - Higgsfield MCP: 비주얼/디자인 에셋 생성 도구 - 랜딩페이지/광고 소재 제작에 쓸만한지 검토
@@ -48,3 +52,10 @@
   access_token 발급 -> CHEONOK_KAKAO_ACCESS_TOKEN 환경변수(GitHub Secrets)에 등록
 - 주의: 카카오 access_token은 6시간 만료. refresh_token 자동 재발급 로직은 아직 미구현
   (토큰 만료되면 HOLD_KAKAO_SECRETS_MISSING으로 스킵, 텔레그램은 정상 발송)
+
+## 7. 유튜브 자체를 수익구조 트랙으로
+- CHEONOK 시스템 구축과 별개로, 유튜브 채널 자체(플리/광고소재/AI영상)도 수익구조 후보로 보고
+  관련 영상/도구 자료를 계속 수집 중
+- 관련 항목: 2(플리 채널), 3(AI영상 광고소재), 4(이지비디오), 5(Higgsfield/citevue)
+- 공통 리스크: 양산형/AI 콘텐츠 채널 단속 (uhRTrXT1efQ) - 어떤 채널이든 "진짜 가치 추가"가
+  보이는 포맷으로 설계할 것
