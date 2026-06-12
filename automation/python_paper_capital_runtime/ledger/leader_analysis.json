@@ -1,60 +1,61 @@
 {
-  "generated_ts": "2026-06-11T11:25:21.191694+00:00",
+  "generated_ts": "2026-06-12T12:19:08.690590+00:00",
   "leader": {
-    "ticker": "AMD",
-    "sector": "AI_SEMI",
-    "score": 115,
+    "ticker": "105560.KS",
+    "sector": "FINANCE",
+    "score": 135,
     "drivers": [
       "VOLUME(+100)",
+      "FOREIGN_LINK(+20)",
       "NEWS(+10)",
       "OVERLAP(x2,+5)"
     ],
-    "foreign_sector_change_pct": -4.569158796406633,
-    "change_pct": -4.860048241788088
+    "foreign_sector_change_pct": 1.991492716841729,
+    "change_pct": 6.4
   },
   "similar_candidates": [
     {
-      "ticker": "RTX",
-      "sector": "DEFENSE",
-      "score": 110,
+      "ticker": "055550.KS",
+      "sector": "FINANCE",
+      "score": 135,
       "shared_drivers": [
-        "NEWS"
-      ]
-    },
-    {
-      "ticker": "NVDA",
-      "sector": "AI_SEMI",
-      "score": 105,
-      "shared_drivers": [
+        "FOREIGN_LINK",
         "NEWS",
-        "SECTOR:AI_SEMI"
-      ]
-    },
-    {
-      "ticker": "AVGO",
-      "sector": "AI_SEMI",
-      "score": 105,
-      "shared_drivers": [
-        "NEWS",
-        "SECTOR:AI_SEMI"
-      ]
-    },
-    {
-      "ticker": "000660.KS",
-      "sector": "AI_SEMI",
-      "score": 100,
-      "shared_drivers": [
-        "NEWS",
-        "SECTOR:AI_SEMI"
+        "SECTOR:FINANCE"
       ]
     },
     {
       "ticker": "005930.KS",
       "sector": "AI_SEMI",
-      "score": 95,
+      "score": 130,
+      "shared_drivers": [
+        "FOREIGN_LINK"
+      ]
+    },
+    {
+      "ticker": "000660.KS",
+      "sector": "AI_SEMI",
+      "score": 125,
+      "shared_drivers": [
+        "FOREIGN_LINK"
+      ]
+    },
+    {
+      "ticker": "JPM",
+      "sector": "FINANCE",
+      "score": 110,
       "shared_drivers": [
         "NEWS",
-        "SECTOR:AI_SEMI"
+        "SECTOR:FINANCE"
+      ]
+    },
+    {
+      "ticker": "BAC",
+      "sector": "FINANCE",
+      "score": 110,
+      "shared_drivers": [
+        "NEWS",
+        "SECTOR:FINANCE"
       ]
     }
   ]

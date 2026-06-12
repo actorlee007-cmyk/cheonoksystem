@@ -1,5 +1,5 @@
 {
-  "generated_ts": "2026-06-11T11:25:33.323975+00:00",
+  "generated_ts": "2026-06-12T10:50:12.238795+00:00",
   "layers": {
     "GLOBAL_FIRST": true,
     "KOREA_THEME_TRANSLATION": true,
@@ -19,10 +19,9 @@
     "GOD_HYBRID_MIND": true,
     "ESSENCE_MEMORY": true,
     "AUTO_PATCH_COUNCIL": true,
-    "FINAL_VETO": true,
-    "SURGE_CAUSE_TRACE": true
+    "FINAL_VETO": true
   },
-  "pass_count": 20,
-  "total_layers": 20,
+  "pass_count": 19,
+  "total_layers": 19,
   "regressions": []
 }

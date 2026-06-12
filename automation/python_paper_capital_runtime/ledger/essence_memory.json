@@ -86,7 +86,35 @@
       ]
     },
     {
-      "ts": "2026-06-11T06:20:47.187623+00:00",
+      "ts": "2026-06-11T04:42:51.009938+00:00",
+      "ticker": "LMT",
+      "sector": "DEFENSE",
+      "drivers": [
+        "VOLUME(+100)",
+        "NEWS(+10)",
+        "OVERLAP(x2,+5)"
+      ]
+    },
+    {
+      "ts": "2026-06-11T04:55:49.709550+00:00",
+      "ticker": "TSLA",
+      "sector": "EV_BATTERY",
+      "drivers": [
+        "VOLUME(+100)",
+        "NEWS(+10)"
+      ]
+    },
+    {
+      "ts": "2026-06-11T04:59:11.292373+00:00",
+      "ticker": "TSLA",
+      "sector": "EV_BATTERY",
+      "drivers": [
+        "VOLUME(+100)",
+        "NEWS(+10)"
+      ]
+    },
+    {
+      "ts": "2026-06-11T05:14:53.092970+00:00",
       "ticker": "NVDA",
       "sector": "AI_SEMI",
       "drivers": [
@@ -96,7 +124,7 @@
       ]
     },
     {
-      "ts": "2026-06-11T07:11:03.645803+00:00",
+      "ts": "2026-06-11T06:03:30.908711+00:00",
       "ticker": "NVDA",
       "sector": "AI_SEMI",
       "drivers": [
@@ -106,31 +134,7 @@
       ]
     },
     {
-      "ts": "2026-06-11T07:18:54.678903+00:00",
-      "ticker": "NVDA",
-      "sector": "AI_SEMI",
-      "drivers": [
-        "VOLUME(+100)"
-      ]
-    },
-    {
-      "ts": "2026-06-11T07:33:07.327478+00:00",
-      "ticker": "NVDA",
-      "sector": "AI_SEMI",
-      "drivers": [
-        "VOLUME(+100)"
-      ]
-    },
-    {
-      "ts": "2026-06-11T08:13:35.319842+00:00",
-      "ticker": "NVDA",
-      "sector": "AI_SEMI",
-      "drivers": [
-        "VOLUME(+100)"
-      ]
-    },
-    {
-      "ts": "2026-06-11T08:34:35.359928+00:00",
+      "ts": "2026-06-11T06:11:36.750807+00:00",
       "ticker": "NVDA",
       "sector": "AI_SEMI",
       "drivers": [
@@ -140,7 +144,7 @@
       ]
     },
     {
-      "ts": "2026-06-11T09:13:58.544493+00:00",
+      "ts": "2026-06-11T08:47:00.790050+00:00",
       "ticker": "NVDA",
       "sector": "AI_SEMI",
       "drivers": [
@@ -150,7 +154,16 @@
       ]
     },
     {
-      "ts": "2026-06-11T09:49:19.596027+00:00",
+      "ts": "2026-06-11T11:11:05.180212+00:00",
+      "ticker": "RTX",
+      "sector": "DEFENSE",
+      "drivers": [
+        "VOLUME(+100)",
+        "NEWS(+10)"
+      ]
+    },
+    {
+      "ts": "2026-06-11T12:46:51.844379+00:00",
       "ticker": "AMD",
       "sector": "AI_SEMI",
       "drivers": [
@@ -158,46 +171,62 @@
       ]
     },
     {
-      "ts": "2026-06-11T09:52:20.528880+00:00",
-      "ticker": "AMD",
-      "sector": "AI_SEMI",
-      "drivers": [
-        "VOLUME(+100)"
-      ]
-    },
-    {
-      "ts": "2026-06-11T10:05:50.768477+00:00",
-      "ticker": "AMD",
-      "sector": "AI_SEMI",
-      "drivers": [
-        "VOLUME(+100)"
-      ]
-    },
-    {
-      "ts": "2026-06-11T10:14:02.907214+00:00",
-      "ticker": "AMD",
+      "ts": "2026-06-12T00:18:44.337545+00:00",
+      "ticker": "005930.KS",
       "sector": "AI_SEMI",
       "drivers": [
         "VOLUME(+100)",
+        "FOREIGN_LINK(+20)",
         "NEWS(+10)",
-        "OVERLAP(x2,+5)"
+        "OVERLAP(x4,+15)"
       ]
     },
     {
-      "ts": "2026-06-11T11:25:21.191694+00:00",
-      "ticker": "AMD",
+      "ts": "2026-06-12T03:52:32.760911+00:00",
+      "ticker": "005930.KS",
       "sector": "AI_SEMI",
       "drivers": [
         "VOLUME(+100)",
+        "FOREIGN_LINK(+20)",
+        "OVERLAP(x3,+10)"
+      ]
+    },
+    {
+      "ts": "2026-06-12T08:25:46.612327+00:00",
+      "ticker": "005930.KS",
+      "sector": "AI_SEMI",
+      "drivers": [
+        "VOLUME(+100)",
+        "FOREIGN_LINK(+20)",
+        "OVERLAP(x3,+10)"
+      ]
+    },
+    {
+      "ts": "2026-06-12T10:50:10.934406+00:00",
+      "ticker": "005930.KS",
+      "sector": "AI_SEMI",
+      "drivers": [
+        "VOLUME(+100)",
+        "FOREIGN_LINK(+20)",
+        "OVERLAP(x3,+10)"
+      ]
+    },
+    {
+      "ts": "2026-06-12T12:19:08.690590+00:00",
+      "ticker": "105560.KS",
+      "sector": "FINANCE",
+      "drivers": [
+        "VOLUME(+100)",
+        "FOREIGN_LINK(+20)",
         "NEWS(+10)",
         "OVERLAP(x2,+5)"
       ]
     }
   ],
-  "sample_size": 21,
+  "sample_size": 23,
   "dominant_sector": "AI_SEMI",
-  "dominant_sector_count": 18,
+  "dominant_sector_count": 15,
   "dominant_driver": "VOLUME",
-  "dominant_driver_count": 21,
-  "updated_ts": "2026-06-11T11:25:21.192149+00:00"
+  "dominant_driver_count": 23,
+  "updated_ts": "2026-06-12T12:19:08.691090+00:00"
 }
