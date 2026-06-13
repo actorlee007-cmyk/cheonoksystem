@@ -91,6 +91,11 @@
   브랜드 클론" - Grant Zuco, Skool 커뮤니티/buildyourstore.ai/Consentmo/AutoDS 제휴형
   코스 광고). w-iIZQi35kU와 같은 패턴(코스 퍼널)이지만 "Claude로 쇼피파이 스토어를
   분석->클론 구조 설계->빌드"하는 워크플로 자체는 드랍쉬핑 트랙에 그대로 적용 가능.
+- https://youtu.be/n00lvr2Mr9s ("$10,756,248.36 with branded dropshipping - just
+  copy me" - NuGenNath, 본문은 NuGenFounders 신청폼+브이로그 링크뿐인 코칭 퍼널 광고).
+  컨텐츠 자체는 의미 없으나, 이 니치의 마케팅 패턴(매출 숫자 플렉스 후크 + 신청폼 퍼널)이
+  반복 확인됨 - CHEONOK 리스크룰("보장형 매출 약속 없음")과 정반대 패턴이므로 참고만 하고
+  메시징은 차용하지 말 것.
 
 ## 10. "홈페이지 클로드로 만든거 자료" - B2B 포트폴리오 자산 (2026-06-12)
 - cheonoksystem.com 자체(offers.html, cta-5m.html, operator-os.html 등)가 Claude Code로
